@@ -75,3 +75,6 @@ build/generated-snippets/
 .env.*
 !.env.example
 *.local.properties
+
+### CLAUDE ###
+/.claude/settings.local.json
