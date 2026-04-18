@@ -1,68 +1,145 @@
-# CLAUDE.md
+# OTA Accommodation Platform
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+OTA 숙박 플랫폼 백엔드 시스템. 핵심 도메인(숙소, 예약, 재고)을 설계하고 구현하는 학습 프로젝트.
 
-## 프로젝트 개요
+## Tech Stack
 
-숙소 플랫폼을 주제로 한 개인 학습용 Spring Boot 프로젝트. 단독 작업자가 `main` 브랜치에 직접 커밋/푸시하는 단순 워크플로우.
+- Java 21 / Spring Boot 4.0.5 / Gradle
+- MySQL (Main DB)
+- Lombok
+- 테스트: JUnit 5, Mockito, Testcontainers
+- API 문서: Spring REST Docs (테스트 기반 문서 자동 생성)
 
-## 기술 스택
+## Architecture
 
-- **Java 21** (Gradle toolchain으로 고정)
-- **Spring Boot 4.0.5** — `spring-boot-starter-webmvc`, `spring-boot-starter-data-jpa`
-- **MySQL** (`mysql-connector-j`, runtime)
-- **Lombok** (annotation processor 포함)
-- **Spring REST Docs** — 테스트에서 생성된 스니펫(`build/generated-snippets`)을 Asciidoctor로 문서화
+**헥사고날 아키텍처 (Ports & Adapters)** + **채널별 최상위 분리**.
 
-## 주요 명령어
+### 패키지 구조
 
-```bash
-# 애플리케이션 실행
-./gradlew bootRun
+```
+com.accommodation.platform/
+  core/{domain}/                           # 공유 도메인 & 인프라
+    domain/
+      model/                               # 엔티티, VO, Enum
+      service/                             # 도메인 서비스 (순수 비즈니스 규칙)
+      event/                               # 도메인 이벤트
+    application/
+      port/in/                             # Inbound Port (유스케이스 인터페이스)
+      port/out/                            # Outbound Port (영속성/외부 시스템 인터페이스)
+      service/                             # 유스케이스 구현체
+    adapter/
+      out/persistence/                     # JPA Repository, Entity 매핑
+      out/external/                        # 외부 API 클라이언트
 
-# 전체 빌드 (컴파일 + 테스트 + JAR 패키징)
-./gradlew build
+  admin/{domain}/                          # 관리자 채널
+    application/
+      port/in/                             # 관리자 전용 Inbound Port
+      service/                             # 관리자 전용 유스케이스 구현체
+    adapter/in/web/                        # 관리자 REST API (Controller, Request/Response DTO)
 
-# 테스트만 실행
-./gradlew test
+  extranet/{domain}/                       # 숙소 파트너 채널
+    application/
+      port/in/                             # 파트너 전용 Inbound Port
+      service/                             # 파트너 전용 유스케이스 구현체
+    adapter/in/web/                        # 파트너 REST API
 
-# 단일 테스트 클래스 실행
-./gradlew test --tests com.accommodation.platform.PlatformApplicationTests
-
-# 단일 테스트 메서드 실행
-./gradlew test --tests "com.accommodation.platform.SomeTest.methodName"
-
-# REST Docs Asciidoctor 렌더링 (test 후 실행됨)
-./gradlew asciidoctor
-
-# 클린 빌드
-./gradlew clean build
+  customer/{domain}/                       # 고객 채널
+    application/
+      port/in/                             # 고객 전용 Inbound Port
+      service/                             # 고객 전용 유스케이스 구현체
+    adapter/in/web/                        # 고객 REST API
 ```
 
-## 아키텍처 메모
+### 레이어 규칙
 
-- **핵사고날아키텍쳐**: 핵사고날 아키택쳐 구조로 진행
-- **베이스 패키지**: `com.accommodation.platform` — 엔트리포인트는 `PlatformApplication`. 새 모듈/도메인을 추가할 때는 이 아래에 `domain`, `controller`, `service`, `repository` 등 레이어 혹은 기능별 하위 패키지로 분리.
-- **설정 파일**: `src/main/resources/application.yaml` — 현재는 애플리케이션 이름만 선언. DB 연결/프로파일별 설정은 이 파일 또는 `application-{profile}.yaml`에 추가.
-- **REST Docs 파이프라인**: `test` 태스크가 `build/generated-snippets`를 출력하고 `asciidoctor` 태스크가 이를 입력으로 받음 (`build.gradle` 참고). API 문서를 작성할 때는 MockMvc 테스트에서 스니펫을 생성한 뒤 `src/main/asciidoc/`에 `.adoc` 문서를 두는 구조를 따른다.
-- **민감 설정 분리**: `application-secret.yml`, `*.local.properties`, `.env*`는 gitignore 대상. 시크릿은 이런 파일이나 환경변수로만 다룬다.
+**domain (최내부)** — 프레임워크 의존성 제로
+- 엔티티, VO는 순수 Java. JPA/Spring 어노테이션 금지
+- 비즈니스 불변식(invariant)은 엔티티 메서드로 보호
+- 도메인 이벤트는 POJO로 정의
 
-## 커밋 규칙
-**사용자**의 요청이 있기 전까지는 절대 커밋을 하지 않는다.
-모든 커밋 메시지는 **Conventional Commits 접두어**를 붙이고 **한글**로 작성한다:
+**application (중간)** — 포트를 통해서만 외부와 소통
+- Inbound Port: 유스케이스 인터페이스 (`~UseCase`, `~Query`)
+- Outbound Port: 영속성/외부 시스템 인터페이스 (`~Repository`, `~Client`)
+- 유스케이스 구현체는 Inbound Port를 구현하고, Outbound Port를 주입받음
+- 트랜잭션 경계는 유스케이스 구현체(`@Transactional`)에서 관리
 
-- `feat:` 새 기능/엔티티/API/화면 추가
-- `fix:` 버그 수정
-- `refactor:` 동작 변경 없는 구조 개선
-- `style:` 포맷/세미콜론/공백
-- `docs:` 문서/주석 변경
-- `test:` 테스트 추가/수정
-- `chore:` 빌드/설정/gitignore/의존성 등
-- `perf:` 성능 개선
+**adapter (최외부)** — 프레임워크/인프라 의존 허용
+- `adapter/in/web`: Controller, Request/Response DTO. Inbound Port를 호출
+- `adapter/out/persistence`: JPA Entity(`~JpaEntity`), Spring Data Repository, Outbound Port 구현체
+- JPA Entity <-> 도메인 모델 변환은 `adapter/out/persistence` 내 매퍼에서 처리
 
-예: `feat: 회원 엔티티 추가`, `fix: 숙소 검색 페이징 오류 수정`
-커밋/푸시는 `/commit-push` 슬래시 커맨드로 수행 — 정의는 `.claude/skills/commit-push/SKILL.md`에 있으며, 변경 시 이 스킬도 함께 수정한다.
+### 의존성 방향
 
-## Gradle 래퍼
+```
+adapter/in  -->  application(port/in)  -->  domain
+                 application(port/out) <--  adapter/out
+```
+- 안쪽 레이어는 바깥을 모른다. domain은 application을, application은 adapter를 참조하지 않는다
+- 채널(admin/extranet/customer)은 `core`를 참조할 수 있지만, `core`는 채널을 참조하지 않는다
+- 채널 간 직접 참조 금지 (admin -> extranet 불가)
 
-`gradlew`, `gradlew.bat`, `gradle/wrapper/`는 저장소에 포함되어 있음. 로컬에 Gradle을 설치하지 않고 래퍼로 모든 빌드를 수행한다.
+### 네이밍 컨벤션
+
+| 구분 | 패턴 | 예시 |
+|------|------|------|
+| Inbound Port (명령) | `{Channel}{Action}{Domain}UseCase` | `ExtranetRegisterRoomUseCase`, `AdminAdjustPriceUseCase` |
+| Inbound Port (조회) | `{Channel}{Action}{Domain}Query` | `CustomerSearchAccommodationQuery`, `ExtranetGetSalesStatisticsQuery` |
+| Inbound Port 구현체 | `{Channel}{Action}{Domain}Service` | `ExtranetRegisterRoomService`, `AdminAdjustPriceService` |
+| Outbound Port | `{Domain}Repository`, `{Domain}Client` | `AccommodationRepository`, `SupplierClient` |
+| Outbound Port 구현체 | `{Domain}{Tech}Adapter` | `AccommodationJpaAdapter`, `SupplierRestAdapter` |
+| Controller | `{Channel}{Domain}Controller` | `AdminAccommodationController`, `CustomerReservationController` |
+| 도메인 이벤트 | `{Domain}{PastTense}Event` | `ReservationConfirmedEvent`, `InventoryDepletedEvent` |
+| JPA Entity | `{Domain}JpaEntity` | `AccommodationJpaEntity`, `RoomJpaEntity` |
+| Request/Response DTO | `{Action}{Domain}Request/Response` | `RegisterRoomRequest`, `SearchAccommodationResponse` |
+| Command/Query DTO | `{Action}{Domain}Command/Query` | `RegisterRoomCommand`, `SearchAccommodationCriteria` |
+
+### 배치 기준
+
+| 상황 | 위치 |
+|------|------|
+| 여러 채널에서 공유하는 로직 | `core` |
+| 한 채널에서만 쓰는 유스케이스 | 해당 채널 |
+| 도메인 엔티티, VO, 도메인 서비스 | 항상 `core` |
+| Outbound Port + 구현체 (Repository 등) | 항상 `core` |
+| Controller, Request/Response DTO | 항상 해당 채널 |
+| 처음엔 한 채널 -> 나중에 공유 필요 | 공유 시점에 `core`로 이동 |
+
+## Domains
+
+### 구현 핵심 도메인
+| 도메인 | 설명 |
+|--------|------|
+| Extranet (파트너 센터) | 숙소/객실 등록, 요금 및 재고(Inventory) 설정 |
+| 고객 서비스 (Web/App) | 숙소 검색, 요금 조회/비교, 예약/취소 |
+| Admin (관리자) | 숙소, 예약, 파트너 모니터링 및 운영 |
+| Supplier 연동 | 외부 공급사 상품 통합 어댑터 |
+
+### 설계 중심 도메인 (ERD/아키텍처만)
+- 쿠폰, 리뷰, 결제, 회원 (회원은 예약에 필요한 최소 데이터만 구현)
+
+### 구현 우선순위
+숙소 등록 -> 재고 설정 -> 검색 -> 예약(동시성 처리)
+
+## Coding Standards
+
+- Java 21 최신 문법 적극 활용: Record, Pattern Matching, Sealed Classes, Virtual Threads
+- RESTful API 원칙 준수, 공통 응답은 `ApiResponse<T>` 사용
+- `@RestControllerAdvice` 전역 예외 처리 + 도메인별 Custom Exception
+- Lombok: `@Getter`, `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 사용
+- 모든 테이블에 `created_at`, `updated_at` 컬럼 포함
+
+## Key Requirements
+
+- **오버부킹 방지**: 동일 재고 동시 요청 시 Distributed Lock 또는 DB Lock 활용
+- **조회 성능**: 대량 요금 조회 트래픽 대비 인덱싱, 쿼리 최적화, 캐싱 전략 적용
+- **이벤트 기반(EDA)**: 예약 상태 변경 등 주요 도메인 이벤트로 시스템 간 결합도 해제
+- **Supplier 통합**: 다양한 외부 공급사를 유연하게 수용하는 어댑터 인터페이스
+- **인증/인가**: Spring Security 기반 설계
+
+## Build & Run
+
+```bash
+./gradlew build        # 빌드
+./gradlew test         # 테스트
+./gradlew bootRun      # 실행
+```
