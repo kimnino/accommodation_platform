@@ -120,21 +120,9 @@ adapter/in  -->  application(port/in)  -->  domain
 ### 구현 우선순위
 숙소 등록 -> 재고 설정 -> 검색 -> 예약(동시성 처리)
 
-## Coding Standards
+## Coding Standards & Key Requirements
 
-- Java 21 최신 문법 적극 활용: Record, Pattern Matching, Sealed Classes, Virtual Threads
-- RESTful API 원칙 준수, 공통 응답은 `ApiResponse<T>` 사용
-- `@RestControllerAdvice` 전역 예외 처리 + 도메인별 Custom Exception
-- Lombok: `@Getter`, `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 사용
-- 모든 테이블에 `created_at`, `updated_at` 컬럼 포함
-
-## Key Requirements
-
-- **오버부킹 방지**: 동일 재고 동시 요청 시 Distributed Lock 또는 DB Lock 활용
-- **조회 성능**: 대량 요금 조회 트래픽 대비 인덱싱, 쿼리 최적화, 캐싱 전략 적용
-- **이벤트 기반(EDA)**: 예약 상태 변경 등 주요 도메인 이벤트로 시스템 간 결합도 해제
-- **Supplier 통합**: 다양한 외부 공급사를 유연하게 수용하는 어댑터 인터페이스
-- **인증/인가**: Spring Security 기반 설계
+@docs/conventions/code-conventions.md
 
 ## Build & Run
 

@@ -1,0 +1,405 @@
+# OTA 숙박 플랫폼 작업계획서
+
+## 구현 순서 요약
+
+| Phase | 내용 | 피드백 상태 |
+|-------|------|------------|
+| 0 | 공통 인프라 (ApiResponse, 예외, BaseEntity, 테스트 기반) | 피드백 완료 |
+| 1 | 숙소/객실 등록 (Accommodation + Room + RoomOption) | 피드백 대기 |
+| 2 | 재고/요금 설정 (Inventory + Price) | 피드백 대기 |
+| 3 | 검색 (Customer Search) | 피드백 대기 |
+| 4 | 예약 + 동시성 (Reservation) | 피드백 대기 |
+| 5 | Supplier 연동 | 피드백 대기 |
+| 6 | 설계 중심 도메인 (Member, Coupon, Payment, Review, Wishlist) | 피드백 대기 |
+| 7 | 횡단 관심사 (Security, i18n, Image, Logging) | 피드백 대기 |
+
+> Phase 6, 7은 병렬 진행 가능
+
+---
+
+## Phase 0: 프로젝트 기반 구조
+
+### 0-1. build.gradle 의존성 보강
+- `spring-boot-starter-validation`
+- `org.testcontainers:mysql` + `org.testcontainers:junit-jupiter`
+- `spring-boot-starter-security` (Phase 7에서 활성화)
+
+### 0-2. application.yaml 설정
+- `spring.jackson.property-naming-strategy: SNAKE_CASE`
+- `spring.jpa.hibernate.ddl-auto: validate`
+- `spring.jpa.open-in-view: false`
+- 로깅 패턴 (trace_id MDC 포함)
+
+### 0-3. 공통 응답 / 예외 처리
+
+위치: `com.accommodation.platform.common`
+
+| 파일 | 설명 |
+|------|------|
+| `response/ApiResponse.java` | record. status, data, error, timestamp |
+| `response/ErrorDetail.java` | record. code, message, fieldErrors |
+| `response/FieldError.java` | record. field, message |
+| `exception/BusinessException.java` | RuntimeException 상속, ErrorCode 보유 |
+| `exception/ErrorCode.java` | Enum. HTTP status + 비즈니스 에러 코드 |
+| `exception/GlobalExceptionHandler.java` | @RestControllerAdvice 전역 예외 처리 |
+
+### 0-4. 공통 도메인 베이스
+
+| 위치 | 파일 | 설명 |
+|------|------|------|
+| `common.domain` | `BaseEntity.java` | createdAt(Instant), updatedAt(Instant). 순수 Java |
+| `common.domain` | `SoftDeletable.java` | isDeleted, deletedAt 필드 인터페이스 |
+| `common.adapter.out.persistence` | `BaseJpaEntity.java` | @MappedSuperclass. 공통 컬럼 + @PrePersist/@PreUpdate |
+
+### 0-5. 설정 클래스
+
+| 파일 | 설명 |
+|------|------|
+| `common/config/JacksonConfig.java` | SNAKE_CASE, Instant 직렬화 |
+| `common/config/WebMvcConfig.java` | CORS 등 |
+
+### 0-6. 테스트 인프라
+
+| 파일 | 설명 |
+|------|------|
+| `IntegrationTestBase.java` | @SpringBootTest + Testcontainers MySQL 공통 베이스 |
+| `application-test.yaml` | 테스트 전용 DB 설정 |
+
+---
+
+## Phase 1: 숙소/객실 등록
+
+### 1-1. Accommodation 도메인 모델
+
+위치: `core.accommodation.domain.model`
+
+| 파일 | 설명 |
+|------|------|
+| `Accommodation.java` | 엔티티. name, type, address, latitude/longitude, status, facilities, images, checkInTime/checkOutTime |
+| `AccommodationType.java` | Enum: HOTEL, RESORT, PENSION, POOL_VILLA, MOTEL, GUEST_HOUSE |
+| `AccommodationStatus.java` | Enum: PENDING, ACTIVE, SUSPENDED, CLOSED |
+| `Address.java` | VO. region, city, district, detail, zipCode |
+| `Facility.java` | Enum. PARKING, WIFI, POOL, FITNESS 등 |
+| `AccommodationImage.java` | VO. url, category, displayOrder, isPrimary |
+| `ImageCategory.java` | Enum: EXTERIOR, LOBBY, ROOM, FACILITY, ETC |
+
+### 1-2. Accommodation 포트 & 어댑터 (core)
+
+| 레이어 | 파일 | 설명 |
+|--------|------|------|
+| port/out | `AccommodationRepository.java` | save, findById, findByPartnerId |
+| port/out | `AccommodationImageStorage.java` | 이미지 업로드/삭제 추상화 |
+| persistence | `AccommodationJpaEntity.java` | JPA 엔티티 |
+| persistence | `AccommodationImageJpaEntity.java` | 이미지 JPA 엔티티 |
+| persistence | `AccommodationJpaRepository.java` | Spring Data JPA |
+| persistence | `AccommodationJpaAdapter.java` | Repository 구현체 |
+| persistence | `AccommodationMapper.java` | JpaEntity <-> 도메인 모델 |
+
+### 1-3. Extranet 채널 - 숙소 등록/수정
+
+위치: `extranet.accommodation`
+
+| 레이어 | 파일 |
+|--------|------|
+| port/in | `ExtranetRegisterAccommodationUseCase.java` |
+| port/in | `ExtranetUpdateAccommodationUseCase.java` |
+| port/in | `ExtranetGetAccommodationQuery.java` |
+| service | `ExtranetRegisterAccommodationService.java` |
+| service | `ExtranetUpdateAccommodationService.java` |
+| service | `ExtranetGetAccommodationService.java` |
+| web | `ExtranetAccommodationController.java` — `/api/v1/extranet/accommodations` |
+| web | `RegisterAccommodationRequest.java`, `UpdateAccommodationRequest.java`, `AccommodationDetailResponse.java` |
+
+### 1-4. Admin 채널 - 숙소 승인/관리
+
+위치: `admin.accommodation`
+
+| 레이어 | 파일 |
+|--------|------|
+| port/in | `AdminApproveAccommodationUseCase.java` |
+| port/in | `AdminListAccommodationQuery.java` |
+| service | `AdminApproveAccommodationService.java` |
+| service | `AdminListAccommodationService.java` |
+| web | `AdminAccommodationController.java` — `/api/v1/admin/accommodations` |
+
+### 1-5. Room 도메인 모델
+
+위치: `core.room.domain.model`
+
+| 파일 | 설명 |
+|------|------|
+| `Room.java` | 엔티티. accommodationId, name, roomType, standardCapacity, maxCapacity, facilities, images, status |
+| `RoomType.java` | Enum: STANDARD, DELUXE, SUITE, FAMILY, ONDOL |
+| `RoomStatus.java` | Enum: ACTIVE, INACTIVE |
+| `RoomOption.java` | 엔티티. roomId, name, cancellationPolicy, breakfastIncluded, additionalPrice(BigDecimal). **1객실:N옵션** |
+| `CancellationPolicy.java` | Enum: FREE_CANCELLATION, NON_REFUNDABLE, PARTIAL_REFUND |
+
+### 1-6. Room 포트 & 어댑터 (core)
+
+| 레이어 | 파일 |
+|--------|------|
+| port/out | `RoomRepository.java`, `RoomOptionRepository.java` |
+| persistence | `RoomJpaEntity.java`, `RoomOptionJpaEntity.java` |
+| persistence | `RoomJpaRepository.java`, `RoomJpaAdapter.java`, `RoomMapper.java` |
+
+### 1-7. Extranet 채널 - 객실/옵션 등록
+
+위치: `extranet.room`
+
+| 레이어 | 파일 |
+|--------|------|
+| port/in | `ExtranetRegisterRoomUseCase.java`, `ExtranetRegisterRoomOptionUseCase.java`, `ExtranetGetRoomQuery.java` |
+| service | `ExtranetRegisterRoomService.java` (숙소 소유권 검증 포함), `ExtranetRegisterRoomOptionService.java`, `ExtranetGetRoomService.java` |
+| web | `ExtranetRoomController.java` — `/api/v1/extranet/accommodations/{accommodationId}/rooms` |
+
+### Phase 1 테스트
+
+- Accommodation 도메인 모델 단위 테스트 (상태 전환 invariant)
+- ExtranetRegisterAccommodationService 단위 테스트 (Mockito)
+- AccommodationJpaAdapter 통합 테스트 (Testcontainers)
+- ExtranetAccommodationController REST Docs 테스트
+
+---
+
+## Phase 2: 재고 + 요금 설정
+
+### 2-1. Inventory 도메인 모델
+
+위치: `core.inventory.domain.model`
+
+| 파일 | 설명 |
+|------|------|
+| `Inventory.java` | 엔티티. roomOptionId, date(LocalDate), totalQuantity, remainingQuantity, status. 불변식: `remaining >= 0` |
+| `InventoryStatus.java` | Enum: AVAILABLE, SOLD_OUT, CLOSED |
+| `TimeSlotInventory.java` | 대실용. date, startTime(LocalTime), endTime(LocalTime), totalQuantity, remainingQuantity |
+
+### 2-2. Inventory 도메인 서비스 & 이벤트
+
+| 파일 | 설명 |
+|------|------|
+| `domain/service/InventoryDomainService.java` | 날짜 범위 재고 가용성 판단, 연박 검증 |
+| `domain/event/InventoryDepletedEvent.java` | 재고 소진 시 발행 |
+| `domain/event/InventoryRestoredEvent.java` | 취소로 재고 복구 시 |
+
+### 2-3. Inventory 포트 & 어댑터
+
+| 레이어 | 파일 | 설명 |
+|--------|------|------|
+| port/out | `InventoryRepository.java` | **`findWithLock` 메서드 포함** (동시성 제어) |
+| persistence | `InventoryJpaEntity.java` | 비관적 락 설정 |
+| persistence | `InventoryJpaRepository.java` | `@Lock(PESSIMISTIC_WRITE)` 메서드 |
+| persistence | `InventoryJpaAdapter.java`, `InventoryMapper.java` | |
+
+### 2-4. Price 도메인 모델
+
+위치: `core.price.domain.model`
+
+| 파일 | 설명 |
+|------|------|
+| `RoomPrice.java` | 엔티티. roomOptionId, date(LocalDate), basePrice(BigDecimal), sellingPrice(BigDecimal) |
+| `domain/service/PriceDomainService.java` | 박수 기반 총 가격 합산 계산 |
+
+### 2-5. Price 포트 & 어댑터
+
+| 레이어 | 파일 |
+|--------|------|
+| port/out | `RoomPriceRepository.java` |
+| persistence | `RoomPriceJpaEntity.java`, `RoomPriceJpaRepository.java`, `RoomPriceJpaAdapter.java`, `RoomPriceMapper.java` |
+
+### 2-6. Extranet 채널 - 재고/요금 설정
+
+| 도메인 | 포트 | 컨트롤러 |
+|--------|------|----------|
+| inventory | `ExtranetSetInventoryUseCase`, `ExtranetGetInventoryQuery` | `ExtranetInventoryController` — `/api/v1/extranet/rooms/{roomOptionId}/inventories` |
+| price | `ExtranetSetPriceUseCase`, `ExtranetGetPriceQuery` | `ExtranetPriceController` — `/api/v1/extranet/rooms/{roomOptionId}/prices` |
+
+### 2-7. Admin 채널 - 요금 조정
+
+| 파일 |
+|------|
+| `AdminAdjustPriceUseCase`, `AdminAdjustPriceService`, `AdminPriceController` |
+
+### Phase 2 테스트
+
+- Inventory 도메인 단위 테스트 (decrease 시 0 미만 방지)
+- PriceDomainService 단위 테스트 (박수 합산)
+- InventoryJpaAdapter 통합 테스트 (비관적 락 동작)
+
+---
+
+## Phase 3: 검색
+
+### 3-1. Customer 채널 - 숙소 검색
+
+위치: `customer.accommodation`
+
+| 레이어 | 파일 | 설명 |
+|--------|------|------|
+| port/in | `CustomerSearchAccommodationQuery.java` | `search(criteria): Page<AccommodationSummary>` |
+| port/in | `CustomerGetAccommodationDetailQuery.java` | 숙소 상세 (객실+옵션+가격) |
+| service | `CustomerSearchAccommodationService.java` | Accommodation + Inventory + Price 조합 조회 |
+| service | `CustomerGetAccommodationDetailService.java` | 날짜 범위 가용 객실+가격 |
+| web | `CustomerAccommodationController.java` — `/api/v1/accommodations` |
+| web | `SearchAccommodationRequest.java` — region, checkInDate, checkOutDate, guestCount, filters, sort |
+| web | `AccommodationSummaryResponse.java` — 리스트용 (이름, 대표이미지, 최저가, 평점) |
+| web | `AccommodationDetailResponse.java` — 상세 (객실 목록, 옵션별 가격, 잔여 재고) |
+
+### 3-2. 검색 전용 Repository (core)
+
+| 파일 | 설명 |
+|------|------|
+| `AccommodationSearchRepository.java` | 검색 전용 Outbound Port (CQRS 분리) |
+| `AccommodationSearchJpaAdapter.java` | QueryDSL 또는 JPQL 동적 검색 구현 |
+
+### 3-3. 검색 기능
+
+- **필터**: 가격 범위, 숙소유형, 시설/서비스, 예약가능 여부 (재고 join)
+- **정렬**: 추천순(기본), 가격 낮은/높은순, 평점순
+- **페이징**: Offset 기반 (초기)
+
+### Phase 3 테스트
+
+- CustomerSearchAccommodationService 단위 테스트
+- AccommodationSearchJpaAdapter 통합 테스트 (복합 조건)
+- 검색 API REST Docs 테스트
+
+---
+
+## Phase 4: 예약 + 동시성 처리
+
+### 4-1. Reservation 도메인 모델
+
+위치: `core.reservation.domain.model`
+
+| 파일 | 설명 |
+|------|------|
+| `Reservation.java` | 엔티티. reservationNumber, memberId, roomOptionId, accommodationId, checkInDate, checkOutDate, guestInfo(GuestInfo), totalPrice(BigDecimal), status, reservationType |
+| `ReservationStatus.java` | Enum: PENDING, CONFIRMED, CANCELLED, COMPLETED, NO_SHOW |
+| `ReservationType.java` | Enum: STAY(숙박), HOURLY(대실) |
+| `GuestInfo.java` | VO. name, phone, email |
+
+### 4-2. 도메인 서비스 & 이벤트
+
+| 파일 | 설명 |
+|------|------|
+| `domain/service/ReservationDomainService.java` | 예약 생성 규칙 검증, 취소 환불 계산 |
+| `domain/event/ReservationCreatedEvent.java` | |
+| `domain/event/ReservationConfirmedEvent.java` | |
+| `domain/event/ReservationCancelledEvent.java` | 재고 복구 트리거 |
+
+### 4-3. Reservation 포트 & 어댑터
+
+| 레이어 | 파일 |
+|--------|------|
+| port/out | `ReservationRepository.java` |
+| persistence | `ReservationJpaEntity.java`, `ReservationJpaRepository.java`, `ReservationJpaAdapter.java`, `ReservationMapper.java` |
+
+### 4-4. Customer 채널 - 예약 생성/취소
+
+위치: `customer.reservation`
+
+| 레이어 | 파일 | 설명 |
+|--------|------|------|
+| port/in | `CustomerCreateReservationUseCase.java` | 재고 확인 → 재고 차감(lock) → 예약 생성 → 확정 |
+| port/in | `CustomerCancelReservationUseCase.java` | 취소 정책 기반 환불 + 재고 복구 |
+| port/in | `CustomerGetReservationQuery.java` | 내 예약 목록/상세 |
+| service | `CustomerCreateReservationService.java` | **핵심**. @Transactional + InventoryRepository.findWithLock() |
+| service | `CustomerCancelReservationService.java` | 상태 변경 + 재고 복구 + 이벤트 발행 |
+| web | `CustomerReservationController.java` — `/api/v1/reservations` |
+
+### 4-5. Extranet 채널 - 예약 관리
+
+위치: `extranet.reservation`
+
+| 레이어 | 파일 |
+|--------|------|
+| port/in | `ExtranetConfirmReservationUseCase.java` (수동 확정) |
+| port/in | `ExtranetGetReservationQuery.java` |
+| service | `ExtranetConfirmReservationService.java`, `ExtranetGetReservationService.java` |
+| web | `ExtranetReservationController.java` — `/api/v1/extranet/reservations` |
+
+### 4-6. 동시성 처리 전략
+
+**1차 구현: Pessimistic Lock**
+- `InventoryJpaRepository`에 `@Lock(PESSIMISTIC_WRITE)` → `SELECT ... FOR UPDATE`
+- 트랜잭션 범위 최소화
+
+**향후 확장**
+- Redis Distributed Lock (Redisson) — 멀티 인스턴스
+- Optimistic Lock (@Version) + 재시도 — 충돌 낮은 경우
+
+### Phase 4 테스트 (최고 중요)
+
+- Reservation 도메인 단위 테스트 (상태 전환, 환불 계산)
+- CustomerCreateReservationService 단위 테스트 (정상/재고부족)
+- **동시성 테스트**: `CountDownLatch` + `ExecutorService` → 동일 재고에 N개 동시 예약 → 재고 수만큼만 성공 검증
+- 예약 API REST Docs 테스트
+
+---
+
+## Phase 5: Supplier 연동
+
+### 5-1. 도메인 모델
+
+위치: `core.supplier.domain.model`
+
+| 파일 | 설명 |
+|------|------|
+| `Supplier.java` | id, name, code, apiEndpoint, status |
+| `SupplierAccommodation.java` | 외부 숙소 → 내부 숙소 매핑 |
+| `SupplierRoomMapping.java` | 외부 객실 ID ↔ 내부 객실 ID |
+
+### 5-2. 포트 & 어댑터
+
+| 레이어 | 파일 | 설명 |
+|--------|------|------|
+| port/out | `SupplierClient.java` | 공급사 API 추상화. searchRooms, checkAvailability, createBooking |
+| port/out | `SupplierRepository.java` | 공급사 정보 저장/조회 |
+| external | `SupplierRestAdapter.java` | RestClient 구현. Virtual Threads 활용 |
+| port/in | `SyncSupplierInventoryUseCase.java` | 외부 재고 동기화 |
+| service | `SyncSupplierInventoryService.java` | 외부 → 내부 Inventory/Price 변환 저장 |
+
+---
+
+## Phase 6: 설계 중심 도메인 (ERD + API 스켈레톤)
+
+> 내부 로직은 주석으로 구현 방안 제시. 메서드 시그니처와 ERD만 확정.
+
+### 6-1. Member (회원)
+
+`core.member` — 최소 데이터: id, name, phone, email, role(Enum), status(Enum)
+
+### 6-2. Coupon (쿠폰)
+
+`core.coupon` — Coupon(discountType, amount, validFrom/To), CouponAccommodationMapping(1:1/1:N), MemberCoupon(발급내역)
+
+### 6-3. Payment (결제)
+
+`core.payment` — Payment(reservationId, amount, method, status), PaymentGatewayClient(외부 PG 포트)
+
+### 6-4. Review (리뷰)
+
+`core.review` — Review(reservationId, rating(BigDecimal), content, images), 정렬/객실별 필터
+
+### 6-5. Wishlist (찜)
+
+`core.wishlist` — Wishlist(memberId, accommodationId)
+
+---
+
+## Phase 7: 횡단 관심사
+
+### 7-1. Security
+- `SecurityConfig.java` — 채널별 URL 접근 제어 (ADMIN, PARTNER, CUSTOMER)
+- JWT 기반 인증 필터
+- `@CurrentUser` 커스텀 어노테이션
+
+### 7-2. 다국어 (i18n)
+- `_translation` 테이블 패턴 (AccommodationTranslation, RoomTranslation)
+
+### 7-3. 이미지 처리
+- `ImageUploader` 인터페이스 + `LocalImageUploader`(개발용), 향후 S3
+
+### 7-4. Logging / Tracing
+- `MdcFilter` — trace_id를 MDC에 세팅
+- `RequestLoggingInterceptor` — 요청/응답 로깅
