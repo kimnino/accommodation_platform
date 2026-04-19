@@ -75,11 +75,10 @@
 
 | 파일 | 설명 |
 |------|------|
-| `Accommodation.java` | 엔티티. name, type, address, latitude/longitude, status, facilities, images, checkInTime/checkOutTime |
+| `Accommodation.java` | 엔티티. name, type, address, latitude/longitude, status, tags(List), images, checkInTime/checkOutTime |
 | `AccommodationType.java` | Enum: HOTEL, RESORT, PENSION, POOL_VILLA, MOTEL, GUEST_HOUSE |
 | `AccommodationStatus.java` | Enum: PENDING, ACTIVE, SUSPENDED, CLOSED |
 | `Address.java` | VO. region, city, district, detail, zipCode |
-| `Facility.java` | Enum. PARKING, WIFI, POOL, FITNESS 등 |
 | `AccommodationImage.java` | VO. url, category, displayOrder, isPrimary |
 | `ImageCategory.java` | Enum: EXTERIOR, LOBBY, ROOM, FACILITY, ETC |
 
@@ -110,7 +109,57 @@
 | web | `ExtranetAccommodationController.java` — `/api/v1/extranet/accommodations` |
 | web | `RegisterAccommodationRequest.java`, `UpdateAccommodationRequest.java`, `AccommodationDetailResponse.java` |
 
-### 1-4. Admin 채널 - 숙소 승인/관리
+### 1-4. 동적 태그 시스템 (Tag)
+
+위치: `core.tag.domain.model`
+
+> 기존 `Facility` Enum 대체. 관리자가 코드 배포 없이 태그 그룹/태그를 자유롭게 추가·삭제.
+
+| 파일 | 설명 |
+|------|------|
+| `TagGroup.java` | 엔티티. name, displayOrder, targetType(ACCOMMODATION/ROOM), accommodationType(HOTEL/MOTEL/ALL 등), isActive |
+| `Tag.java` | 엔티티. tagGroupId, name, displayOrder, isActive |
+| `TagTarget.java` | Enum: ACCOMMODATION, ROOM |
+
+```
+TagGroup (취향, accommodationType: HOTEL)
+  ├─ Tag: #가족여행숙소
+  ├─ Tag: #드라마촬영지
+  └─ Tag: #스파
+
+TagGroup (공용시설, accommodationType: ALL)
+  ├─ Tag: 수영장
+  ├─ Tag: 사우나
+  └─ Tag: 피트니스
+```
+
+위치: `core.tag`
+
+| 레이어 | 파일 | 설명 |
+|--------|------|------|
+| port/out | `TagGroupRepository.java` | 태그 그룹 CRUD |
+| port/out | `TagRepository.java` | 태그 CRUD |
+| persistence | `TagGroupJpaEntity.java`, `TagJpaEntity.java` | JPA 엔티티 |
+| persistence | `AccommodationTagJpaEntity.java` | 숙소-태그 매핑 (accommodationId, tagId) |
+| persistence | `RoomTagJpaEntity.java` | 객실-태그 매핑 (roomId, tagId) |
+| persistence | `TagJpaAdapter.java` | Repository 구현체 |
+
+위치: `admin.tag`
+
+| 레이어 | 파일 |
+|--------|------|
+| port/in | `AdminCreateTagGroupUseCase.java`, `AdminManageTagUseCase.java` |
+| service | `AdminCreateTagGroupService.java`, `AdminManageTagService.java` |
+| web | `AdminTagController.java` — `/api/v1/admin/tag-groups`, `/api/v1/admin/tag-groups/{groupId}/tags` |
+
+위치: `extranet.tag`
+
+| 레이어 | 파일 | 설명 |
+|--------|------|------|
+| port/in | `ExtranetGetAvailableTagQuery.java` | 내 숙소유형에 맞는 태그 그룹/태그 목록 조회 |
+| service | `ExtranetGetAvailableTagService.java` | accommodationType 기반 필터링 |
+
+### 1-5. Admin 채널 - 숙소 승인/관리
 
 위치: `admin.accommodation`
 
@@ -128,7 +177,7 @@
 
 | 파일 | 설명 |
 |------|------|
-| `Room.java` | 엔티티. accommodationId, name, roomType, standardCapacity, maxCapacity, facilities, images, status |
+| `Room.java` | 엔티티. accommodationId, name, roomType, standardCapacity, maxCapacity, tags(List), images, status |
 | `RoomType.java` | Enum: STANDARD, DELUXE, SUITE, FAMILY, ONDOL |
 | `RoomStatus.java` | Enum: ACTIVE, INACTIVE |
 | `RoomOption.java` | 엔티티. roomId, name, cancellationPolicy, breakfastIncluded, additionalPrice(BigDecimal). **1객실:N옵션** |
@@ -177,9 +226,24 @@
 
 | 파일 | 설명 |
 |------|------|
-| `domain/service/InventoryDomainService.java` | 날짜 범위 재고 가용성 판단, 연박 검증 |
+| `domain/service/InventoryDomainService.java` | 날짜 범위 재고 가용성 판단, 연박 검증, **숙박/대실 상호 배타 동기화** |
 | `domain/event/InventoryDepletedEvent.java` | 재고 소진 시 발행 |
 | `domain/event/InventoryRestoredEvent.java` | 취소로 재고 복구 시 |
+
+#### 숙박/대실 재고 충돌 방지 (Critical)
+
+물리 객실 수량(`Room.totalQuantity`)을 상위 기준으로, Inventory와 TimeSlotInventory가 상호 참조하는 구조:
+
+```
+물리 객실 A (1개)
+  ├─ 숙박 예약 시 → 해당 날짜의 모든 대실 슬롯 자동 마감
+  └─ 대실 예약 시 → 해당 날짜의 숙박 가능 여부 재계산
+      └─ 청소 시간(Buffer Time) 고려: 대실 슬롯 사이 최소 정비시간 확보
+```
+
+- `InventoryDomainService`에서 숙박/대실 상태 동기화 로직 구현
+- 대실 슬롯 예약 시 `bufferMinutes` (숙소별 설정) 만큼 전후 슬롯 차단
+- 하루 중 대실로 인해 연속 가용 시간이 부족하면 숙박 불가 판정
 
 ### 2-3. Inventory 포트 & 어댑터
 
@@ -196,8 +260,14 @@
 
 | 파일 | 설명 |
 |------|------|
-| `RoomPrice.java` | 엔티티. roomOptionId, date(LocalDate), basePrice(BigDecimal), sellingPrice(BigDecimal) |
-| `domain/service/PriceDomainService.java` | 박수 기반 총 가격 합산 계산 |
+| `RoomPrice.java` | 엔티티. roomOptionId, date(LocalDate), basePrice(BigDecimal), sellingPrice(BigDecimal), taxIncluded(boolean) |
+| `domain/service/PriceDomainService.java` | 박수 기반 총 가격 합산 계산, VAT 계산 |
+
+#### VAT(부가세) 처리
+
+- `RoomPrice`에 `taxIncluded` 플래그로 세금 포함/불포함 구분
+- `PriceDomainService`에서 국가별 세율 적용 로직 (글로벌 확장 대비)
+- 초기에는 한국 VAT 10% 고정, 향후 국가별 세율 테이블로 확장
 
 ### 2-5. Price 포트 & 어댑터
 
@@ -253,9 +323,26 @@
 
 ### 3-3. 검색 기능
 
-- **필터**: 가격 범위, 숙소유형, 시설/서비스, 예약가능 여부 (재고 join)
+- **필터**: 가격 범위, 숙소유형, **동적 태그 기반** (숙소유형에 따라 필터 항목 자동 변경), 예약가능 여부 (재고 join)
 - **정렬**: 추천순(기본), 가격 낮은/높은순, 평점순
 - **페이징**: Offset 기반 (초기)
+
+### 3-4. 검색 성능 최적화 전략
+
+실시간으로 Inventory + Price를 수만 건 join하면 응답 속도 저하 → 아래 전략 적용:
+
+**1차: QueryDSL 최적화**
+- N+1 방지를 위한 fetchJoin 전략 명시
+- 커버링 인덱스 활용 (숙소 지역, 날짜, 상태)
+
+**2차: 검색용 비정규화 (Denormalization)**
+- 검색 전용 스냅샷 테이블 또는 Materialized View 개념 도입
+- 숙소별 최저가, 잔여 재고 여부를 미리 계산하여 캐싱
+- 재고/가격 변경 시 이벤트 기반으로 스냅샷 갱신
+
+**3차: Redis 캐시**
+- 인기 검색 조건(지역+날짜)에 대한 결과 캐싱
+- TTL 기반 자동 만료 + 재고 변경 이벤트 시 캐시 무효화
 
 ### Phase 3 테스트
 
@@ -274,7 +361,7 @@
 | 파일 | 설명 |
 |------|------|
 | `Reservation.java` | 엔티티. reservationNumber, memberId, roomOptionId, accommodationId, checkInDate, checkOutDate, guestInfo(GuestInfo), totalPrice(BigDecimal), status, reservationType |
-| `ReservationStatus.java` | Enum: PENDING, CONFIRMED, CANCELLED, COMPLETED, NO_SHOW |
+| `ReservationStatus.java` | Enum: PENDING, **PAYMENT_WAITING**, CONFIRMED, CANCELLED, COMPLETED, NO_SHOW |
 | `ReservationType.java` | Enum: STAY(숙박), HOURLY(대실) |
 | `GuestInfo.java` | VO. name, phone, email |
 
@@ -300,7 +387,7 @@
 
 | 레이어 | 파일 | 설명 |
 |--------|------|------|
-| port/in | `CustomerCreateReservationUseCase.java` | 재고 확인 → 재고 차감(lock) → 예약 생성 → 확정 |
+| port/in | `CustomerCreateReservationUseCase.java` | 재고 확인 → 재고 선점(hold) → PAYMENT_WAITING → 결제 완료 → 확정 |
 | port/in | `CustomerCancelReservationUseCase.java` | 취소 정책 기반 환불 + 재고 복구 |
 | port/in | `CustomerGetReservationQuery.java` | 내 예약 목록/상세 |
 | service | `CustomerCreateReservationService.java` | **핵심**. @Transactional + InventoryRepository.findWithLock() |
@@ -318,7 +405,21 @@
 | service | `ExtranetConfirmReservationService.java`, `ExtranetGetReservationService.java` |
 | web | `ExtranetReservationController.java` — `/api/v1/extranet/reservations` |
 
-### 4-6. 동시성 처리 전략
+### 4-6. 재고 선점(Soft-lock) + Hold 메커니즘
+
+결제 페이지 진입 시 재고를 임시 확보하고, TTL 내 미결제 시 자동 복구:
+
+```
+예약 시작 → 재고 차감(hold) → PAYMENT_WAITING (TTL: 10분)
+  ├─ 결제 완료 → CONFIRMED
+  └─ 10분 초과 → 스케줄러가 ReservationCancelledEvent 발행 → 재고 자동 복구
+```
+
+- `Reservation`에 `holdExpiredAt(Instant)` 필드 추가
+- 스케줄러(`@Scheduled`) 또는 지연 이벤트로 만료된 hold 자동 취소
+- 멱등성 보장: `reservationRequestId`(UUID)를 클라이언트에서 발급, 중복 요청 방지
+
+### 4-7. 동시성 처리 전략
 
 **1차 구현: Pessimistic Lock**
 - `InventoryJpaRepository`에 `@Lock(PESSIMISTIC_WRITE)` → `SELECT ... FOR UPDATE`
@@ -349,15 +450,26 @@
 | `SupplierAccommodation.java` | 외부 숙소 → 내부 숙소 매핑 |
 | `SupplierRoomMapping.java` | 외부 객실 ID ↔ 내부 객실 ID |
 
-### 5-2. 포트 & 어댑터
+### 5-2. Canonical Model & 데이터 매핑
+
+외부 공급사마다 객실 명칭, 편의시설 코드가 상이 → 내부 표준 규격으로 변환하는 레이어 필요:
+
+| 파일 | 설명 |
+|------|------|
+| `domain/model/CanonicalRoom.java` | 내부 표준 객실 모델 (공급사 데이터 → 이 형태로 정규화) |
+| `domain/model/CanonicalPrice.java` | 내부 표준 가격 모델 |
+| `domain/model/SupplierFieldMapping.java` | 공급사별 필드 매핑 테이블 (외부 시설코드 → 내부 Facility Enum) |
+| `domain/service/SupplierDataNormalizer.java` | 공급사 응답 → Canonical Model 변환 로직 |
+
+### 5-3. 포트 & 어댑터
 
 | 레이어 | 파일 | 설명 |
 |--------|------|------|
 | port/out | `SupplierClient.java` | 공급사 API 추상화. searchRooms, checkAvailability, createBooking |
 | port/out | `SupplierRepository.java` | 공급사 정보 저장/조회 |
-| external | `SupplierRestAdapter.java` | RestClient 구현. Virtual Threads 활용 |
+| external | `SupplierRestAdapter.java` | RestClient 구현. `Executors.newVirtualThreadPerTaskExecutor()` 활용 |
 | port/in | `SyncSupplierInventoryUseCase.java` | 외부 재고 동기화 |
-| service | `SyncSupplierInventoryService.java` | 외부 → 내부 Inventory/Price 변환 저장 |
+| service | `SyncSupplierInventoryService.java` | SupplierDataNormalizer 통해 정규화 후 내부 Inventory/Price 저장 |
 
 ---
 
@@ -403,3 +515,21 @@
 ### 7-4. Logging / Tracing
 - `MdcFilter` — trace_id를 MDC에 세팅
 - `RequestLoggingInterceptor` — 요청/응답 로깅
+
+---
+
+## 횡단 체크포인트
+
+> 각 Phase 구현 시 함께 점검해야 할 항목
+
+| 체크포인트 | 관련 Phase | 상태 |
+|-----------|-----------|------|
+| 숙박/대실 재고 상호 배타 동기화 | Phase 2, 4 | 미구현 |
+| 청소 시간(Buffer Time) — 대실 슬롯 사이 최소 정비시간 | Phase 2 | 미구현 |
+| VAT(부가세) 포함/불포함 처리 | Phase 2 | 미구현 |
+| 검색 성능 최적화 (비정규화/캐시) | Phase 3 | 미구현 |
+| N+1 방지 fetchJoin 전략 | Phase 3 | 미구현 |
+| 재고 선점(Hold) + TTL 자동 복구 | Phase 4 | 미구현 |
+| 멱등성(Idempotency) — 예약/결제 중복 요청 방지 | Phase 4, 6 | 미구현 |
+| Supplier Canonical Model 변환 | Phase 5 | 미구현 |
+| Virtual Threads 적용 (외부 API 호출) | Phase 5 | 미구현 |
