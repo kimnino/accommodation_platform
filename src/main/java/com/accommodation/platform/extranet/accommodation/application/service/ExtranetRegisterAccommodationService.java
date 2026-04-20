@@ -1,14 +1,23 @@
 package com.accommodation.platform.extranet.accommodation.application.service;
 
 import java.time.LocalTime;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.accommodation.platform.core.accommodation.adapter.out.persistence.AccommodationSupportedLocaleJpaEntity;
+import com.accommodation.platform.core.accommodation.adapter.out.persistence.AccommodationTranslationJpaEntity;
 import com.accommodation.platform.core.accommodation.application.port.out.PersistAccommodationPort;
+import com.accommodation.platform.core.accommodation.application.port.out.PersistAccommodationTranslationPort;
+import com.accommodation.platform.common.exception.BusinessException;
+import com.accommodation.platform.common.exception.ErrorCode;
 import com.accommodation.platform.core.accommodation.domain.enums.AccommodationType;
+import com.accommodation.platform.core.accommodation.domain.enums.SupportedLocale;
 import com.accommodation.platform.core.accommodation.domain.model.Accommodation;
 import com.accommodation.platform.extranet.accommodation.application.port.in.ExtranetRegisterAccommodationUseCase;
+
+import jakarta.persistence.EntityManager;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,6 +27,8 @@ import lombok.RequiredArgsConstructor;
 public class ExtranetRegisterAccommodationService implements ExtranetRegisterAccommodationUseCase {
 
     private final PersistAccommodationPort persistAccommodationPort;
+    private final PersistAccommodationTranslationPort persistTranslationPort;
+    private final EntityManager entityManager;
 
     @Override
     public Accommodation register(RegisterAccommodationCommand command) {
@@ -34,6 +45,48 @@ public class ExtranetRegisterAccommodationService implements ExtranetRegisterAcc
                 .checkOutTime(command.checkOutTime() != null ? LocalTime.parse(command.checkOutTime()) : null)
                 .build();
 
-        return persistAccommodationPort.save(accommodation);
+        Accommodation saved = persistAccommodationPort.save(accommodation);
+
+        saveSupportedLocales(saved.getId(), command.supportedLocales());
+        saveTranslations(saved.getId(), command.translations());
+
+        return saved;
+    }
+
+    private void saveSupportedLocales(Long accommodationId, List<String> locales) {
+
+        if (locales == null || locales.isEmpty()) {
+            return;
+        }
+
+        for (String localeCode : locales) {
+            String code = localeCode.toLowerCase();
+            if (!SupportedLocale.isValid(code)) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT, "지원하지 않는 언어코드입니다: " + code);
+            }
+            entityManager.persist(new AccommodationSupportedLocaleJpaEntity(accommodationId, code));
+        }
+    }
+
+    private void saveTranslations(Long accommodationId, List<TranslationCommand> translations) {
+
+        if (translations == null || translations.isEmpty()) {
+            return;
+        }
+
+        List<AccommodationTranslationJpaEntity> entities = translations.stream()
+                .map(t -> new AccommodationTranslationJpaEntity(
+                        accommodationId,
+                        t.locale(),
+                        t.name(),
+                        t.fullAddress(),
+                        t.locationDescription(),
+                        t.introduction(),
+                        t.serviceAndFacilities(),
+                        t.usageInfo(),
+                        t.cancellationAndRefundPolicy()))
+                .toList();
+
+        persistTranslationPort.saveAll(entities);
     }
 }

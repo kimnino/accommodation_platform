@@ -1,0 +1,35 @@
+== Admin API (관리자)
+
+플랫폼 관리자가 숙소를 심사하고 운영 관리하는 API입니다.
+
+NOTE: Admin API 테스트 코드 추가 후 문서가 보강됩니다.
+
+=== 숙소 승인
+
+`PATCH /api/v1/admin/accommodations/{accommodationId}/approve`
+
+PENDING 상태의 숙소를 ACTIVE로 전환합니다.
+
+=== 숙소 정지
+
+`PATCH /api/v1/admin/accommodations/{accommodationId}/suspend`
+
+ACTIVE 상태의 숙소를 SUSPENDED로 전환합니다.
+
+=== 숙소 폐쇄
+
+`PATCH /api/v1/admin/accommodations/{accommodationId}/close`
+
+숙소를 CLOSED 상태로 전환합니다.
+
+=== 수정 요청 승인
+
+`PATCH /api/v1/admin/accommodations/modifications/{modificationRequestId}/approve`
+
+파트너의 숙소 수정 요청을 승인하고 실제 숙소 정보에 반영합니다.
+
+=== 수정 요청 거절
+
+`PATCH /api/v1/admin/accommodations/modifications/{modificationRequestId}/reject`
+
+파트너의 숙소 수정 요청을 거절합니다. 거절 사유를 포함합니다.
