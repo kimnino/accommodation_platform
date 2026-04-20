@@ -124,6 +124,28 @@ adapter/in  -->  application(port/in)  -->  domain
 
 @docs/conventions/code-conventions.md
 
+## 피드백 기반 개발 프로세스
+
+각 Phase 구현 완료 후, 사용자가 피드백 파일을 작성하면 Claude가 읽고 반영하는 방식으로 진행한다.
+
+### 피드백 파일 위치 및 네이밍
+
+```
+docs/plan/feedback/
+  phase_1.md       # Phase 1 첫 번째 피드백
+  phase_1_2.md     # Phase 1 두 번째 피드백
+  phase_1_3.md     # Phase 1 세 번째 피드백
+  phase_2.md       # Phase 2 첫 번째 피드백
+  ...
+```
+
+### 워크플로우
+
+1. Claude가 Phase N 구현 완료
+2. 사용자가 `docs/plan/feedback/phase_N.md`에 피드백 작성
+3. 사용자가 피드백 반영 요청 → Claude가 파일 읽고 코드에 반영
+4. 추가 피드백이 있으면 `phase_N_2.md`, `phase_N_3.md` ... 순서로 반복
+
 ## Build & Run
 
 ```bash

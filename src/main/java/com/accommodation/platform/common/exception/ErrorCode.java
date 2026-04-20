@@ -21,6 +21,10 @@ public enum ErrorCode {
     // Room
     ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "ROOM_NOT_FOUND", "객실을 찾을 수 없습니다."),
 
+    // Modification
+    MODIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "MODIFICATION_NOT_FOUND", "수정 요청을 찾을 수 없습니다."),
+    MODIFICATION_ALREADY_PROCESSED(HttpStatus.CONFLICT, "MODIFICATION_ALREADY_PROCESSED", "이미 처리된 수정 요청입니다."),
+
     // Inventory
     INVENTORY_NOT_AVAILABLE(HttpStatus.CONFLICT, "INVENTORY_NOT_AVAILABLE", "선택하신 날짜에 예약 가능한 객실이 없습니다."),
 

@@ -20,11 +20,13 @@ public abstract class BaseEntity {
         this.updatedAt = Instant.now();
     }
 
-    protected void setCreatedAt(Instant createdAt) {
+    public void setCreatedAt(Instant createdAt) {
+
         this.createdAt = createdAt;
     }
 
-    protected void setUpdatedAt(Instant updatedAt) {
+    public void setUpdatedAt(Instant updatedAt) {
+
         this.updatedAt = updatedAt;
     }
 }
