@@ -110,3 +110,41 @@
 
 ### 개발자 코멘트
 1. 
+
+---
+
+## 2026/04/20 - [Phase 2 재고/요금 도메인 구현 및 피드백 반영]
+
+### 수행 내용
+
+1. `feat/phase2-inventory-price` 브랜치 생성 및 Phase 2 구현
+   - Inventory 도메인 (숙박 일별 재고, 불변식 `remaining >= 0`, 상태 자동 전환)
+   - TimeSlotInventory 도메인 (대실 30/60분 블록, AVAILABLE → OCCUPIED/BLOCKED)
+   - InventoryDomainService (연박 검증, 숙박/대실 공존, 버퍼타임, 단축 이용 계산)
+   - RoomPrice 도메인 (PriceType STAY/HOURLY, VAT 계산)
+   - PriceDomainService (박수 합산, VAT 포함/불포함 처리)
+   - 비관적 락 (`@Lock(PESSIMISTIC_WRITE)`) — 예약 동시성 제어용
+2. 대실 운영 설정
+   - AccommodationHourlySetting (운영시간, 이용시간, 버퍼, 슬롯 단위)
+   - 슬롯 단위: 파트너가 30분 또는 60분 선택
+   - 날짜별 대실 슬롯 자동 생성 API
+3. Extranet 재고/요금 API
+   - 재고 설정 (연속/비연속 일자 모두 지원)
+   - 요금 설정 (PriceType으로 숙박/대실 가격 분리, 날짜별 차등 가능)
+   - 대실 운영 설정 + 슬롯 오픈 API
+4. Admin 요금 조정 API
+5. 피드백 반영 (3차)
+   - 재고 로우 사전 생성 방식 유지 확정
+   - 대실 슬롯: 이용시간별 겹치는 슬롯 → 30/60분 단위 블록 타임라인으로 변경
+   - 숙박/대실 시간대 공존: 체크인 시간 이후 슬롯만 확인
+   - 비연속 일자 재고/가격 설정 (dates 필드)
+   - 대실 가격: PriceType(STAY/HOURLY) 분리
+   - RoomOptionTranslation 다국어 누락 추가
+
+### 이슈 / 학습
+- 대실 슬롯 설계를 "시작시간별 이용시간 슬롯"에서 "30분 블록 타임라인"으로 변경. 슬롯 겹침 문제 해결, 로우 수 예측 가능
+- 숙박/대실 공존 시 시간대 충돌이 아닌 시간대 분리로 해결. 체크인 시간 기준으로 판단
+- 대실 단축 이용: 운영 종료 임박 시 이용 가능 시간을 반환하여 고객 선택 유도
+
+### 개발자 코멘트
+1. 
