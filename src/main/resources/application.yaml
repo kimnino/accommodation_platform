@@ -1,3 +1,27 @@
 spring:
   application:
     name: platform
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/accommodation_platform?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
+
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{trace_id:-}] %-5level %logger{36} - %msg%n"
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace
