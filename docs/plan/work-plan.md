@@ -12,6 +12,7 @@
 | 5 | Supplier 연동 (MINHYUK_HOUSE) | ✅ 완료 (피드백 1차 반영) |
 | 6 | 설계 중심 도메인 (Member, Coupon, Payment, Review, Wishlist) | 🔜 다음 |
 | 7 | 횡단 관심사 (Security, i18n, Image, Logging) | 대기 (Phase 6과 병렬 가능) |
+| 8 | Demo UI & 실행 환경 (HTML 12페이지, 44개 API) | 🔜 진행 중 (버그 수정 대기) |
 
 > Phase 6, 7은 병렬 진행 가능
 
@@ -32,6 +33,7 @@
 | `feat/phase5-supplier` | 5 | 5-1 ~ 5-3 전체 | Supplier 연동 |
 | `feat/phase6-skeleton-domains` | 6 | 6-1 ~ 6-5 전체 | 설계 중심 도메인 (ERD + 스켈레톤) |
 | `feat/phase7-cross-cutting` | 7 | 7-1 ~ 7-4 전체 | 횡단 관심사 |
+| `feat/phase8-demo-ui` | 8 | HTML 12페이지 + 실행 환경 | Demo UI, Docker, 샘플 데이터 |
 
 ### 머지 순서
 

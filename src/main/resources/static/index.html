@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTA 숙박 플랫폼 Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 40px auto; padding: 20px; }
+        h1 { text-align: center; margin-bottom: 40px; color: #333; }
+        .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .card { background: white; border-radius: 12px; padding: 30px; text-align: center;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+        .card h2 { margin-bottom: 10px; }
+        .card p { color: #666; font-size: 14px; }
+        .card.partner { border-top: 4px solid #2196F3; }
+        .card.admin { border-top: 4px solid #FF5722; }
+        .card.customer { border-top: 4px solid #4CAF50; }
+        .emoji { font-size: 48px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>OTA 숙박 플랫폼 Demo</h1>
+        <div class="cards">
+            <div class="card partner" onclick="location.href='/partner.html'">
+                <div class="emoji">🏢</div>
+                <h2>숙소 파트너</h2>
+                <p>숙소/객실 등록, 재고/가격 설정</p>
+            </div>
+            <div class="card admin" onclick="location.href='/admin.html'">
+                <div class="emoji">⚙️</div>
+                <h2>관리자</h2>
+                <p>숙소 승인, 태그 관리, 가격 조정</p>
+            </div>
+            <div class="card customer" onclick="location.href='/customer.html'">
+                <div class="emoji">🔍</div>
+                <h2>고객</h2>
+                <p>숙소 검색, 예약</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
