@@ -8,10 +8,10 @@
 | 1 | 숙소/객실 등록 + 태그 시스템 | ✅ 완료 (피드백 6차 반영) |
 | 2 | 재고/요금 설정 (Inventory + Price) | ✅ 완료 (피드백 3차 반영) |
 | 3 | 검색 (Customer Search) | ✅ 완료 (피드백 1차 반영) |
-| 4 | 예약 + 동시성 (Reservation) | 🔜 다음 |
-| 5 | Supplier 연동 | 대기 |
-| 6 | 설계 중심 도메인 (Member, Coupon, Payment, Review, Wishlist) | 대기 |
-| 7 | 횡단 관심사 (Security, i18n, Image, Logging) | 대기 |
+| 4 | 예약 + 동시성 (Reservation) | ✅ 완료 (피드백 2차 반영) |
+| 5 | Supplier 연동 (MINHYUK_HOUSE) | ✅ 완료 (피드백 1차 반영) |
+| 6 | 설계 중심 도메인 (Member, Coupon, Payment, Review, Wishlist) | 🔜 다음 |
+| 7 | 횡단 관심사 (Security, i18n, Image, Logging) | 대기 (Phase 6과 병렬 가능) |
 
 > Phase 6, 7은 병렬 진행 가능
 
@@ -563,7 +563,7 @@ TagGroup (공용시설, accommodationType: ALL)
 | VAT(부가세) 포함/불포함 처리 | Phase 2 | ✅ 구현 (PriceDomainService) |
 | 검색 성능 최적화 (QueryDSL + 배치 쿼리) | Phase 3 | ✅ 구현 (2단계 배치 패턴) |
 | N+1 방지 — 배치 조회 | Phase 3 | ✅ 구현 (IN절 배치) |
-| 재고 선점(Hold) + TTL 자동 복구 | Phase 4 | 미구현 |
-| 멱등성(Idempotency) — 예약/결제 중복 요청 방지 | Phase 4, 6 | 미구현 |
-| Supplier Canonical Model 변환 | Phase 5 | 미구현 |
-| Virtual Threads 적용 (외부 API 호출) | Phase 5 | 미구현 |
+| 재고 선점(Hold) + TTL 자동 복구 | Phase 4 | ✅ 구현 (10분 Hold + @Scheduled 자동 취소) |
+| 멱등성(Idempotency) — 예약 중복 요청 방지 | Phase 4 | ✅ 구현 (reservationRequestId UUID) |
+| Supplier Canonical Model 변환 | Phase 5 | ✅ 구현 (CanonicalRoom/Price + Normalizer) |
+| Virtual Threads 적용 (외부 API 호출) | Phase 5 | 미적용 (현재 Mock, 실 연동 시 적용) |
