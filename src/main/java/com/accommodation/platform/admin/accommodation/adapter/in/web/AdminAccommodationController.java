@@ -9,14 +9,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import lombok.RequiredArgsConstructor;
+
 import com.accommodation.platform.admin.accommodation.application.port.in.AdminApproveAccommodationUseCase;
 import com.accommodation.platform.admin.accommodation.application.port.in.AdminApproveModificationUseCase;
 import com.accommodation.platform.admin.accommodation.application.port.in.AdminListAccommodationQuery;
 import com.accommodation.platform.common.response.ApiResponse;
 import com.accommodation.platform.core.accommodation.domain.model.Accommodation;
 import com.accommodation.platform.extranet.accommodation.adapter.in.web.AccommodationDetailResponse;
-
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor

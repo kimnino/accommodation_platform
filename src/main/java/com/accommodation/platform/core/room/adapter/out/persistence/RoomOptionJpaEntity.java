@@ -11,11 +11,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import com.accommodation.platform.common.adapter.out.persistence.BaseJpaEntity;
-import com.accommodation.platform.core.room.domain.enums.CancellationPolicy;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import com.accommodation.platform.common.adapter.out.persistence.BaseJpaEntity;
+import com.accommodation.platform.core.room.domain.enums.CancellationPolicy;
 
 import static lombok.AccessLevel.PROTECTED;
 
@@ -35,20 +35,28 @@ public class RoomOptionJpaEntity extends BaseJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** 객실 ID (FK 미사용, 인덱스로 조인) */
+    /**
+     * 객실 ID (FK 미사용, 인덱스로 조인)
+     */
     @Column(nullable = false)
     private Long roomId;
 
-    /** 옵션명 (예: "조식 포함", "오션뷰", "레이트 체크아웃") */
+    /**
+     * 옵션명 (예: "조식 포함", "오션뷰", "레이트 체크아웃")
+     */
     @Column(nullable = false)
     private String name;
 
-    /** 취소 정책 (FREE_CANCELLATION, NON_REFUNDABLE, PARTIAL_REFUND) */
+    /**
+     * 취소 정책 (FREE_CANCELLATION, NON_REFUNDABLE, PARTIAL_REFUND)
+     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CancellationPolicy cancellationPolicy;
 
-    /** 기본 객실 가격 대비 추가 금액 */
+    /**
+     * 기본 객실 가격 대비 추가 금액
+     */
     @Column(precision = 12, scale = 2)
     private BigDecimal additionalPrice;
 

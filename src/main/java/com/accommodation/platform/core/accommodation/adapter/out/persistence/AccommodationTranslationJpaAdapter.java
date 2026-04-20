@@ -4,9 +4,9 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import com.accommodation.platform.core.accommodation.application.port.out.PersistAccommodationTranslationPort;
-
 import lombok.RequiredArgsConstructor;
+
+import com.accommodation.platform.core.accommodation.application.port.out.PersistAccommodationTranslationPort;
 
 @Repository
 @RequiredArgsConstructor

@@ -2,17 +2,17 @@ package com.accommodation.platform.core.room.domain.model;
 
 import java.math.BigDecimal;
 
-import com.accommodation.platform.common.domain.BaseEntity;
-import com.accommodation.platform.core.room.domain.enums.CancellationPolicy;
-
 import lombok.Builder;
 import lombok.Getter;
+
+import com.accommodation.platform.common.domain.BaseEntity;
+import com.accommodation.platform.core.room.domain.enums.CancellationPolicy;
 
 @Getter
 public class RoomOption extends BaseEntity {
 
     private Long id;
-    private Long roomId;
+    private final Long roomId;
     private String name;
     private CancellationPolicy cancellationPolicy;
     private BigDecimal additionalPrice;

@@ -55,9 +55,9 @@ public class AccommodationMapper {
         domain.getImages().stream()
                 .map(image -> new AccommodationImageJpaEntity(
                         domain.getId(),
-                        image.getRelativePath(),
-                        image.getCategory(),
-                        image.getDisplayOrder(),
+                        image.relativePath(),
+                        image.category(),
+                        image.displayOrder(),
                         image.isPrimary()))
                 .forEach(entity.getImages()::add);
 

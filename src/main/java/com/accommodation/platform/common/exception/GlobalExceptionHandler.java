@@ -7,11 +7,11 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import lombok.extern.slf4j.Slf4j;
+
 import com.accommodation.platform.common.response.ApiResponse;
 import com.accommodation.platform.common.response.ErrorDetail;
 import com.accommodation.platform.common.response.FieldError;
-
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestControllerAdvice

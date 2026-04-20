@@ -27,11 +27,15 @@ public class AccommodationSupportedLocaleJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** 숙소 ID */
+    /**
+     * 숙소 ID
+     */
     @Column(nullable = false)
     private Long accommodationId;
 
-    /** 지원 언어코드 (ko, en, ja) — 소문자 */
+    /**
+     * 지원 언어코드 (ko, en, ja) — 소문자
+     */
     @Column(nullable = false, length = 10)
     private String locale;
 

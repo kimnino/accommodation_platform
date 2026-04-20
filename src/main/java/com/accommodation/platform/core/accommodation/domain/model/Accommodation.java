@@ -5,20 +5,22 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import lombok.Builder;
+import lombok.Getter;
+
 import com.accommodation.platform.common.domain.BaseEntity;
 import com.accommodation.platform.core.accommodation.domain.enums.AccommodationStatus;
 import com.accommodation.platform.core.accommodation.domain.enums.AccommodationType;
 
-import lombok.Builder;
-import lombok.Getter;
-
 @Getter
 public class Accommodation extends BaseEntity {
 
+    private final List<Long> tagIds = new ArrayList<>();
+    private final List<AccommodationImage> images = new ArrayList<>();
     private Long id;
-    private Long partnerId;
+    private final Long partnerId;
     private String name;
-    private AccommodationType type;
+    private final AccommodationType type;
     private String fullAddress;
     private double latitude;
     private double longitude;
@@ -26,8 +28,6 @@ public class Accommodation extends BaseEntity {
     private AccommodationStatus status;
     private LocalTime checkInTime;
     private LocalTime checkOutTime;
-    private final List<Long> tagIds = new ArrayList<>();
-    private final List<AccommodationImage> images = new ArrayList<>();
 
     @Builder
     public Accommodation(Long id, Long partnerId, String name, AccommodationType type,
@@ -101,7 +101,7 @@ public class Accommodation extends BaseEntity {
 
     public void removeImage(String relativePath) {
 
-        this.images.removeIf(image -> image.getRelativePath().equals(relativePath));
+        this.images.removeIf(image -> image.relativePath().equals(relativePath));
         updateTimestamp();
     }
 

@@ -4,23 +4,23 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.accommodation.platform.common.domain.BaseEntity;
-import com.accommodation.platform.core.room.domain.enums.RoomStatus;
-
 import lombok.Builder;
 import lombok.Getter;
+
+import com.accommodation.platform.common.domain.BaseEntity;
+import com.accommodation.platform.core.room.domain.enums.RoomStatus;
 
 @Getter
 public class Room extends BaseEntity {
 
+    private final List<Long> tagIds = new ArrayList<>();
     private Long id;
-    private Long accommodationId;
+    private final Long accommodationId;
     private String name;
     private String roomTypeName;
     private int standardCapacity;
     private int maxCapacity;
     private RoomStatus status;
-    private final List<Long> tagIds = new ArrayList<>();
 
     @Builder
     public Room(Long id, Long accommodationId, String name, String roomTypeName,

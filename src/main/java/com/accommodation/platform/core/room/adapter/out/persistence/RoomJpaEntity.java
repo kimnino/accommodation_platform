@@ -9,11 +9,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import com.accommodation.platform.common.adapter.out.persistence.BaseJpaEntity;
-import com.accommodation.platform.core.room.domain.enums.RoomStatus;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import com.accommodation.platform.common.adapter.out.persistence.BaseJpaEntity;
+import com.accommodation.platform.core.room.domain.enums.RoomStatus;
 
 import static lombok.AccessLevel.PROTECTED;
 
@@ -32,24 +32,36 @@ public class RoomJpaEntity extends BaseJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** 숙소 ID (FK 미사용, 인덱스로 조인) */
+    /**
+     * 숙소 ID (FK 미사용, 인덱스로 조인)
+     */
     @Column(nullable = false)
     private Long accommodationId;
 
-    /** 객실명 (기본 언어). 다국어는 room_translation에서 관리 */
+    /**
+     * 객실명 (기본 언어). 다국어는 room_translation에서 관리
+     */
     @Column(nullable = false)
     private String name;
 
-    /** 객실 유형명 (nullable). 파트너가 직접 입력, 다국어는 room_translation에서 관리 */
+    /**
+     * 객실 유형명 (nullable). 파트너가 직접 입력, 다국어는 room_translation에서 관리
+     */
     private String roomTypeName;
 
-    /** 기준 인원 */
+    /**
+     * 기준 인원
+     */
     private int standardCapacity;
 
-    /** 최대 인원 */
+    /**
+     * 최대 인원
+     */
     private int maxCapacity;
 
-    /** 객실 상태 (ACTIVE, INACTIVE) */
+    /**
+     * 객실 상태 (ACTIVE, INACTIVE)
+     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private RoomStatus status;

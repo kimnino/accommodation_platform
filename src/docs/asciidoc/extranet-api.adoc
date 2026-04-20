@@ -157,3 +157,57 @@ include::{snippets}/extranet/room-option/register/response-fields.adoc[]
 ==== 요청
 
 include::{snippets}/extranet/room-option/delete/http-request.adoc[]
+
+---
+
+=== 사용 가능한 태그 그룹 조회
+
+숙소유형에 맞는 태그 그룹 목록을 조회합니다. `targetType` 파라미터로 숙소용/객실용을 구분합니다.
+
+`GET /api/v1/extranet/accommodations/{accommodationId}/tags/groups?targetType=ACCOMMODATION`
+
+---
+
+=== 태그 그룹 내 태그 목록 조회
+
+특정 태그 그룹에 속한 태그 목록을 조회합니다.
+
+`GET /api/v1/extranet/accommodations/{accommodationId}/tags/groups/{tagGroupId}`
+
+---
+
+=== 숙소 태그 조회
+
+숙소에 연결된 태그 ID 목록을 조회합니다.
+
+`GET /api/v1/extranet/accommodations/{accommodationId}/tags`
+
+---
+
+=== 숙소 태그 추가
+
+숙소에 태그를 추가합니다. 이미 연결된 태그는 무시됩니다.
+
+`POST /api/v1/extranet/accommodations/{accommodationId}/tags`
+
+[source,json]
+----
+{
+  "tag_ids": [1, 2, 3]
+}
+----
+
+---
+
+=== 숙소 태그 삭제
+
+숙소에서 태그를 제거합니다.
+
+`DELETE /api/v1/extranet/accommodations/{accommodationId}/tags`
+
+[source,json]
+----
+{
+  "tag_ids": [1, 2]
+}
+----

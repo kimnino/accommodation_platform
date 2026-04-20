@@ -15,13 +15,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import lombok.RequiredArgsConstructor;
+
 import com.accommodation.platform.common.response.ApiResponse;
 import com.accommodation.platform.core.accommodation.domain.model.Accommodation;
 import com.accommodation.platform.extranet.accommodation.application.port.in.ExtranetGetAccommodationQuery;
 import com.accommodation.platform.extranet.accommodation.application.port.in.ExtranetRegisterAccommodationUseCase;
 import com.accommodation.platform.extranet.accommodation.application.port.in.ExtranetUpdateAccommodationUseCase;
-
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
