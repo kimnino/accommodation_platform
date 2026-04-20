@@ -108,9 +108,6 @@
 - LoadTagGroupPort와 LoadTagPort 모두 `findById(Long)` 메서드를 가지면 하나의 Adapter에서 구현 시 충돌. LoadTagPort는 `findTagById(Long)`으로 구분
 - TagGroup의 accommodationType이 null이면 전체 숙소유형에 적용 — JPQL에서 `IS NULL OR =` 조건으로 처리
 
-### 개발자 코멘트
-1. 
-
 ---
 
 ## 2026/04/20 - [Phase 2 재고/요금 도메인 구현 및 피드백 반영]
@@ -145,6 +142,36 @@
 - 대실 슬롯 설계를 "시작시간별 이용시간 슬롯"에서 "30분 블록 타임라인"으로 변경. 슬롯 겹침 문제 해결, 로우 수 예측 가능
 - 숙박/대실 공존 시 시간대 충돌이 아닌 시간대 분리로 해결. 체크인 시간 기준으로 판단
 - 대실 단축 이용: 운영 종료 임박 시 이용 가능 시간을 반환하여 고객 선택 유도
+
+### 개발자 코멘트
+1. 
+
+---
+
+## 2026/04/20 - [Phase 3 고객 숙소 검색 구현 및 피드백 반영]
+
+### 수행 내용
+
+1. `feat/phase3-search` 브랜치 생성 및 Phase 3 구현
+   - Customer 숙소 검색 API (`GET /api/v1/accommodations`)
+   - Customer 숙소 상세 API (`GET /api/v1/accommodations/{id}`)
+   - 검색 전용 Outbound Port (`SearchAccommodationPort`) — CQRS 분리
+2. 검색 기능
+   - 필터: 지역, 숙소유형, 인원, 가격 범위, 태그, 날짜 범위
+   - 정렬, 페이징 (Offset 기반)
+   - 상세: 객실별 옵션 + 날짜 범위 총 가격(VAT 반영) + 잔여 재고
+3. 피드백 반영
+   - JPQL → QueryDSL 전환 (타입 안전 동적 쿼리)
+   - 검색 쿼리 2단계 배치 패턴 (숙소 조회 → IN절 배치 이미지/최저가)
+   - 가격 필터를 Java 후처리 → WHERE EXISTS 서브쿼리로 이동
+   - 객실 이미지 테이블(`room_image`) 추가, 상세 응답에 포함
+   - DomainServiceConfig — 순수 도메인 서비스 Bean 등록 (프레임워크 무의존 유지)
+
+### 이슈 / 학습
+- SELECT 서브쿼리는 N+1 패턴과 유사. 배치 조회(IN절)로 전환하면 쿼리 수 고정 (4회)
+- 가격 필터를 후처리하면 페이징이 깨짐 (20개 조회 후 필터링 → 결과 20개 미만). WHERE절에서 처리해야 정확
+- QueryDSL의 BooleanBuilder로 조건을 동적으로 조합하면 JPQL 문자열 조합 대비 안전하고 리팩토링 용이
+- AccommodationImage가 record로 변경되어 accessor가 `getXxx()` → `xxx()`로 변경됨 주의
 
 ### 개발자 코멘트
 1. 
