@@ -210,3 +210,36 @@
 
 ### 개발자 코멘트
 1. 단일서버로 비관적 락을 사용해서 
+
+---
+
+## 2026/04/20 - [Phase 5 Supplier 연동 구현 및 피드백 반영]
+
+### 수행 내용
+
+1. `feat/phase5-supplier` 브랜치 생성 및 Phase 5 구현
+   - Supplier 도메인 모델 (Supplier, CanonicalAccommodation/Room/Price)
+   - 전략 패턴: SupplierClient 인터페이스 + MinhyukHouseSupplierAdapter (가상 API)
+   - MINHYUK_HOUSE: 강남점(HOTEL, 3객실) + 홍대점(GUEST_HOUSE, 2객실), 주중/주말 가격 차등
+2. 매핑 테이블 3단 구조
+   - supplier_accommodation_mapping (외부숙소 ↔ 내부숙소, livePriceSync 포함)
+   - supplier_room_mapping (외부객실 ↔ 내부객실)
+   - supplier_room_option_mapping (외부옵션 ↔ 내부객실옵션)
+3. 동기화 서비스 (SyncSupplierInventoryService)
+   - 외부 가격/재고 → CanonicalPrice → 내부 RoomPrice + Inventory 저장
+   - resolveRoomOptionId: room_option_mapping → room_mapping fallback (2단/3단 업체 대응)
+4. 피드백 반영
+   - 전략 패턴 확장성 확인 (새 업체 = 구현체 추가만)
+   - livePriceSync를 숙소 엔티티가 아닌 매핑 테이블로 이동 (같은 숙소가 공급사A는 실시간, B는 수동 가능)
+   - 3단 매핑 vs 엔티티 직접 컬럼 논의 → 매핑 테이블 유지 (다중 공급사 대응)
+   - 외부 업체 구조별 대응: 3단/2단/1단 모두 매핑 가능
+   - 내부 데이터(Room, RoomOption) 필수 존재 확인 — 매핑 없이는 고객 화면에 안 보임
+
+### 이슈 / 학습
+- 외부 업체 데이터 구조가 다양해도 Canonical Model로 정규화하면 내부 로직 변경 불필요
+- livePriceSync는 숙소 속성이 아닌 "공급사-숙소 관계"의 속성 — 매핑 테이블에 배치가 맞음
+- 매핑 테이블은 동기화용이고, 고객 서비스는 내부 데이터만 사용 — 외부 장애가 검색/예약에 전파되지 않음
+- 2단 업체(객실만)는 Room의 첫 번째 RoomOption에 자동 연결, 옵션만 주는 업체는 대표 Room 생성 후 매핑
+
+### 개발자 코멘트
+1. 

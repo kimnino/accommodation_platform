@@ -95,6 +95,9 @@ public class AccommodationJpaEntity extends BaseJpaEntity {
      */
     private LocalTime checkOutTime;
 
+    /** 외부 공급사 연동 숙소 여부 (supplier_accommodation_mapping에 매핑이 있으면 true) */
+    private boolean supplierManaged;
+
     @OneToMany(mappedBy = "accommodationId", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<AccommodationImageJpaEntity> images = new ArrayList<>();
 
@@ -114,5 +117,6 @@ public class AccommodationJpaEntity extends BaseJpaEntity {
         this.status = status;
         this.checkInTime = checkInTime;
         this.checkOutTime = checkOutTime;
+        this.supplierManaged = false;
     }
 }
