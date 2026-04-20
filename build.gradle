@@ -55,4 +55,9 @@ tasks.named('test') {
 tasks.named('asciidoctor') {
 	inputs.dir snippetsDir
 	dependsOn test
+	attributes 'snippets': snippetsDir
+	sources {
+		include 'index.adoc'
+	}
+	baseDirFollowsSourceFile()
 }
