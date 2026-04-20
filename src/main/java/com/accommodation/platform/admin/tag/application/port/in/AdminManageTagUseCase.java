@@ -1,0 +1,28 @@
+package com.accommodation.platform.admin.tag.application.port.in;
+
+import java.util.List;
+
+import com.accommodation.platform.core.tag.domain.model.Tag;
+
+public interface AdminManageTagUseCase {
+
+    Tag create(Long tagGroupId, CreateTagCommand command);
+
+    Tag update(Long tagId, UpdateTagCommand command);
+
+    void deactivate(Long tagId);
+
+    List<Tag> listByTagGroupId(Long tagGroupId);
+
+    record CreateTagCommand(
+            String name,
+            int displayOrder
+    ) {
+    }
+
+    record UpdateTagCommand(
+            String name,
+            int displayOrder
+    ) {
+    }
+}

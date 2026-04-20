@@ -50,9 +50,9 @@ public record AccommodationDetailResponse(
         public static ImageResponse from(AccommodationImage image) {
 
             return new ImageResponse(
-                    image.getRelativePath(),
-                    image.getCategory().name(),
-                    image.getDisplayOrder(),
+                    image.relativePath(),
+                    image.category().name(),
+                    image.displayOrder(),
                     image.isPrimary());
         }
     }

@@ -15,12 +15,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import com.accommodation.platform.common.adapter.out.persistence.BaseJpaEntity;
 import com.accommodation.platform.core.accommodation.domain.enums.AccommodationStatus;
 import com.accommodation.platform.core.accommodation.domain.enums.AccommodationType;
-
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import static lombok.AccessLevel.PROTECTED;
 
@@ -38,45 +38,65 @@ public class AccommodationJpaEntity extends BaseJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** 소속 업체(파트너) 번호. 향후 판매자 정보 표시에도 활용 */
+    /**
+     * 소속 업체(파트너) 번호. 향후 판매자 정보 표시에도 활용
+     */
     @Column(nullable = false)
     private Long partnerId;
 
-    /** 숙소명 (기본 언어) */
+    /**
+     * 숙소명 (기본 언어)
+     */
     @Column(nullable = false)
     private String name;
 
-    /** 숙소 유형 (HOTEL, RESORT, PENSION 등) */
+    /**
+     * 숙소 유형 (HOTEL, RESORT, PENSION 등)
+     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AccommodationType type;
 
-    /** 풀주소 (도로명/지번 등) — 다국어 대상 */
+    /**
+     * 풀주소 (도로명/지번 등) — 다국어 대상
+     */
     @Column(nullable = false)
     private String fullAddress;
 
-    /** 위도 */
+    /**
+     * 위도
+     */
     private double latitude;
 
-    /** 경도 */
+    /**
+     * 경도
+     */
     private double longitude;
 
-    /** 위치 관련 보충 설명 — 다국어 대상 */
+    /**
+     * 위치 관련 보충 설명 — 다국어 대상
+     */
     private String locationDescription;
 
-    /** 숙소 상태 (PENDING → ACTIVE → SUSPENDED / CLOSED) */
+    /**
+     * 숙소 상태 (PENDING → ACTIVE → SUSPENDED / CLOSED)
+     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AccommodationStatus status;
 
-    /** 체크인 시간 (현지 시간 기준) */
+    /**
+     * 체크인 시간 (현지 시간 기준)
+     */
     private LocalTime checkInTime;
 
-    /** 체크아웃 시간 (현지 시간 기준) */
+    /**
+     * 체크아웃 시간 (현지 시간 기준)
+     */
     private LocalTime checkOutTime;
 
     @OneToMany(mappedBy = "accommodationId", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<AccommodationImageJpaEntity> images = new ArrayList<>();
+    private final List<AccommodationImageJpaEntity> images = new ArrayList<>();
 
     public AccommodationJpaEntity(Long id, Long partnerId, String name, AccommodationType type,
                                   String fullAddress, double latitude, double longitude,

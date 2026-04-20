@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import lombok.RequiredArgsConstructor;
+
 import com.accommodation.platform.common.response.ApiResponse;
 import com.accommodation.platform.core.room.domain.model.Room;
 import com.accommodation.platform.core.room.domain.model.RoomOption;
@@ -26,8 +28,6 @@ import com.accommodation.platform.extranet.room.application.port.in.ExtranetRegi
 import com.accommodation.platform.extranet.room.application.port.in.ExtranetRegisterRoomUseCase;
 import com.accommodation.platform.extranet.room.application.port.in.ExtranetUpdateRoomOptionUseCase;
 import com.accommodation.platform.extranet.room.application.port.in.ExtranetUpdateRoomUseCase;
-
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor

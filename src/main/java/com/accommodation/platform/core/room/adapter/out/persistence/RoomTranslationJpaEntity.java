@@ -7,10 +7,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import com.accommodation.platform.common.adapter.out.persistence.BaseJpaEntity;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import com.accommodation.platform.common.adapter.out.persistence.BaseJpaEntity;
 
 import static lombok.AccessLevel.PROTECTED;
 
@@ -28,18 +28,26 @@ public class RoomTranslationJpaEntity extends BaseJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** 객실 ID (FK 미사용, 인덱스로 조인) */
+    /**
+     * 객실 ID (FK 미사용, 인덱스로 조인)
+     */
     @Column(nullable = false)
     private Long roomId;
 
-    /** 언어 코드 (ko, en, ja, zh 등) */
+    /**
+     * 언어 코드 (ko, en, ja, zh 등)
+     */
     @Column(nullable = false, length = 10)
     private String locale;
 
-    /** 객실명 — 언어별 번역 */
+    /**
+     * 객실명 — 언어별 번역
+     */
     private String name;
 
-    /** 객실 유형명 — 언어별 번역 (파트너 직접 입력) */
+    /**
+     * 객실 유형명 — 언어별 번역 (파트너 직접 입력)
+     */
     private String roomTypeName;
 
     public RoomTranslationJpaEntity(Long roomId, String locale, String name, String roomTypeName) {

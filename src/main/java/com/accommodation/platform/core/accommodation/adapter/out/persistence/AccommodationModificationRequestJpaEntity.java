@@ -9,11 +9,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import com.accommodation.platform.common.adapter.out.persistence.BaseJpaEntity;
-import com.accommodation.platform.core.accommodation.domain.enums.ModificationStatus;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import com.accommodation.platform.common.adapter.out.persistence.BaseJpaEntity;
+import com.accommodation.platform.core.accommodation.domain.enums.ModificationStatus;
 
 import static lombok.AccessLevel.PROTECTED;
 
@@ -33,28 +33,38 @@ public class AccommodationModificationRequestJpaEntity extends BaseJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** 수정 대상 숙소 ID */
+    /**
+     * 수정 대상 숙소 ID
+     */
     @Column(nullable = false)
     private Long accommodationId;
 
-    /** 요청한 파트너(업체) ID */
+    /**
+     * 요청한 파트너(업체) ID
+     */
     @Column(nullable = false)
     private Long partnerId;
 
-    /** 수정 요청 상태 (PENDING → APPROVED / REJECTED) */
+    /**
+     * 수정 요청 상태 (PENDING → APPROVED / REJECTED)
+     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ModificationStatus status;
 
-    /** 수정 요청 데이터 (JSON). 변경하려는 필드와 값을 담음 */
+    /**
+     * 수정 요청 데이터 (JSON). 변경하려는 필드와 값을 담음
+     */
     @Column(nullable = false, columnDefinition = "JSON")
     private String requestData;
 
-    /** 관리자 거절 시 사유 */
+    /**
+     * 관리자 거절 시 사유
+     */
     private String rejectionReason;
 
     public AccommodationModificationRequestJpaEntity(Long accommodationId, Long partnerId,
-                                                      ModificationStatus status, String requestData) {
+                                                     ModificationStatus status, String requestData) {
 
         this.accommodationId = accommodationId;
         this.partnerId = partnerId;

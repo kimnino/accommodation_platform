@@ -9,10 +9,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import com.accommodation.platform.core.accommodation.domain.enums.ImageCategory;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import com.accommodation.platform.core.accommodation.domain.enums.ImageCategory;
 
 import static lombok.AccessLevel.PROTECTED;
 
@@ -31,23 +31,33 @@ public class AccommodationImageJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** 숙소 ID (FK 미사용, 인덱스로 조인) */
+    /**
+     * 숙소 ID (FK 미사용, 인덱스로 조인)
+     */
     @Column(nullable = false)
     private Long accommodationId;
 
-    /** 이미지 상대경로 (예: /accommodation/exterior/20260420102838.png) */
+    /**
+     * 이미지 상대경로 (예: /accommodation/exterior/20260420102838.png)
+     */
     @Column(nullable = false)
     private String relativePath;
 
-    /** 이미지 카테고리 (EXTERIOR, LOBBY, ROOM 등) */
+    /**
+     * 이미지 카테고리 (EXTERIOR, LOBBY, ROOM 등)
+     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ImageCategory category;
 
-    /** 노출 순서 */
+    /**
+     * 노출 순서
+     */
     private int displayOrder;
 
-    /** 대표 이미지 여부 */
+    /**
+     * 대표 이미지 여부
+     */
     private boolean isPrimary;
 
     public AccommodationImageJpaEntity(Long accommodationId, String relativePath, ImageCategory category,

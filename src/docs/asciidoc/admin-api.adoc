@@ -1,8 +1,6 @@
 == Admin API (관리자)
 
-플랫폼 관리자가 숙소를 심사하고 운영 관리하는 API입니다.
-
-NOTE: Admin API 테스트 코드 추가 후 문서가 보강됩니다.
+플랫폼 관리자가 숙소를 심사하고 태그를 관리하는 API입니다.
 
 === 숙소 승인
 
@@ -33,3 +31,75 @@ ACTIVE 상태의 숙소를 SUSPENDED로 전환합니다.
 `PATCH /api/v1/admin/accommodations/modifications/{modificationRequestId}/reject`
 
 파트너의 숙소 수정 요청을 거절합니다. 거절 사유를 포함합니다.
+
+---
+
+=== 태그 그룹 생성
+
+관리자가 새로운 태그 그룹을 생성합니다. 숙소유형별 또는 전체 대상으로 설정 가능합니다.
+
+==== 요청
+
+include::{snippets}/admin/tag-group/create/http-request.adoc[]
+
+==== 요청 필드
+
+include::{snippets}/admin/tag-group/create/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/admin/tag-group/create/http-response.adoc[]
+
+==== 응답 필드
+
+include::{snippets}/admin/tag-group/create/response-fields.adoc[]
+
+---
+
+=== 태그 그룹 목록 조회
+
+전체 태그 그룹 목록을 조회합니다.
+
+==== 요청
+
+include::{snippets}/admin/tag-group/list/http-request.adoc[]
+
+==== 응답
+
+include::{snippets}/admin/tag-group/list/http-response.adoc[]
+
+---
+
+=== 태그 생성
+
+태그 그룹에 새로운 태그를 추가합니다.
+
+==== 요청
+
+include::{snippets}/admin/tag/create/http-request.adoc[]
+
+==== 요청 필드
+
+include::{snippets}/admin/tag/create/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/admin/tag/create/http-response.adoc[]
+
+==== 응답 필드
+
+include::{snippets}/admin/tag/create/response-fields.adoc[]
+
+---
+
+=== 태그 목록 조회
+
+태그 그룹 내 태그 목록을 조회합니다.
+
+==== 요청
+
+include::{snippets}/admin/tag/list/http-request.adoc[]
+
+==== 응답
+
+include::{snippets}/admin/tag/list/http-response.adoc[]
