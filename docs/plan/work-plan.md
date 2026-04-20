@@ -2,16 +2,16 @@
 
 ## 구현 순서 요약
 
-| Phase | 내용 | 피드백 상태 |
-|-------|------|------------|
-| 0 | 공통 인프라 (ApiResponse, 예외, BaseEntity, 테스트 기반) | 피드백 완료 |
-| 1 | 숙소/객실 등록 (Accommodation + Room + RoomOption) | 피드백 대기 |
-| 2 | 재고/요금 설정 (Inventory + Price) | 피드백 대기 |
-| 3 | 검색 (Customer Search) | 피드백 대기 |
-| 4 | 예약 + 동시성 (Reservation) | 피드백 대기 |
-| 5 | Supplier 연동 | 피드백 대기 |
-| 6 | 설계 중심 도메인 (Member, Coupon, Payment, Review, Wishlist) | 피드백 대기 |
-| 7 | 횡단 관심사 (Security, i18n, Image, Logging) | 피드백 대기 |
+| Phase | 내용 | 상태 |
+|-------|------|------|
+| 0 | 공통 인프라 (ApiResponse, 예외, BaseEntity, 테스트 기반) | ✅ 완료 |
+| 1 | 숙소/객실 등록 + 태그 시스템 | ✅ 완료 (피드백 6차 반영) |
+| 2 | 재고/요금 설정 (Inventory + Price) | ✅ 완료 (피드백 3차 반영) |
+| 3 | 검색 (Customer Search) | ✅ 완료 (피드백 1차 반영) |
+| 4 | 예약 + 동시성 (Reservation) | 🔜 다음 |
+| 5 | Supplier 연동 | 대기 |
+| 6 | 설계 중심 도메인 (Member, Coupon, Payment, Review, Wishlist) | 대기 |
+| 7 | 횡단 관심사 (Security, i18n, Image, Logging) | 대기 |
 
 > Phase 6, 7은 병렬 진행 가능
 
@@ -558,11 +558,11 @@ TagGroup (공용시설, accommodationType: ALL)
 
 | 체크포인트 | 관련 Phase | 상태 |
 |-----------|-----------|------|
-| 숙박/대실 재고 상호 배타 동기화 | Phase 2, 4 | 미구현 |
-| 청소 시간(Buffer Time) — 대실 슬롯 사이 최소 정비시간 | Phase 2 | 미구현 |
-| VAT(부가세) 포함/불포함 처리 | Phase 2 | 미구현 |
-| 검색 성능 최적화 (비정규화/캐시) | Phase 3 | 미구현 |
-| N+1 방지 fetchJoin 전략 | Phase 3 | 미구현 |
+| 숙박/대실 재고 상호 배타 동기화 | Phase 2, 4 | ✅ 구현 (InventoryDomainService, 30분 블록) |
+| 청소 시간(Buffer Time) — 대실 슬롯 사이 최소 정비시간 | Phase 2 | ✅ 구현 (BLOCKED 상태) |
+| VAT(부가세) 포함/불포함 처리 | Phase 2 | ✅ 구현 (PriceDomainService) |
+| 검색 성능 최적화 (QueryDSL + 배치 쿼리) | Phase 3 | ✅ 구현 (2단계 배치 패턴) |
+| N+1 방지 — 배치 조회 | Phase 3 | ✅ 구현 (IN절 배치) |
 | 재고 선점(Hold) + TTL 자동 복구 | Phase 4 | 미구현 |
 | 멱등성(Idempotency) — 예약/결제 중복 요청 방지 | Phase 4, 6 | 미구현 |
 | Supplier Canonical Model 변환 | Phase 5 | 미구현 |

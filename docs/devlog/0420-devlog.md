@@ -143,9 +143,6 @@
 - 숙박/대실 공존 시 시간대 충돌이 아닌 시간대 분리로 해결. 체크인 시간 기준으로 판단
 - 대실 단축 이용: 운영 종료 임박 시 이용 가능 시간을 반환하여 고객 선택 유도
 
-### 개발자 코멘트
-1. 
-
 ---
 
 ## 2026/04/20 - [Phase 3 고객 숙소 검색 구현 및 피드백 반영]
@@ -173,5 +170,43 @@
 - QueryDSL의 BooleanBuilder로 조건을 동적으로 조합하면 JPQL 문자열 조합 대비 안전하고 리팩토링 용이
 - AccommodationImage가 record로 변경되어 accessor가 `getXxx()` → `xxx()`로 변경됨 주의
 
+---
+
+## 2026/04/20 - [Phase 4 예약 + 동시성 처리 구현 및 피드백 반영]
+
+### 수행 내용
+
+1. `feat/phase4-reservation` 브랜치 생성 및 Phase 4 구현
+   - Reservation 도메인 모델 (상태 전환 6단계, 멱등성 키, Hold 만료)
+   - GuestInfo VO, ReservationType(STAY/HOURLY), ReservationStatus(6종)
+   - 도메인 이벤트: ReservationCreated/Confirmed/CancelledEvent
+   - JPA Entity, Repository, Mapper, Adapter
+2. Customer 예약 API
+   - 숙박 예약 생성 (비관적 락 + 재고 선점 + 10분 Hold)
+   - 대실 예약 생성
+   - 예약 취소 + 재고 복구
+   - 예약 조회 (상세/목록)
+3. Extranet 예약 관리
+   - 수동 확정 API
+   - 파트너 예약 취소 API (취소 사유 포함)
+   - 숙소별 예약 목록 조회
+4. Hold 만료 자동 취소
+   - `@Scheduled`(1분 간격) — PAYMENT_WAITING 상태에서 holdExpiredAt 초과 시 자동 취소 + 재고 복구
+   - `@EnableScheduling` 추가
+5. 피드백 반영
+   - HoldExpirationScheduler 패키지 이동 (`application/service` → `adapter/scheduler`)
+   - Extranet 예약 취소 API 추가
+   - 쿠폰/포인트 확장: Phase 6에서 `reservation_discount` 매핑 테이블로 처리 예정
+   - MapStruct: 현재 유지, 매퍼 증가 시 일괄 전환 고려
+   - Admin 슈퍼 권한: Phase 7에서 SUPER_ADMIN 역할로 구현 예정
+6. 동시성 테스트
+   - `CountDownLatch` + `ExecutorService` → 재고 3개에 10개 동시 요청 → 3개만 성공 검증
+
+### 이슈 / 학습
+- 비관적 락(`SELECT FOR UPDATE`)으로 재고 동시 차감 방지. 트랜잭션 범위를 최소화해야 대기 시간 단축
+- Hold 만료 스케줄러는 `application/service`보다 `adapter/scheduler`가 성격에 맞음 (인프라 관심사)
+- 멱등성 키(`reservationRequestId`)로 네트워크 재시도 시 중복 예약 방지
+- Reservation 도메인에서 상태 전환 invariant가 복잡 — 잘못된 상태에서의 전환은 IllegalStateException으로 보호
+
 ### 개발자 코멘트
-1. 
+1. 단일서버로 비관적 락을 사용해서 
