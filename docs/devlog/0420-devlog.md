@@ -243,3 +243,35 @@
 
 ### 개발자 코멘트
 1. 
+
+---
+
+## 2026/04/20 - [Phase 8 Demo UI & 실행 환경 구축]
+
+### 수행 내용
+
+1. `feat/phase8-demo-ui` 브랜치 생성 및 Demo 환경 구축
+   - Docker Compose (MySQL 8.0.36)
+   - `application-local.yaml` (ddl-auto: create, data.sql 자동 로드)
+   - 샘플 데이터: 숙소 4개, 객실 7개, 옵션 8개, 재고/가격, 태그
+   - README.md 실행 가이드 (Docker/로컬 MySQL 두 가지 방법)
+2. HTML 페이지 12개 구현
+   - 메인 (index.html): 3채널 진입점
+   - 파트너 6페이지: 대시보드, 숙소 관리, 객실&옵션, 재고&가격, 대실 설정, 태그 관리, 예약 관리
+   - 관리자 4페이지: 대시보드, 숙소 관리(승인/수정요청), 가격 조정, 태그 관리
+   - 고객 1페이지: 검색, 상세, 숙박/대실 예약, 내 예약/취소
+3. 버그 수정
+   - AccommodationMapper 상태 복원 누락 → `restoreStatus()` 추가
+   - 수정 요청 목록 조회 API 누락 → `AdminApproveModificationUseCase.listPending()` 추가
+   - SearchAccommodationRequest `guestCount` int → Integer (nullable 대응)
+4. API 전수 테스트 체크리스트 작성 (44개 API)
+   - 버그 리포트 문서 준비 (`phase8_bugs.md`)
+
+### 이슈 / 학습
+- Accommodation 도메인에서 Builder로 생성하면 status가 항상 PENDING으로 초기화 — Mapper에서 DB 상태 복원 필수
+- `type="time"` HTML 입력은 브라우저 로캘에 따라 12h/24h 표시 — `<select>`로 직접 구현해야 24h 고정
+- 재고/가격을 분리된 폼으로 설정하면 UX 불편 — 통합 설정 + 현황 테이블이 실용적
+- data.sql에서 BaseJpaEntity 미상속 테이블은 created_at/updated_at 컬럼 없음 주의
+
+### 개발자 코멘트
+1. 
