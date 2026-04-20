@@ -17,6 +17,40 @@
 
 ---
 
+## 브랜치 전략
+
+각 Phase별 feature 브랜치에서 작업 후 main에 머지한다. Phase 0은 모든 Phase의 기반이므로 가장 먼저 머지한다.
+
+| 브랜치명 | Phase | 범위 | 비고 |
+|----------|-------|------|------|
+| `feat/phase0-common-infra` | 0 | 0-1 ~ 0-6 전체 | 모든 Phase의 기반. 최우선 머지 |
+| `feat/phase1-accommodation` | 1 | 1-1 ~ 1-3, 1-5 ~ 1-7 | Accommodation + Room 도메인, Extranet/Admin 채널 |
+| `feat/phase1-tag-system` | 1 | 1-4 | 동적 태그 시스템 (독립 분리) |
+| `feat/phase2-inventory-price` | 2 | 2-1 ~ 2-7 전체 | Inventory + Price 도메인 |
+| `feat/phase3-search` | 3 | 3-1 ~ 3-4 전체 | 고객 숙소 검색 |
+| `feat/phase4-reservation` | 4 | 4-1 ~ 4-7 전체 | 예약 + 동시성 처리 |
+| `feat/phase5-supplier` | 5 | 5-1 ~ 5-3 전체 | Supplier 연동 |
+| `feat/phase6-skeleton-domains` | 6 | 6-1 ~ 6-5 전체 | 설계 중심 도메인 (ERD + 스켈레톤) |
+| `feat/phase7-cross-cutting` | 7 | 7-1 ~ 7-4 전체 | 횡단 관심사 |
+
+### 머지 순서
+
+```
+main ← feat/phase0-common-infra
+     ← feat/phase1-accommodation
+     ← feat/phase1-tag-system
+     ← feat/phase2-inventory-price
+     ← feat/phase3-search
+     ← feat/phase4-reservation
+     ← feat/phase5-supplier
+     ← feat/phase6-skeleton-domains  (Phase 6, 7 병렬 가능)
+     ← feat/phase7-cross-cutting
+```
+
+> 작업 요청 시 현재 브랜치가 해당 Phase 브랜치와 다르면, 올바른 브랜치로 checkout 후 작업한다.
+
+---
+
 ## Phase 0: 프로젝트 기반 구조
 
 ### 0-1. build.gradle 의존성 보강

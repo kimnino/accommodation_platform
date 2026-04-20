@@ -186,14 +186,26 @@ public record FieldError(
 - 모든 테이블: `created_at`, `updated_at` 필수
 - 삭제 전략: `is_deleted` (Boolean) + `deleted_at` Soft Delete 적용
 
+### 외래키(FK) 제약
+- **FK 제약조건 사용하지 않음** (실무 스타일)
+- 참조 무결성은 애플리케이션 레이어(Service)에서 검증
+- 조인 성능을 위한 **인덱스는 반드시 생성**
+```sql
+-- FK는 안 걸지만 조인 컬럼에 인덱스 필수
+CREATE INDEX idx_room_accommodation_id ON room(accommodation_id);
+CREATE INDEX idx_inventory_room_option_id ON inventory(room_option_id);
+```
+
 ### 인덱스
 - 조회 빈도 높은 필드에 인덱스 설정 (숙소 지역, 날짜, 상태 등)
 - 복합 인덱스는 카디널리티 높은 컬럼 우선 배치
+- FK 대체 인덱스: 모든 참조 컬럼(`_id` 접미어)에 인덱스 생성
 
 ### JPA 규칙
 - JPA Entity는 `adapter/out/persistence` 레이어에서만 사용
 - 도메인 모델 <-> JPA Entity 변환은 매퍼에서 처리
 - N+1 방지: fetch join 또는 EntityGraph 활용
+- JPA Entity 간 연관관계는 `@ManyToOne` 대신 **ID 필드(`Long accommodationId`)로 참조** — 도메인 간 결합도 최소화
 
 ---
 
