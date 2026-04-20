@@ -1,4 +1,4 @@
-
+₩
 ## 2026/04/20 - [Phase 0 공통 인프라 구현]
 
 ### 수행 내용
@@ -78,3 +78,35 @@
 
 ### 개발자 코멘트
 1. 처음에 객실타입에 대한 방향을 엉뚱하게 생각했지만, 다국어처리까지 숙소파트너에게 일임하여, 하도록 설정, 추가 피드백으로 숙소파트너가 다국어 서비스를 지원할 지에 대해서 로직 추가 예정
+
+---
+
+## 2026/04/20 - [Phase 1 동적 태그 시스템 구현]
+
+### 수행 내용
+
+1. `feat/phase1-tag-system` 브랜치 생성 및 동적 태그 시스템 구현
+   - TagGroup / Tag 도메인 모델 (활성/비활성 상태 전환)
+   - JPA Entity: tag_group, tag, accommodation_tag, room_tag
+   - Persist/Load Port 분리, TagJpaAdapter 구현
+2. Admin 채널 — 태그 관리
+   - 태그 그룹 CRUD (생성/수정/비활성화/목록)
+   - 태그 CRUD (그룹 내 생성/수정/비활성화/목록)
+   - Admin REST Docs 테스트 4개 + admin-api.adoc 최신화
+3. Extranet 채널 — 파트너 태그 관리
+   - 숙소유형에 맞는 태그 그룹/태그 조회 API
+   - 숙소 태그 추가(POST)/삭제(DELETE)/조회(GET) API
+   - extranet-api.adoc 최신화
+4. 피드백 6차 반영
+   - 태그 다국어: tag_group_translation, tag_translation 테이블 추가
+   - getTagsByGroup 메서드 partnerId 누락 수정
+5. CLAUDE.md 프로젝트 공통 규칙 정리
+   - Outbound Port 네이밍 (Persist/Load 분리), Enum 위치 (domain/enums/)
+   - 다국어 패턴, 이미지 상대경로, JPA 주석, 수정 승인 구조
+
+### 이슈 / 학습
+- LoadTagGroupPort와 LoadTagPort 모두 `findById(Long)` 메서드를 가지면 하나의 Adapter에서 구현 시 충돌. LoadTagPort는 `findTagById(Long)`으로 구분
+- TagGroup의 accommodationType이 null이면 전체 숙소유형에 적용 — JPQL에서 `IS NULL OR =` 조건으로 처리
+
+### 개발자 코멘트
+1. 
