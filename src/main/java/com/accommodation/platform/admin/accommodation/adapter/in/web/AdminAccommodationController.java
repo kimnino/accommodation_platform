@@ -64,6 +64,12 @@ public class AdminAccommodationController {
         return ApiResponse.success(AccommodationDetailResponse.from(accommodation));
     }
 
+    @GetMapping("/modifications/pending")
+    public ApiResponse<List<?>> listPendingModifications() {
+
+        return ApiResponse.success(modificationUseCase.listPending());
+    }
+
     @PatchMapping("/modifications/{modificationRequestId}/approve")
     public ApiResponse<Void> approveModification(@PathVariable Long modificationRequestId) {
 

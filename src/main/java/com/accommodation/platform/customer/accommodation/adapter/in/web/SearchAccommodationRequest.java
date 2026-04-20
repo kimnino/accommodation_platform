@@ -9,7 +9,7 @@ public record SearchAccommodationRequest(
         String region,
         LocalDate checkInDate,
         LocalDate checkOutDate,
-        int guestCount,
+        Integer guestCount,
         String accommodationType,
         Long minPrice,
         Long maxPrice,
@@ -20,7 +20,7 @@ public record SearchAccommodationRequest(
     public SearchCriteria toCriteria() {
 
         return new SearchCriteria(
-                region, checkInDate, checkOutDate, guestCount,
+                region, checkInDate, checkOutDate, guestCount != null ? guestCount : 0,
                 accommodationType, minPrice, maxPrice, tagIds, sort);
     }
 }

@@ -23,6 +23,7 @@ public class AccommodationMapper {
                 .checkOutTime(entity.getCheckOutTime())
                 .build();
 
+        accommodation.restoreStatus(entity.getStatus());
         accommodation.setCreatedAt(entity.getCreatedAt());
         accommodation.setUpdatedAt(entity.getUpdatedAt());
 

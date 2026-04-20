@@ -1,6 +1,7 @@
 package com.accommodation.platform.admin.accommodation.application.service;
 
 import java.time.LocalTime;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,13 @@ public class AdminApproveModificationService implements AdminApproveModification
     private final LoadAccommodationPort loadAccommodationPort;
     private final PersistAccommodationPort persistAccommodationPort;
     private final ObjectMapper objectMapper;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AccommodationModificationRequestJpaEntity> listPending() {
+
+        return modificationRequestRepository.findByStatus(ModificationStatus.PENDING);
+    }
 
     @Override
     public void approve(Long modificationRequestId) {

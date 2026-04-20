@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>숙소 관리 - 파트너</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #f5f5f5; }
+        .header { background: #2196F3; color: white; padding: 15px 20px; }
+        .header a { color: white; text-decoration: none; margin-right: 15px; }
+        .container { max-width: 900px; margin: 20px auto; padding: 0 20px; }
+        .section { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .section h3 { margin-bottom: 15px; border-bottom: 2px solid #2196F3; padding-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; } th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; } th { background: #f9f9f9; }
+        .form-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; align-items: end; }
+        .form-row label { display: block; font-size: 12px; color: #666; margin-bottom: 3px; }
+        .form-row input, .form-row select, .form-row textarea { padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; color: white; }
+        .btn-primary { background: #2196F3; } .btn-warn { background: #FF9800; }
+        .status { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .status.ACTIVE { background: #E8F5E9; color: #2E7D32; } .status.PENDING { background: #FFF3E0; color: #E65100; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/partner.html">← 대시보드</a>
+        <strong>숙소 관리</strong>
+    </div>
+    <div class="container">
+        <div class="section">
+            <h3>내 숙소 목록</h3>
+            <table><thead><tr><th>ID</th><th>숙소명</th><th>유형</th><th>체크인/아웃</th><th>상태</th><th></th></tr></thead>
+            <tbody id="accList"></tbody></table>
+        </div>
+
+        <div id="accDetailSection" style="display:none">
+            <div class="section">
+                <h3 id="editTitle">숙소 상세 설정</h3>
+                <div class="form-row">
+                    <div><label>숙소명</label><input id="editName" style="width:200px"></div>
+                    <div><label>체크인</label><select id="editCheckIn"></select></div>
+                    <div><label>체크아웃</label><select id="editCheckOut"></select></div>
+                    <div><button class="btn btn-warn" onclick="requestModification()">수정 요청</button></div>
+                </div>
+                <details style="margin-top:15px">
+                    <summary style="cursor:pointer;color:#2196F3;font-size:14px;font-weight:bold">다국어 설정</summary>
+                    <div style="margin-top:10px;padding:15px;background:#f9f9f9;border-radius:8px">
+                        <div class="form-row">
+                            <div><label>언어</label><select id="transLocale">
+                                <option value="ko">한국어 (ko)</option><option value="en">English (en)</option><option value="ja">日本語 (ja)</option>
+                            </select></div>
+                        </div>
+                        <div class="form-row"><div style="flex:1"><label>숙소명</label><input id="transName" style="width:100%"></div></div>
+                        <div class="form-row"><div style="flex:1"><label>주소</label><input id="transAddress" style="width:100%"></div></div>
+                        <div class="form-row"><div style="flex:1"><label>위치 설명</label><input id="transLocation" style="width:100%"></div></div>
+                        <div class="form-row"><div style="flex:1"><label>숙소 소개</label><textarea id="transIntro" style="width:100%;height:60px"></textarea></div></div>
+                        <div class="form-row"><div style="flex:1"><label>이용 정보</label><textarea id="transUsage" style="width:100%;height:60px"></textarea></div></div>
+                        <div class="form-row"><div style="flex:1"><label>취소/환불 규정</label><textarea id="transCancel" style="width:100%;height:60px"></textarea></div></div>
+                        <p style="font-size:11px;color:#999;margin-top:5px">* 다국어 저장 API는 Phase 7에서 완성 예정</p>
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>새 숙소 등록</h3>
+            <div class="form-row">
+                <div style="flex:1"><label>숙소명 (기본)</label><input id="regName" style="width:100%" placeholder="서울 그랜드 호텔"></div>
+                <div><label>유형</label><select id="regType"><option>HOTEL</option><option>RESORT</option><option>PENSION</option>
+                    <option>POOL_VILLA</option><option>MOTEL</option><option>GUEST_HOUSE</option></select></div>
+            </div>
+            <div class="form-row">
+                <div style="flex:1"><label>주소</label><input id="regAddress" style="width:100%" placeholder="서울시 강남구 테헤란로 123"></div>
+            </div>
+            <div class="form-row">
+                <div><label>위도</label><input id="regLat" type="number" step="0.0001" value="37.5665" style="width:120px"></div>
+                <div><label>경도</label><input id="regLng" type="number" step="0.0001" value="126.9780" style="width:120px"></div>
+                <div><label>체크인</label><select id="regCheckIn"></select></div>
+                <div><label>체크아웃</label><select id="regCheckOut"></select></div>
+            </div>
+            <div style="margin-top:10px;padding:12px;background:#f0f7ff;border-radius:8px;border:1px solid #bbdefb">
+                <strong style="font-size:13px">다국어 지원 언어 선택</strong>
+                <div class="form-row" style="margin-top:8px">
+                    <label><input type="checkbox" id="regLocKo" checked> 한국어 (ko)</label>
+                    <label><input type="checkbox" id="regLocEn"> English (en)</label>
+                    <label><input type="checkbox" id="regLocJa"> 日本語 (ja)</label>
+                </div>
+                <div id="regTransFields" style="margin-top:10px"></div>
+                <button type="button" style="font-size:12px;color:#2196F3;background:none;border:none;cursor:pointer;margin-top:5px" onclick="toggleTransFields()">다국어 입력 열기/닫기</button>
+                <div id="regTransInputs" style="display:none;margin-top:10px">
+                    <div style="margin-bottom:8px;padding:10px;border:1px solid #e0e0e0;border-radius:6px" id="transKo">
+                        <strong style="font-size:12px;color:#666">한국어 (ko)</strong>
+                        <div class="form-row" style="margin-top:5px">
+                            <div style="flex:1"><label>숙소명</label><input id="regNameKo" style="width:100%"></div>
+                            <div style="flex:1"><label>주소</label><input id="regAddrKo" style="width:100%"></div>
+                        </div>
+                        <div class="form-row"><div style="flex:1"><label>소개</label><textarea id="regIntroKo" style="width:100%;height:40px;padding:6px;border:1px solid #ddd;border-radius:4px"></textarea></div></div>
+                    </div>
+                    <div style="margin-bottom:8px;padding:10px;border:1px solid #e0e0e0;border-radius:6px" id="transEn">
+                        <strong style="font-size:12px;color:#666">English (en)</strong>
+                        <div class="form-row" style="margin-top:5px">
+                            <div style="flex:1"><label>Name</label><input id="regNameEn" style="width:100%"></div>
+                            <div style="flex:1"><label>Address</label><input id="regAddrEn" style="width:100%"></div>
+                        </div>
+                        <div class="form-row"><div style="flex:1"><label>Introduction</label><textarea id="regIntroEn" style="width:100%;height:40px;padding:6px;border:1px solid #ddd;border-radius:4px"></textarea></div></div>
+                    </div>
+                    <div style="margin-bottom:8px;padding:10px;border:1px solid #e0e0e0;border-radius:6px" id="transJa">
+                        <strong style="font-size:12px;color:#666">日本語 (ja)</strong>
+                        <div class="form-row" style="margin-top:5px">
+                            <div style="flex:1"><label>宿泊名</label><input id="regNameJa" style="width:100%"></div>
+                            <div style="flex:1"><label>住所</label><input id="regAddrJa" style="width:100%"></div>
+                        </div>
+                        <div class="form-row"><div style="flex:1"><label>紹介</label><textarea id="regIntroJa" style="width:100%;height:40px;padding:6px;border:1px solid #ddd;border-radius:4px"></textarea></div></div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary" style="margin-top:15px" onclick="registerAcc()">숙소 등록</button>
+        </div>
+    </div>
+    <script>
+        const pid = new URLSearchParams(location.search).get('pid') || '1';
+        let currentAccId = null;
+
+        function buildTimeOptions(selectId, defaultVal) {
+            const sel = document.getElementById(selectId);
+            for (let h = 0; h < 24; h++) {
+                const val = String(h).padStart(2, '0') + ':00';
+                const opt = document.createElement('option');
+                opt.value = val;
+                opt.textContent = val;
+                if (val === defaultVal) opt.selected = true;
+                sel.appendChild(opt);
+            }
+        }
+
+        buildTimeOptions('regCheckIn', '15:00');
+        buildTimeOptions('regCheckOut', '11:00');
+        buildTimeOptions('editCheckIn', '15:00');
+        buildTimeOptions('editCheckOut', '11:00');
+
+        async function loadAccList() {
+            const res = await fetch(`/api/v1/extranet/accommodations`, { headers: { 'X-Partner-Id': pid } });
+            const list = (await res.json()).data || [];
+            document.getElementById('accList').innerHTML = list.map(a => `
+                <tr><td>${a.id}</td><td>${a.name}</td><td>${a.type}</td>
+                <td>${a.check_in_time || '-'} / ${a.check_out_time || '-'}</td>
+                <td><span class="status ${a.status}">${a.status}</span></td>
+                <td><button class="btn btn-primary" style="padding:4px 10px;font-size:12px" onclick="loadDetail(${a.id},'${a.name}')">상세</button></td></tr>`).join('');
+        }
+
+        async function loadDetail(accId, name) {
+            currentAccId = accId;
+            document.getElementById('editTitle').textContent = `${name} - 상세 설정`;
+            document.getElementById('accDetailSection').style.display = 'block';
+            const res = await fetch(`/api/v1/extranet/accommodations/${accId}`, { headers: { 'X-Partner-Id': pid } });
+            const d = (await res.json()).data;
+            if (d) {
+                document.getElementById('editName').value = d.name || '';
+                document.getElementById('editCheckIn').value = d.check_in_time || '';
+                document.getElementById('editCheckOut').value = d.check_out_time || '';
+            }
+        }
+
+        async function requestModification() {
+            const res = await fetch(`/api/v1/extranet/accommodations/${currentAccId}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Partner-Id': pid },
+                body: JSON.stringify({ name: document.getElementById('editName').value, full_address: null,
+                    latitude: 0, longitude: 0, location_description: null,
+                    check_in_time: document.getElementById('editCheckIn').value,
+                    check_out_time: document.getElementById('editCheckOut').value })
+            });
+            const json = await res.json();
+            alert(json.status === 'SUCCESS' ? `수정 요청 완료 (ID: ${json.data})\n관리자 승인 후 반영됩니다.` : '실패');
+        }
+
+        function toggleTransFields() {
+            const el = document.getElementById('regTransInputs');
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function registerAcc() {
+            // 지원 언어
+            const locales = [];
+            if (document.getElementById('regLocKo').checked) locales.push('ko');
+            if (document.getElementById('regLocEn').checked) locales.push('en');
+            if (document.getElementById('regLocJa').checked) locales.push('ja');
+
+            // 다국어 데이터
+            const translations = [];
+            if (document.getElementById('regLocKo').checked && document.getElementById('regNameKo').value) {
+                translations.push({ locale: 'ko', name: document.getElementById('regNameKo').value,
+                    full_address: document.getElementById('regAddrKo').value || null,
+                    introduction: document.getElementById('regIntroKo').value || null });
+            }
+            if (document.getElementById('regLocEn').checked && document.getElementById('regNameEn').value) {
+                translations.push({ locale: 'en', name: document.getElementById('regNameEn').value,
+                    full_address: document.getElementById('regAddrEn').value || null,
+                    introduction: document.getElementById('regIntroEn').value || null });
+            }
+            if (document.getElementById('regLocJa').checked && document.getElementById('regNameJa').value) {
+                translations.push({ locale: 'ja', name: document.getElementById('regNameJa').value,
+                    full_address: document.getElementById('regAddrJa').value || null,
+                    introduction: document.getElementById('regIntroJa').value || null });
+            }
+
+            const res = await fetch(`/api/v1/extranet/accommodations`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Partner-Id': pid },
+                body: JSON.stringify({
+                    name: document.getElementById('regName').value,
+                    type: document.getElementById('regType').value,
+                    full_address: document.getElementById('regAddress').value,
+                    latitude: +document.getElementById('regLat').value,
+                    longitude: +document.getElementById('regLng').value,
+                    check_in_time: document.getElementById('regCheckIn').value,
+                    check_out_time: document.getElementById('regCheckOut').value,
+                    supported_locales: locales,
+                    translations: translations.length > 0 ? translations : null
+                })
+            });
+            const json = await res.json();
+            alert(json.status === 'SUCCESS'
+                ? `등록 완료! (상태: ${json.data.status})\n지원 언어: ${locales.join(', ')}\n관리자 승인 후 ACTIVE됩니다.`
+                : '실패: ' + (json.error?.message || ''));
+            loadAccList();
+        }
+
+        loadAccList();
+    </script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>파트너 센터</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #f5f5f5; }
+        .header { background: #2196F3; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header a { color: white; text-decoration: none; }
+        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+        h1 { text-align: center; margin-bottom: 30px; color: #333; }
+        .pid-bar { text-align: center; margin-bottom: 20px; }
+        .pid-bar input { padding: 6px 10px; width: 50px; text-align: center; border: 1px solid #ddd; border-radius: 4px; }
+        .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                cursor: pointer; transition: transform 0.2s; border-left: 4px solid #2196F3; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+        .card h3 { margin-bottom: 8px; }
+        .card p { color: #666; font-size: 13px; }
+        .card .count { font-size: 28px; font-weight: bold; color: #2196F3; float: right; margin-top: -30px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/">← 홈</a>
+        <strong>숙소 파트너 센터</strong>
+        <span>파트너 ID: <input id="partnerId" value="1" onchange="loadDashboard()"></span>
+    </div>
+    <div class="container">
+        <h1>파트너 대시보드</h1>
+        <div class="cards">
+            <div class="card" onclick="go('partner-acc.html')">
+                <h3>숙소 관리</h3>
+                <p>숙소 등록, 상세 설정, 다국어</p>
+                <div class="count" id="accCount">-</div>
+            </div>
+            <div class="card" onclick="go('partner-rooms.html')">
+                <h3>객실 & 옵션 관리</h3>
+                <p>객실 추가, 옵션 설정</p>
+            </div>
+            <div class="card" onclick="go('partner-setup.html')">
+                <h3>재고 & 가격 설정</h3>
+                <p>날짜별 재고, 숙박/대실 가격</p>
+            </div>
+            <div class="card" onclick="go('partner-hourly.html')">
+                <h3>대실 설정</h3>
+                <p>운영시간, 슬롯 오픈</p>
+            </div>
+            <div class="card" onclick="go('partner-tags.html')">
+                <h3>태그 관리</h3>
+                <p>숙소 태그 추가/삭제</p>
+            </div>
+            <div class="card" onclick="go('partner-res.html')">
+                <h3>예약 관리</h3>
+                <p>예약 확정, 취소, 현황</p>
+            </div>
+        </div>
+    </div>
+    <script>
+        function go(page) {
+            const pid = document.getElementById('partnerId').value;
+            location.href = `${page}?pid=${pid}`;
+        }
+        async function loadDashboard() {
+            const pid = document.getElementById('partnerId').value;
+            const res = await fetch(`/api/v1/extranet/accommodations`, { headers: { 'X-Partner-Id': pid } });
+            const json = await res.json();
+            document.getElementById('accCount').textContent = (json.data || []).length;
+        }
+        loadDashboard();
+    </script>
+</body>
+</html>

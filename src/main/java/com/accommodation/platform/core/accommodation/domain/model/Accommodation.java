@@ -134,6 +134,11 @@ public class Accommodation extends BaseEntity {
         this.id = id;
     }
 
+    public void restoreStatus(AccommodationStatus status) {
+
+        this.status = status;
+    }
+
     private void validateRequired(Long partnerId, String name, AccommodationType type, String fullAddress) {
 
         if (partnerId == null) {

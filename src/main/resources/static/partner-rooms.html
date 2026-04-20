@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>객실 & 옵션 관리 - 파트너</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #f5f5f5; }
+        .header { background: #2196F3; color: white; padding: 15px 20px; }
+        .header a { color: white; text-decoration: none; margin-right: 15px; }
+        .container { max-width: 900px; margin: 20px auto; padding: 0 20px; }
+        .section { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .section h3 { margin-bottom: 15px; border-bottom: 2px solid #2196F3; padding-bottom: 8px; }
+        .form-row { display: flex; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; align-items: end; }
+        .form-row label { display: block; font-size: 12px; color: #666; margin-bottom: 3px; }
+        .form-row input, .form-row select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .btn { padding: 6px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; color: white; }
+        .btn-primary { background: #2196F3; } .btn-success { background: #4CAF50; }
+        .status { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .status.ACTIVE { background: #E8F5E9; color: #2E7D32; }
+        .room-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 12px; }
+        .room-card h4 { margin-bottom: 4px; }
+        .opt-list { margin-top: 8px; padding-left: 15px; border-left: 3px solid #e0e0e0; }
+        .opt-item { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+        .acc-select { margin-bottom: 15px; }
+        .acc-select select { padding: 10px; font-size: 15px; border: 2px solid #2196F3; border-radius: 6px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/partner.html">← 대시보드</a>
+        <strong>객실 & 옵션 관리</strong>
+    </div>
+    <div class="container">
+        <div class="acc-select">
+            <label style="font-size:14px;font-weight:bold;margin-bottom:5px;display:block">숙소 선택</label>
+            <select id="accSelect" onchange="loadRooms()"></select>
+        </div>
+
+        <div id="roomsSection">
+            <div class="section">
+                <h3>객실 목록</h3>
+                <div id="roomList"></div>
+                <div style="margin-top:15px;padding-top:12px;border-top:1px solid #eee">
+                    <strong>객실 추가</strong>
+                    <div class="form-row" style="margin-top:8px">
+                        <div><label>객실명</label><input id="newRoomName"></div>
+                        <div><label>객실유형 (선택)</label><input id="newRoomType"></div>
+                        <div><label>기준 인원</label><input id="newStdCap" type="number" value="2" style="width:60px"></div>
+                        <div><label>최대 인원</label><input id="newMaxCap" type="number" value="4" style="width:60px"></div>
+                        <div><button class="btn btn-primary" onclick="addRoom()">추가</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const pid = new URLSearchParams(location.search).get('pid') || '1';
+
+        async function loadAccSelect() {
+            const res = await fetch(`/api/v1/extranet/accommodations`, { headers: { 'X-Partner-Id': pid } });
+            const list = (await res.json()).data || [];
+            document.getElementById('accSelect').innerHTML = list.map(a =>
+                `<option value="${a.id}">${a.name} (${a.type})</option>`).join('');
+            if (list.length > 0) loadRooms();
+        }
+
+        async function loadRooms() {
+            const accId = document.getElementById('accSelect').value;
+            const res = await fetch(`/api/v1/extranet/accommodations/${accId}/rooms`, { headers: { 'X-Partner-Id': pid } });
+            const rooms = (await res.json()).data || [];
+
+            let html = '';
+            for (const r of rooms) {
+                const optRes = await fetch(`/api/v1/extranet/accommodations/${accId}/rooms/${r.id}/options`, { headers: { 'X-Partner-Id': pid } });
+                const options = (await optRes.json()).data || [];
+
+                html += `<div class="room-card">
+                    <div style="display:flex;justify-content:space-between">
+                        <div><h4>${r.name} ${r.room_type_name ? '<span style="color:#2196F3;font-size:13px">(' + r.room_type_name + ')</span>' : ''}</h4>
+                        <span style="color:#666;font-size:12px">기준 ${r.standard_capacity}명 / 최대 ${r.max_capacity}명</span></div>
+                        <div>
+                            <span class="status ${r.status}">${r.status}</span>
+                            <button class="btn btn-primary" onclick="editRoom(${r.id},'${r.name}','${r.room_type_name||''}',${r.standard_capacity},${r.max_capacity})">수정</button>
+                            <button class="btn" style="background:#f44336" onclick="deleteRoom(${r.id})">삭제</button>
+                        </div>
+                    </div>
+                    <div class="opt-list">
+                        <strong style="font-size:12px;color:#666">옵션</strong>
+                        ${options.length === 0 ? '<p style="color:#ccc;font-size:13px">옵션 없음</p>' :
+                        options.map(o => `<div class="opt-item">
+                            <span>${o.name} <small style="color:#999">${o.cancellation_policy}</small></span>
+                            <span>
+                                ${o.additional_price > 0 ? '+' + Number(o.additional_price).toLocaleString() + '원' : '기본'}
+                                <button class="btn btn-primary" style="padding:2px 6px;font-size:10px" onclick="editOption(${r.id},${o.id},'${o.name}','${o.cancellation_policy}',${o.additional_price})">수정</button>
+                                <button class="btn" style="background:#f44336;padding:2px 6px;font-size:10px" onclick="deleteOption(${r.id},${o.id})">삭제</button>
+                            </span>
+                        </div>`).join('')}
+                        <div class="form-row" style="margin-top:8px">
+                            <input id="newOpt_${r.id}" placeholder="옵션명" style="font-size:12px;padding:5px 8px">
+                            <select id="newOptPolicy_${r.id}" style="font-size:12px;padding:5px">
+                                <option value="FREE_CANCELLATION">무료취소</option>
+                                <option value="NON_REFUNDABLE">환불불가</option>
+                                <option value="PARTIAL_REFUND">부분환불</option>
+                            </select>
+                            <input id="newOptPrice_${r.id}" type="number" placeholder="추가금액" value="0" style="width:80px;font-size:12px;padding:5px">
+                            <button class="btn btn-success" onclick="addOption(${r.id})">옵션 추가</button>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            document.getElementById('roomList').innerHTML = html || '<p style="color:#999">등록된 객실이 없습니다.</p>';
+        }
+
+        async function addRoom() {
+            const accId = document.getElementById('accSelect').value;
+            await fetch(`/api/v1/extranet/accommodations/${accId}/rooms`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Partner-Id': pid },
+                body: JSON.stringify({ name: document.getElementById('newRoomName').value,
+                    room_type_name: document.getElementById('newRoomType').value || null,
+                    standard_capacity: +document.getElementById('newStdCap').value,
+                    max_capacity: +document.getElementById('newMaxCap').value })
+            });
+            loadRooms();
+        }
+
+        async function editRoom(roomId, name, typeName, stdCap, maxCap) {
+            const newName = prompt('객실명:', name); if (!newName) return;
+            const newType = prompt('객실유형:', typeName);
+            const newStd = prompt('기준 인원:', stdCap);
+            const newMax = prompt('최대 인원:', maxCap);
+            const accId = document.getElementById('accSelect').value;
+            await fetch(`/api/v1/extranet/accommodations/${accId}/rooms/${roomId}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Partner-Id': pid },
+                body: JSON.stringify({ name: newName, room_type_name: newType || null,
+                    standard_capacity: +newStd, max_capacity: +newMax })
+            });
+            loadRooms();
+        }
+
+        async function deleteRoom(roomId) {
+            if (!confirm('객실을 삭제하시겠습니까?')) return;
+            const accId = document.getElementById('accSelect').value;
+            await fetch(`/api/v1/extranet/accommodations/${accId}/rooms/${roomId}`, {
+                method: 'DELETE', headers: { 'X-Partner-Id': pid }
+            });
+            loadRooms();
+        }
+
+        async function editOption(roomId, optId, name, policy, price) {
+            const newName = prompt('옵션명:', name); if (!newName) return;
+            const newPrice = prompt('추가금액:', price);
+            const accId = document.getElementById('accSelect').value;
+            await fetch(`/api/v1/extranet/accommodations/${accId}/rooms/${roomId}/options/${optId}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Partner-Id': pid },
+                body: JSON.stringify({ name: newName, cancellation_policy: policy, additional_price: +newPrice || 0 })
+            });
+            loadRooms();
+        }
+
+        async function deleteOption(roomId, optId) {
+            if (!confirm('옵션을 삭제하시겠습니까?')) return;
+            const accId = document.getElementById('accSelect').value;
+            await fetch(`/api/v1/extranet/accommodations/${accId}/rooms/${roomId}/options/${optId}`, {
+                method: 'DELETE', headers: { 'X-Partner-Id': pid }
+            });
+            loadRooms();
+        }
+
+        async function addOption(roomId) {
+            const accId = document.getElementById('accSelect').value;
+            const name = document.getElementById(`newOpt_${roomId}`).value;
+            if (!name) { alert('옵션명을 입력하세요'); return; }
+            await fetch(`/api/v1/extranet/accommodations/${accId}/rooms/${roomId}/options`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Partner-Id': pid },
+                body: JSON.stringify({ name, cancellation_policy: document.getElementById(`newOptPolicy_${roomId}`).value,
+                    additional_price: +document.getElementById(`newOptPrice_${roomId}`).value || 0 })
+            });
+            loadRooms();
+        }
+
+        loadAccSelect();
+    </script>
+</body>
+</html>

@@ -12,6 +12,7 @@
 | 5 | Supplier 연동 (MINHYUK_HOUSE) | ✅ 완료 (피드백 1차 반영) |
 | 6 | 설계 중심 도메인 (Member, Coupon, Payment, Review, Wishlist) | 🔜 다음 |
 | 7 | 횡단 관심사 (Security, i18n, Image, Logging) | 대기 (Phase 6과 병렬 가능) |
+| 8 | Demo UI & 실행 환경 | 🔜 진행 중 |
 
 > Phase 6, 7은 병렬 진행 가능
 
