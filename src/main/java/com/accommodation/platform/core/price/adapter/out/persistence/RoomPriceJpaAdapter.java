@@ -23,7 +23,7 @@ public class RoomPriceJpaAdapter implements PersistRoomPricePort, LoadRoomPriceP
     public RoomPrice save(RoomPrice roomPrice) {
 
         RoomPriceJpaEntity entity = mapper.toJpaEntity(roomPrice);
-        RoomPriceJpaEntity saved = jpaRepository.save(entity);
+        RoomPriceJpaEntity saved = jpaRepository.saveAndFlush(entity);
         return mapper.toDomain(saved);
     }
 
@@ -33,7 +33,8 @@ public class RoomPriceJpaAdapter implements PersistRoomPricePort, LoadRoomPriceP
         List<RoomPriceJpaEntity> entities = roomPrices.stream()
                 .map(mapper::toJpaEntity)
                 .toList();
-        return jpaRepository.saveAll(entities).stream()
+        List<RoomPriceJpaEntity> savedEntities = jpaRepository.saveAllAndFlush(entities);
+        return savedEntities.stream()
                 .map(mapper::toDomain)
                 .toList();
     }
@@ -57,5 +58,11 @@ public class RoomPriceJpaAdapter implements PersistRoomPricePort, LoadRoomPriceP
                 .stream()
                 .map(mapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public void deleteByRoomOptionId(Long roomOptionId) {
+
+        jpaRepository.deleteByRoomOptionId(roomOptionId);
     }
 }

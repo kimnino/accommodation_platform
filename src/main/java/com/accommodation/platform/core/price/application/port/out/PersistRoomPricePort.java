@@ -9,4 +9,6 @@ public interface PersistRoomPricePort {
     RoomPrice save(RoomPrice roomPrice);
 
     List<RoomPrice> saveAll(List<RoomPrice> roomPrices);
+
+    void deleteByRoomOptionId(Long roomOptionId);
 }

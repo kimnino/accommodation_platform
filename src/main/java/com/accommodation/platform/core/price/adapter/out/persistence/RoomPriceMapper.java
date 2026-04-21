@@ -1,39 +1,24 @@
 package com.accommodation.platform.core.price.adapter.out.persistence;
 
-import org.springframework.stereotype.Component;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingConstants;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.ReportingPolicy;
 
 import com.accommodation.platform.core.price.domain.model.RoomPrice;
 
-@Component
-public class RoomPriceMapper {
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.ERROR)
+interface RoomPriceMapper {
 
-    public RoomPrice toDomain(RoomPriceJpaEntity entity) {
+    RoomPrice toDomain(RoomPriceJpaEntity entity);
 
-        RoomPrice price = RoomPrice.builder()
-                .id(entity.getId())
-                .roomOptionId(entity.getRoomOptionId())
-                .date(entity.getDate())
-                .priceType(entity.getPriceType())
-                .basePrice(entity.getBasePrice())
-                .sellingPrice(entity.getSellingPrice())
-                .taxIncluded(entity.isTaxIncluded())
-                .build();
+    RoomPriceJpaEntity toJpaEntity(RoomPrice domain);
 
-        price.setCreatedAt(entity.getCreatedAt());
-        price.setUpdatedAt(entity.getUpdatedAt());
-
-        return price;
-    }
-
-    public RoomPriceJpaEntity toJpaEntity(RoomPrice domain) {
-
-        return new RoomPriceJpaEntity(
-                domain.getId(),
-                domain.getRoomOptionId(),
-                domain.getDate(),
-                domain.getPriceType(),
-                domain.getBasePrice(),
-                domain.getSellingPrice(),
-                domain.isTaxIncluded());
+    @AfterMapping
+    default void restoreJpaTimestamps(@MappingTarget RoomPriceJpaEntity entity, RoomPrice domain) {
+        if (domain.getCreatedAt() != null) {
+            entity.restoreTimestamps(domain.getCreatedAt(), domain.getUpdatedAt());
+        }
     }
 }
