@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OTA Platform API Tester</title>
+<style>
+:root {
+    --bg-dark: #1e1e2e;
+    --bg-sidebar: #252535;
+    --bg-content: #f5f5f8;
+    --bg-card: #ffffff;
+    --bg-input: #2a2a3c;
+    --text-light: #e0e0e8;
+    --text-muted: #9090a0;
+    --text-dark: #2c2c3a;
+    --accent: #6c8cff;
+    --accent-hover: #5a7aee;
+    --green: #4caf80;
+    --yellow: #e6a740;
+    --red: #e05555;
+    --border: #3a3a4e;
+    --border-light: #ddd;
+    --method-get: #61affe;
+    --method-post: #49cc90;
+    --method-put: #fca130;
+    --method-patch: #9b59b6;
+    --method-delete: #f93e3e;
+    --json-string: #ce9178;
+    --json-number: #b5cea8;
+    --json-bool: #569cd6;
+    --json-null: #808080;
+    --json-key: #9cdcfe;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'Segoe UI', -apple-system, sans-serif; display:flex; min-height:100vh; background: var(--bg-content); color: var(--text-dark); font-size:14px; }
+
+/* Sidebar */
+.sidebar { width:280px; min-width:280px; background:var(--bg-sidebar); color:var(--text-light); padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:16px; }
+.sidebar h2 { font-size:16px; color:var(--accent); margin-bottom:4px; }
+.sidebar h3 { font-size:13px; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:1px; }
+.sidebar label { display:flex; align-items:center; gap:8px; cursor:pointer; padding:4px 0; font-size:13px; }
+.sidebar input[type=radio] { accent-color: var(--accent); }
+.sidebar input[type=text], .sidebar input[type=number] { background:var(--bg-input); border:1px solid var(--border); color:var(--text-light); padding:6px 10px; border-radius:4px; width:100%; font-size:13px; }
+.sidebar button { background:var(--accent); color:#fff; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; font-size:13px; font-weight:600; width:100%; }
+.sidebar button:hover { background:var(--accent-hover); }
+.auth-status { padding:8px 12px; border-radius:4px; font-size:12px; margin-top:4px; }
+.auth-status.ok { background:rgba(76,175,128,0.15); color:var(--green); border:1px solid rgba(76,175,128,0.3); }
+.auth-status.no { background:rgba(224,85,85,0.15); color:var(--red); border:1px solid rgba(224,85,85,0.3); }
+.token-display { font-size:11px; color:var(--text-muted); word-break:break-all; margin-top:4px; }
+.role-extra { margin-top:8px; }
+.divider { border-top:1px solid var(--border); margin:4px 0; }
+
+/* Main */
+.main { flex:1; padding:24px; overflow-y:auto; }
+.main h1 { font-size:22px; margin-bottom:4px; }
+.main .subtitle { color:#888; font-size:13px; margin-bottom:20px; }
+
+/* Groups */
+.api-group { margin-bottom:20px; }
+.api-group-title { font-size:14px; font-weight:700; color:var(--text-dark); padding:8px 12px; background:#e8e8f0; border-radius:6px; margin-bottom:8px; cursor:default; }
+
+/* API Row */
+.api-row { background:var(--bg-card); border:1px solid var(--border-light); border-radius:6px; margin-bottom:6px; overflow:hidden; }
+.api-row-header { display:flex; align-items:center; gap:10px; padding:10px 14px; cursor:pointer; user-select:none; }
+.api-row-header:hover { background:#f0f0f5; }
+.method-badge { font-size:11px; font-weight:700; padding:3px 8px; border-radius:3px; color:#fff; min-width:56px; text-align:center; flex-shrink:0; }
+.method-GET { background:var(--method-get); }
+.method-POST { background:var(--method-post); }
+.method-PUT { background:var(--method-put); }
+.method-PATCH { background:var(--method-patch); }
+.method-DELETE { background:var(--method-delete); }
+.api-row-header .url { font-family:'Fira Code','Cascadia Code',monospace; font-size:13px; color:#555; }
+.api-row-header .desc { margin-left:auto; font-size:12px; color:#999; flex-shrink:0; }
+.api-row-header .arrow { transition:transform 0.2s; color:#aaa; flex-shrink:0; }
+.api-row.open .api-row-header .arrow { transform:rotate(90deg); }
+
+/* Expanded */
+.api-row-body { display:none; padding:14px; border-top:1px solid var(--border-light); background:#fafafe; }
+.api-row.open .api-row-body { display:block; }
+.section-label { font-size:12px; font-weight:600; color:#666; margin:10px 0 4px; text-transform:uppercase; }
+.section-label:first-child { margin-top:0; }
+.url-builder { display:flex; flex-wrap:wrap; align-items:center; gap:6px; font-family:monospace; font-size:13px; margin-bottom:8px; }
+.url-builder span { color:#888; }
+.url-builder input { width:60px; padding:3px 6px; border:1px solid var(--border-light); border-radius:3px; font-family:monospace; font-size:13px; text-align:center; }
+
+/* Query params */
+.params-table { width:100%; border-collapse:collapse; margin-bottom:8px; }
+.params-table td { padding:3px 4px; }
+.params-table input { width:100%; padding:4px 6px; border:1px solid var(--border-light); border-radius:3px; font-size:12px; }
+.params-table .remove-btn { background:none; border:none; color:var(--red); cursor:pointer; font-size:16px; width:auto; padding:2px 6px; }
+.add-param-btn { background:none; border:1px dashed var(--border-light); color:#888; padding:4px 10px; border-radius:3px; cursor:pointer; font-size:12px; width:auto; }
+.add-param-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+/* Body editor */
+.body-editor { width:100%; min-height:120px; padding:10px; border:1px solid var(--border-light); border-radius:4px; font-family:'Fira Code','Cascadia Code',monospace; font-size:12px; resize:vertical; background:#fff; }
+
+/* Send btn */
+.send-btn { background:var(--accent); color:#fff; border:none; padding:8px 20px; border-radius:4px; cursor:pointer; font-weight:600; font-size:13px; margin-top:8px; width:auto; }
+.send-btn:hover { background:var(--accent-hover); }
+.send-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+/* Response */
+.response-area { margin-top:12px; border:1px solid var(--border-light); border-radius:4px; overflow:hidden; }
+.response-header { display:flex; align-items:center; gap:12px; padding:8px 12px; background:#eee; font-size:12px; }
+.status-badge { font-weight:700; padding:2px 8px; border-radius:3px; color:#fff; }
+.status-2xx { background:var(--green); }
+.status-4xx { background:var(--yellow); }
+.status-5xx { background:var(--red); }
+.status-other { background:#888; }
+.response-time { color:#888; }
+.response-body { padding:12px; background:#1e1e2e; color:#d4d4d4; font-family:'Fira Code','Cascadia Code',monospace; font-size:12px; max-height:400px; overflow:auto; white-space:pre-wrap; word-break:break-word; }
+.response-error { padding:12px; background:#2e1e1e; color:var(--red); font-size:13px; }
+.auth-warning { background:rgba(230,167,64,0.1); border:1px solid rgba(230,167,64,0.3); padding:8px 12px; border-radius:4px; color:#b8860b; font-size:12px; margin-top:8px; }
+
+/* Security test */
+.security-section { background:var(--bg-card); border:1px solid var(--border-light); border-radius:6px; padding:16px; margin-top:24px; }
+.security-section h3 { margin-bottom:12px; }
+.sec-test { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid #eee; }
+.sec-test:last-child { border-bottom:none; }
+.sec-test button { background:#555; color:#fff; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; font-size:12px; white-space:nowrap; flex-shrink:0; width:auto; }
+.sec-test button:hover { background:#444; }
+.sec-test .result { font-size:12px; font-family:monospace; }
+.sec-test .pass { color:var(--green); font-weight:600; }
+.sec-test .fail { color:var(--red); font-weight:600; }
+
+/* Loading */
+.loading { display:inline-block; width:14px; height:14px; border:2px solid #ccc; border-top-color:var(--accent); border-radius:50%; animation:spin 0.6s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+@media(max-width:768px) {
+    body { flex-direction:column; }
+    .sidebar { width:100%; min-width:100%; flex-direction:row; flex-wrap:wrap; padding:12px; gap:8px; }
+    .main { padding:12px; }
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div>
+        <h2>OTA API Tester</h2>
+        <p style="font-size:11px;color:var(--text-muted)">v1.0 - API 요청/응답 테스트 도구</p>
+    </div>
+    <div class="divider"></div>
+    <div>
+        <h3>역할 선택</h3>
+        <label><input type="radio" name="role" value="ADMIN" checked> 관리자 (ADMIN)</label>
+        <label><input type="radio" name="role" value="PARTNER"> 파트너 (PARTNER)</label>
+        <label><input type="radio" name="role" value="CUSTOMER"> 고객 (CUSTOMER)</label>
+        <div class="role-extra" id="partnerExtra" style="display:none">
+            <label style="font-size:12px;color:var(--text-muted)">Partner ID</label>
+            <input type="number" id="partnerId" value="1" min="1">
+        </div>
+        <div class="role-extra" id="customerExtra" style="display:none">
+            <label style="font-size:12px;color:var(--text-muted)">Member ID</label>
+            <input type="number" id="memberId" value="1" min="1">
+        </div>
+    </div>
+    <button onclick="issueToken()">토큰 발급</button>
+    <div>
+        <div id="authStatus" class="auth-status no">미인증</div>
+        <div id="tokenDisplay" class="token-display"></div>
+    </div>
+    <div class="divider"></div>
+    <div>
+        <h3>Base URL</h3>
+        <input type="text" id="baseUrl" value="http://localhost:8080">
+    </div>
+</div>
+
+<div class="main">
+    <h1>API Endpoint Tester</h1>
+    <p class="subtitle">OTA 숙박 플랫폼 백엔드 API 테스트 도구</p>
+    <div id="apiList"></div>
+
+    <div class="security-section">
+        <h3>보안 테스트</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">인증/인가가 올바르게 동작하는지 확인합니다.</p>
+        <div class="sec-test">
+            <button onclick="secTest1()">CUSTOMER 토큰으로 Admin API 호출</button>
+            <span class="result" id="secResult1">-</span>
+        </div>
+        <div class="sec-test">
+            <button onclick="secTest2()">토큰 없이 파트너 API 호출</button>
+            <span class="result" id="secResult2">-</span>
+        </div>
+        <div class="sec-test">
+            <button onclick="secTest3()">PARTNER 토큰으로 다른 파트너 숙소 접근</button>
+            <span class="result" id="secResult3">-</span>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentToken = null;
+let currentRole = null;
+
+const API_ENDPOINTS = [
+    {
+        group: "인증 (Auth)",
+        endpoints: [
+            { method:"POST", url:"/api/v1/auth/token", desc:"토큰 발급", body: { role: "ADMIN" } }
+        ]
+    },
+    {
+        group: "고객 (Customer) - 공개",
+        endpoints: [
+            { method:"GET", url:"/api/v1/accommodations", desc:"숙소 검색", params:[
+                {key:"checkInDate",value:"2026-04-25"},{key:"checkOutDate",value:"2026-04-26"},{key:"guestCount",value:"2"}
+            ]},
+            { method:"GET", url:"/api/v1/accommodations/{id}", desc:"숙소 상세" }
+        ]
+    },
+    {
+        group: "고객 (Customer) - 인증 필요",
+        endpoints: [
+            { method:"POST", url:"/api/v1/reservations/stay", desc:"숙박 예약", body:{
+                reservation_request_id: "__UUID__",
+                accommodation_id: 1,
+                room_option_id: 1,
+                check_in_date: "2026-04-25",
+                check_out_date: "2026-04-26",
+                guest_name: "홍길동",
+                guest_phone: "010-1234-5678",
+                guest_email: "test@test.com"
+            }},
+            { method:"POST", url:"/api/v1/reservations/hourly", desc:"대실 예약", body:{
+                reservation_request_id: "__UUID__",
+                accommodation_id: 1,
+                room_option_id: 1,
+                use_date: "2026-04-25",
+                start_time: "14:00",
+                end_time: "18:00",
+                guest_name: "홍길동",
+                guest_phone: "010-1234-5678",
+                guest_email: "test@test.com"
+            }},
+            { method:"POST", url:"/api/v1/reservations/{id}/confirm-payment", desc:"결제 확인", body:{
+                payment_key: "toss_pay_1234567890",
+                amount: 130000
+            }},
+            { method:"DELETE", url:"/api/v1/reservations/{id}", desc:"예약 취소" },
+            { method:"GET", url:"/api/v1/reservations", desc:"내 예약 목록" },
+            { method:"GET", url:"/api/v1/reservations/{id}", desc:"예약 상세" }
+        ]
+    },
+    {
+        group: "파트너 (Extranet) - PARTNER 인증 필요",
+        endpoints: [
+            { method:"GET", url:"/api/v1/extranet/accommodations", desc:"내 숙소 목록" },
+            { method:"POST", url:"/api/v1/extranet/accommodations", desc:"숙소 등록", body:{
+                name: "테스트 호텔",
+                type: "HOTEL",
+                full_address: "서울시 강남구 테헤란로 100",
+                latitude: 37.5,
+                longitude: 127.0,
+                check_in_time: "15:00",
+                check_out_time: "11:00"
+            }},
+            { method:"PUT", url:"/api/v1/extranet/accommodations/{id}", desc:"숙소 수정", body:{
+                name: "테스트 호텔 (수정)",
+                full_address: "서울시 강남구 테헤란로 200",
+                check_in_time: "16:00",
+                check_out_time: "11:00"
+            }},
+            { method:"GET", url:"/api/v1/extranet/accommodations/{id}/rooms", desc:"객실 목록" },
+            { method:"POST", url:"/api/v1/extranet/accommodations/{id}/rooms", desc:"객실 등록", body:{
+                name: "디럭스 더블",
+                floor: 5,
+                base_occupancy: 2,
+                max_occupancy: 3
+            }},
+            { method:"GET", url:"/api/v1/extranet/accommodations/{accId}/rooms/{roomId}/options", desc:"옵션 목록" },
+            { method:"POST", url:"/api/v1/extranet/accommodations/{accId}/rooms/{roomId}/options", desc:"옵션 등록", body:{
+                name: "숙박 기본",
+                type: "STAY",
+                check_in_time: "15:00",
+                check_out_time: "11:00"
+            }},
+            { method:"POST", url:"/api/v1/extranet/room-options/{optId}/inventories", desc:"재고 설정", body:{
+                start_date: "2026-05-15",
+                end_date: "2026-05-20",
+                total_quantity: 5
+            }},
+            { method:"GET", url:"/api/v1/extranet/room-options/{optId}/inventories", desc:"재고 조회", params:[
+                {key:"startDate",value:"2026-04-25"},{key:"endDate",value:"2026-04-30"}
+            ]},
+            { method:"POST", url:"/api/v1/extranet/room-options/{optId}/prices", desc:"요금 설정", body:{
+                start_date: "2026-05-15",
+                end_date: "2026-05-20",
+                price_type: "STAY",
+                base_price: 150000,
+                selling_price: 130000,
+                tax_included: true
+            }},
+            { method:"GET", url:"/api/v1/extranet/room-options/{optId}/prices", desc:"요금 조회", params:[
+                {key:"startDate",value:"2026-04-25"},{key:"endDate",value:"2026-04-30"}
+            ]},
+            { method:"GET", url:"/api/v1/extranet/reservations/accommodations/{accId}", desc:"예약 현황" }
+        ]
+    },
+    {
+        group: "관리자 (Admin) - ADMIN 인증 필요",
+        endpoints: [
+            { method:"GET", url:"/api/v1/admin/accommodations", desc:"숙소 목록" },
+            { method:"GET", url:"/api/v1/admin/accommodations/{id}", desc:"숙소 상세" },
+            { method:"PATCH", url:"/api/v1/admin/accommodations/{id}/approve", desc:"숙소 승인" },
+            { method:"PATCH", url:"/api/v1/admin/accommodations/{id}/suspend", desc:"숙소 정지" },
+            { method:"PATCH", url:"/api/v1/admin/accommodations/{id}/close", desc:"숙소 폐쇄" },
+            { method:"GET", url:"/api/v1/admin/accommodations/modifications/pending", desc:"수정 요청 목록" },
+            { method:"PATCH", url:"/api/v1/admin/accommodations/modifications/{id}/approve", desc:"수정 승인" },
+            { method:"PATCH", url:"/api/v1/admin/accommodations/modifications/{id}/reject", desc:"수정 거절", body:{
+                reason: "등록 정보가 정확하지 않습니다."
+            }},
+            { method:"GET", url:"/api/v1/admin/tag-groups", desc:"태그 그룹 목록" },
+            { method:"POST", url:"/api/v1/admin/tag-groups", desc:"태그 그룹 생성", body:{
+                code: "FACILITY",
+                name: "시설",
+                display_order: 1
+            }},
+            { method:"GET", url:"/api/v1/admin/tag-groups/{gid}/tags", desc:"태그 목록" },
+            { method:"POST", url:"/api/v1/admin/tag-groups/{gid}/tags", desc:"태그 추가", body:{
+                code: "WIFI",
+                name: "무선 인터넷",
+                display_order: 1
+            }},
+            { method:"PATCH", url:"/api/v1/admin/room-options/{optId}/price", desc:"가격 조정", body:{
+                date: "2026-05-15",
+                selling_price: 120000
+            }}
+        ]
+    },
+    {
+        group: "Supplier (ADMIN only)",
+        endpoints: [
+            { method:"POST", url:"/api/v1/supplier/{code}/sync", desc:"공급사 동기화", body:{
+                force: false
+            }}
+        ]
+    }
+];
+
+function getBaseUrl() {
+    return document.getElementById('baseUrl').value.replace(/\/+$/, '');
+}
+
+function getSelectedRole() {
+    return document.querySelector('input[name="role"]:checked').value;
+}
+
+// Role selector handling
+document.querySelectorAll('input[name="role"]').forEach(r => {
+    r.addEventListener('change', () => {
+        document.getElementById('partnerExtra').style.display = r.value === 'PARTNER' ? 'block' : 'none';
+        document.getElementById('customerExtra').style.display = r.value === 'CUSTOMER' ? 'block' : 'none';
+    });
+});
+
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+}
+
+function prepareBody(body) {
+    if (!body) return null;
+    const clone = JSON.parse(JSON.stringify(body));
+    for (const k in clone) {
+        if (clone[k] === '__UUID__') clone[k] = generateUUID();
+    }
+    return clone;
+}
+
+async function issueToken() {
+    const role = getSelectedRole();
+    const body = { role };
+    if (role === 'PARTNER') body.partner_id = parseInt(document.getElementById('partnerId').value) || 1;
+    if (role === 'CUSTOMER') body.member_id = parseInt(document.getElementById('memberId').value) || 1;
+
+    try {
+        const resp = await fetch(getBaseUrl() + '/api/v1/auth/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const data = await resp.json();
+        if (resp.ok && data.data && data.data.token) {
+            currentToken = data.data.token;
+            currentRole = role;
+            const statusEl = document.getElementById('authStatus');
+            statusEl.className = 'auth-status ok';
+            statusEl.textContent = '인증됨 \u2713 (' + role + ')';
+            const truncated = currentToken.length > 40 ? currentToken.substring(0, 40) + '...' : currentToken;
+            document.getElementById('tokenDisplay').textContent = truncated;
+            if (data.data.expires_at) {
+                document.getElementById('tokenDisplay').textContent += '\n만료: ' + data.data.expires_at;
+            }
+        } else {
+            // Try alternate response structures
+            if (data.token) {
+                currentToken = data.token;
+                currentRole = role;
+                const statusEl = document.getElementById('authStatus');
+                statusEl.className = 'auth-status ok';
+                statusEl.textContent = '인증됨 \u2713 (' + role + ')';
+                const truncated = currentToken.length > 40 ? currentToken.substring(0, 40) + '...' : currentToken;
+                document.getElementById('tokenDisplay').textContent = truncated;
+            } else {
+                alert('토큰 발급 실패: ' + JSON.stringify(data));
+            }
+        }
+    } catch (e) {
+        alert('토큰 발급 요청 실패: ' + e.message);
+    }
+}
+
+function syntaxHighlight(json) {
+    if (typeof json !== 'string') json = JSON.stringify(json, null, 2);
+    return json.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|\bnull\b)/g, match => {
+            let cls = 'json-number';
+            if (/^"/.test(match)) {
+                cls = /:$/.test(match) ? 'json-key' : 'json-string';
+            } else if (/true|false/.test(match)) {
+                cls = 'json-bool';
+            } else if (/null/.test(match)) {
+                cls = 'json-null';
+            }
+            return '<span style="color:var(--' + cls + ')">' + match + '</span>';
+        });
+}
+
+function extractPathParams(urlTemplate) {
+    const matches = urlTemplate.match(/\{(\w+)\}/g) || [];
+    return matches.map(m => m.replace(/[{}]/g, ''));
+}
+
+function buildUrlFromInputs(rowEl, urlTemplate) {
+    let url = urlTemplate;
+    const params = extractPathParams(urlTemplate);
+    params.forEach(p => {
+        const input = rowEl.querySelector('.path-param-' + p);
+        const val = input ? input.value : '1';
+        url = url.replace('{' + p + '}', encodeURIComponent(val));
+    });
+    // query params
+    const paramRows = rowEl.querySelectorAll('.query-param-row');
+    const qp = [];
+    paramRows.forEach(pr => {
+        const k = pr.querySelector('.qp-key').value.trim();
+        const v = pr.querySelector('.qp-value').value.trim();
+        if (k) qp.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+    });
+    if (qp.length) url += '?' + qp.join('&');
+    return url;
+}
+
+const EP_MAP = {};
+
+function renderApiList() {
+    const container = document.getElementById('apiList');
+    let html = '';
+    let idx = 0;
+    API_ENDPOINTS.forEach(group => {
+        html += '<div class="api-group">';
+        html += '<div class="api-group-title">' + group.group + '</div>';
+        group.endpoints.forEach(ep => {
+            const id = 'api-' + idx;
+            const pathParams = extractPathParams(ep.url);
+            html += '<div class="api-row" id="' + id + '">';
+            html += '<div class="api-row-header" onclick="toggleRow(\'' + id + '\')">';
+            html += '<span class="method-badge method-' + ep.method + '">' + ep.method + '</span>';
+            html += '<span class="url">' + ep.url + '</span>';
+            html += '<span class="desc">' + ep.desc + '</span>';
+            html += '<span class="arrow">&#9654;</span>';
+            html += '</div>';
+            html += '<div class="api-row-body">';
+
+            // URL builder
+            html += '<div class="section-label">URL</div>';
+            html += '<div class="url-builder">';
+            const parts = ep.url.split(/(\{[^}]+\})/);
+            parts.forEach(part => {
+                const m = part.match(/^\{(\w+)\}$/);
+                if (m) {
+                    html += '<input class="path-param-' + m[1] + '" placeholder="' + m[1] + '" value="1">';
+                } else {
+                    html += '<span>' + part + '</span>';
+                }
+            });
+            html += '</div>';
+
+            // Query params
+            if (ep.method === 'GET' || ep.params) {
+                html += '<div class="section-label">Query Parameters</div>';
+                html += '<table class="params-table"><tbody class="qp-body">';
+                if (ep.params) {
+                    ep.params.forEach(p => {
+                        html += '<tr class="query-param-row"><td><input class="qp-key" value="' + p.key + '" placeholder="key"></td><td><input class="qp-value" value="' + p.value + '" placeholder="value"></td><td><button class="remove-btn" onclick="this.closest(\'tr\').remove()">&times;</button></td></tr>';
+                    });
+                }
+                html += '</tbody></table>';
+                html += '<button class="add-param-btn" onclick="addParam(this)">+ 파라미터 추가</button>';
+            }
+
+            // Request body
+            if (ep.body) {
+                html += '<div class="section-label">Request Body</div>';
+                const bodyStr = JSON.stringify(prepareBody(ep.body), null, 2);
+                html += '<textarea class="body-editor">' + bodyStr + '</textarea>';
+            }
+
+            EP_MAP[id] = ep;
+            html += '<button class="send-btn" onclick="sendRequest(\'' + id + '\', EP_MAP[\'' + id + '\'])">요청 보내기</button>';
+
+            // Response area placeholder
+            html += '<div class="response-container"></div>';
+
+            html += '</div></div>';
+            idx++;
+        });
+        html += '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function toggleRow(id) {
+    document.getElementById(id).classList.toggle('open');
+}
+
+function addParam(btn) {
+    const tbody = btn.previousElementSibling.querySelector('.qp-body');
+    const tr = document.createElement('tr');
+    tr.className = 'query-param-row';
+    tr.innerHTML = '<td><input class="qp-key" placeholder="key"></td><td><input class="qp-value" placeholder="value"></td><td><button class="remove-btn" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
+    tbody.appendChild(tr);
+}
+
+async function sendRequest(rowId, ep) {
+    const rowEl = document.getElementById(rowId);
+    const url = getBaseUrl() + buildUrlFromInputs(rowEl, ep.url);
+    const headers = { 'Content-Type': 'application/json' };
+    if (currentToken) headers['Authorization'] = 'Bearer ' + currentToken;
+
+    const opts = { method: ep.method, headers };
+    if (ep.body) {
+        const textarea = rowEl.querySelector('.body-editor');
+        if (textarea) {
+            try {
+                opts.body = textarea.value;
+                JSON.parse(opts.body); // validate
+            } catch (e) {
+                alert('JSON 형식 오류: ' + e.message);
+                return;
+            }
+        }
+    }
+
+    const container = rowEl.querySelector('.response-container');
+    container.innerHTML = '<div style="padding:12px"><span class="loading"></span> 요청 중...</div>';
+
+    const start = performance.now();
+    try {
+        const resp = await fetch(url, opts);
+        const elapsed = Math.round(performance.now() - start);
+        let bodyText = await resp.text();
+        let bodyJson = null;
+        try { bodyJson = JSON.parse(bodyText); } catch(e) {}
+
+        const statusClass = resp.status < 300 ? 'status-2xx' : resp.status < 500 ? 'status-4xx' : 'status-5xx';
+        let html = '<div class="response-area">';
+        html += '<div class="response-header">';
+        html += '<span class="status-badge ' + statusClass + '">' + resp.status + ' ' + resp.statusText + '</span>';
+        html += '<span class="response-time">' + elapsed + 'ms</span>';
+        html += '<span class="response-time">' + new Date().toISOString() + '</span>';
+        html += '</div>';
+
+        if (bodyJson !== null) {
+            html += '<div class="response-body">' + syntaxHighlight(JSON.stringify(bodyJson, null, 2)) + '</div>';
+        } else {
+            html += '<div class="response-body">' + (bodyText || '(empty response)') + '</div>';
+        }
+        html += '</div>';
+
+        if (resp.status === 401) {
+            html += '<div class="auth-warning">인증이 필요합니다. 좌측에서 토큰을 발급해주세요.</div>';
+        } else if (resp.status === 403) {
+            html += '<div class="auth-warning">권한이 없습니다. 해당 API에 접근할 수 있는 역할로 토큰을 발급해주세요.</div>';
+        }
+
+        container.innerHTML = html;
+    } catch (e) {
+        const elapsed = Math.round(performance.now() - start);
+        container.innerHTML = '<div class="response-area"><div class="response-error">요청 실패 (' + elapsed + 'ms): ' + e.message + '<br><br>서버가 실행 중인지 확인해주세요. Base URL: ' + getBaseUrl() + '</div></div>';
+    }
+}
+
+async function securityTest(tokenOverride, url, method, expectedStatus, resultElId) {
+    const el = document.getElementById(resultElId);
+    el.innerHTML = '<span class="loading"></span>';
+    const headers = { 'Content-Type': 'application/json' };
+    if (tokenOverride) headers['Authorization'] = 'Bearer ' + tokenOverride;
+
+    try {
+        const resp = await fetch(getBaseUrl() + url, { method, headers });
+        if (resp.status === expectedStatus) {
+            el.innerHTML = '<span class="pass">PASS</span> - ' + resp.status + ' ' + resp.statusText;
+        } else {
+            el.innerHTML = '<span class="fail">FAIL</span> - 예상: ' + expectedStatus + ', 실제: ' + resp.status + ' ' + resp.statusText;
+        }
+    } catch (e) {
+        el.innerHTML = '<span class="fail">ERROR</span> - ' + e.message;
+    }
+}
+
+async function getTokenForRole(role) {
+    const body = { role };
+    if (role === 'PARTNER') body.partner_id = 1;
+    if (role === 'CUSTOMER') body.member_id = 1;
+    try {
+        const resp = await fetch(getBaseUrl() + '/api/v1/auth/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const data = await resp.json();
+        if (data.data && data.data.token) return data.data.token;
+        if (data.token) return data.token;
+    } catch (e) {}
+    return null;
+}
+
+async function secTest1() {
+    const el = document.getElementById('secResult1');
+    el.innerHTML = '<span class="loading"></span> CUSTOMER 토큰 발급 중...';
+    const token = await getTokenForRole('CUSTOMER');
+    if (!token) { el.innerHTML = '<span class="fail">ERROR</span> - CUSTOMER 토큰 발급 실패'; return; }
+    await securityTest(token, '/api/v1/admin/accommodations', 'GET', 403, 'secResult1');
+}
+
+async function secTest2() {
+    await securityTest(null, '/api/v1/extranet/accommodations', 'GET', 401, 'secResult2');
+}
+
+async function secTest3() {
+    const el = document.getElementById('secResult3');
+    el.innerHTML = '<span class="loading"></span> PARTNER 토큰 발급 중...';
+    const token = await getTokenForRole('PARTNER');
+    if (!token) { el.innerHTML = '<span class="fail">ERROR</span> - PARTNER 토큰 발급 실패'; return; }
+    await securityTest(token, '/api/v1/extranet/accommodations', 'GET', 200, 'secResult3');
+}
+
+renderApiList();
+</script>
+</body>
+</html>

@@ -37,32 +37,40 @@
 
 > `PUT /api/v1/extranet/accommodations/{id}` → `PATCH /api/v1/admin/accommodations/{id}/approve-modification`
 
-| 순서 | 파일 | 확인 포인트 | 완료 |
-|------|------|-------------|------|
-| 1 | `extranet/accommodation/adapter/in/web/UpdateAccommodationRequest.java` | Double 타입 위경도, nullable 필드 | [ ] |
-| 2 | `extranet/accommodation/application/port/in/ExtranetUpdateAccommodationUseCase.java` | Command nullable 처리 | [ ] |
-| 3 | `extranet/accommodation/application/service/ExtranetUpdateAccommodationService.java` | ModificationRequest 생성 로직 | [ ] |
-| 4 | `core/accommodation/adapter/out/persistence/AccommodationModificationRequestJpaEntity.java` | JSON 저장 구조 | [ ] |
-| 5 | `core/accommodation/domain/enums/ModificationStatus.java` | PENDING/APPROVED/REJECTED | [ ] |
-| 6 | `admin/accommodation/application/port/in/AdminApproveModificationUseCase.java` | 승인 커맨드 | [ ] |
-| 7 | `admin/accommodation/application/service/AdminApproveModificationService.java` | JSON → 도메인 반영, null 필드 보존 | [ ] |
-| 8 | `admin/accommodation/adapter/in/web/AdminAccommodationController.java` | 관리자 엔드포인트 | [ ] |
+| 순서 | 파일 | 확인 포인트 | 완료    |
+|------|------|-------------|-------|
+| 1 | `extranet/accommodation/adapter/in/web/UpdateAccommodationRequest.java` | Double 타입 위경도, nullable 필드 | [ V ] |
+| 2 | `extranet/accommodation/application/port/in/ExtranetUpdateAccommodationUseCase.java` | Command nullable 처리 | [ V ] |
+| 3 | `extranet/accommodation/application/service/ExtranetUpdateAccommodationService.java` | ModificationRequest 생성 로직 | [ ]   |
+| 4 | `core/accommodation/adapter/out/persistence/AccommodationModificationRequestJpaEntity.java` | JSON 저장 구조 | [ V ] |
+| 5 | `core/accommodation/domain/enums/ModificationStatus.java` | PENDING/APPROVED/REJECTED | [ V ] |
+| 6 | `admin/accommodation/application/port/in/AdminApproveModificationUseCase.java` | 승인 커맨드 | [ V ] |
+| 7 | `admin/accommodation/application/service/AdminApproveModificationService.java` | JSON → 도메인 반영, null 필드 보존 | [ V ] |
+| 8 | `admin/accommodation/adapter/in/web/AdminAccommodationController.java` | 관리자 엔드포인트 | [ V ] |
 
+## FLOW 2. 숙소 수정 (파트너) + 관리자 승인 피드백
+1. ~~숙소 다국어 관련 상세 정보는 수정은 못하는거야?~~ → [V] `UpdateAccommodationRequest`에 `translations` 필드 추가 완료
+2. ~~ExtranetUpdateAccommodationUseCase.java에서 AccommodationModificationRequestJpaRepository를 직접 호출하는게 결합도가 높아지는거 아닌가?~~ → [V] `PersistModificationRequestPort` + `LoadModificationRequestPort` 분리, `ModificationRequestJpaAdapter` 구현
+3. ~~AdminApproveModificationUseCase여기에 조회 기능을 따로 빼자. 약속을 그렇게 한거같은데.~~ → [V] `AdminGetModificationQuery` 분리, `ModificationRequestSummary` record 반환 (JPA 엔티티 노출 제거)
+4. ~~RejectModificationRequest 그냥 밖으로 빼서 파일로 만들어.~~ → [V] 별도 파일로 추출 완료
 ---
 
 ## FLOW 3. 숙소 목록/상세 조회 (관리자)
 
 > `GET /api/v1/admin/accommodations` / `GET /api/v1/admin/accommodations/{id}`
 
-| 순서 | 파일 | 확인 포인트 | 완료 |
-|------|------|-------------|------|
-| 1 | `admin/accommodation/application/port/in/AdminListAccommodationQuery.java` | listAll / getDetailById | [ ] |
-| 2 | `admin/accommodation/application/service/AdminListAccommodationService.java` | 번역 포함 조회 | [ ] |
-| 3 | `core/accommodation/application/port/out/LoadAccommodationPort.java` | 조회 포트 | [ ] |
-| 4 | `core/accommodation/application/port/out/LoadAccommodationTranslationPort.java` | 번역 조회 포트 | [ ] |
-| 5 | `core/accommodation/adapter/out/persistence/AccommodationJpaRepository.java` | 쿼리 메서드 | [ ] |
-| 6 | `core/accommodation/adapter/out/persistence/AccommodationTranslationJpaRepository.java` | 번역 쿼리 | [ ] |
-| 7 | `admin/accommodation/adapter/in/web/AdminAccommodationDetailResponse.java` | 번역 포함 응답 | [ ] |
+| 순서 | 파일 | 확인 포인트 | 완료    |
+|------|------|-------------|-------|
+| 1 | `admin/accommodation/application/port/in/AdminListAccommodationQuery.java` | listAll / getDetailById | [ V ] |
+| 2 | `admin/accommodation/application/service/AdminListAccommodationService.java` | 번역 포함 조회 | [ V ] |
+| 3 | `core/accommodation/application/port/out/LoadAccommodationPort.java` | 조회 포트 | [ V ] |
+| 4 | `core/accommodation/application/port/out/LoadAccommodationTranslationPort.java` | 번역 조회 포트 | [ V ] |
+| 5 | `core/accommodation/adapter/out/persistence/AccommodationJpaRepository.java` | 쿼리 메서드 | [ V ] |
+| 6 | `core/accommodation/adapter/out/persistence/AccommodationTranslationJpaRepository.java` | 번역 쿼리 | [ V ] |
+| 7 | `admin/accommodation/adapter/in/web/AdminAccommodationDetailResponse.java` | 번역 포함 응답 | [ V ] |
+
+## FLOW 3. 숙소 목록/상세 조회 (관리자) 피드백
+1. ~~Optional<SupplierAccommodationMappingJpaEntity> findBySupplierIdAndExternalAccommodationId(Long supplierId, String externalAccommodationId); 미사용 메서드는 왜 만든건지?~~ → 확인 완료. Supplier 연동 시 사용 예정으로 선언된 메서드. 현재 미사용이나 의도적 유지.
 
 ---
 
@@ -70,20 +78,24 @@
 
 > `POST /api/v1/extranet/accommodations/{id}/rooms`
 
-| 순서 | 파일 | 확인 포인트 | 완료 |
-|------|------|-------------|------|
-| 1 | `extranet/room/adapter/in/web/RegisterRoomRequest.java` | 필드 검증 | [ ] |
-| 2 | `extranet/room/adapter/in/web/ExtranetRoomController.java` | Room + RoomOption 엔드포인트 | [ ] |
-| 3 | `extranet/room/application/port/in/ExtranetRegisterRoomUseCase.java` | Command 정의 | [ ] |
-| 4 | `extranet/room/application/service/ExtranetRegisterRoomService.java` | 숙소 존재 확인, Room 생성 | [ ] |
-| 5 | `core/room/domain/model/Room.java` | 불변식, 상태 | [ ] |
-| 6 | `core/room/domain/model/RoomOption.java` | 옵션 모델 | [ ] |
-| 7 | `core/room/adapter/out/persistence/RoomMapper.java` | 도메인 ↔ JPA 변환 | [ ] |
-| 8 | `core/room/adapter/out/persistence/RoomJpaEntity.java` | 테이블 정의 | [ ] |
-| 9 | `core/room/adapter/out/persistence/RoomOptionJpaEntity.java` | 옵션 테이블 | [ ] |
-| 10 | `core/room/adapter/out/persistence/RoomJpaAdapter.java` | 저장 구현 | [ ] |
-| 11 | `core/room/adapter/out/persistence/RoomOptionJpaAdapter.java` | 옵션 저장 구현 | [ ] |
-| 12 | `extranet/room/adapter/in/web/RoomDetailResponse.java` | 응답 DTO | [ ] |
+| 순서 | 파일 | 확인 포인트 | 완료    |
+|------|------|-------------|-------|
+| 1 | `extranet/room/adapter/in/web/RegisterRoomRequest.java` | 필드 검증 | [ V ] |
+| 2 | `extranet/room/adapter/in/web/ExtranetRoomController.java` | Room + RoomOption 엔드포인트 | [ V ] |
+| 3 | `extranet/room/application/port/in/ExtranetRegisterRoomUseCase.java` | Command 정의 | [ V ] |
+| 4 | `extranet/room/application/service/ExtranetRegisterRoomService.java` | 숙소 존재 확인, Room 생성 | [ V ] |
+| 5 | `core/room/domain/model/Room.java` | 불변식, 상태 | [ V ] |
+| 6 | `core/room/domain/model/RoomOption.java` | 옵션 모델 | [ V ] |
+| 7 | `core/room/adapter/out/persistence/RoomMapper.java` | 도메인 ↔ JPA 변환 | [ V ] |
+| 8 | `core/room/adapter/out/persistence/RoomJpaEntity.java` | 테이블 정의 | [ V ] |
+| 9 | `core/room/adapter/out/persistence/RoomOptionJpaEntity.java` | 옵션 테이블 | [ V ] |
+| 10 | `core/room/adapter/out/persistence/RoomJpaAdapter.java` | 저장 구현 | [ V ] |
+| 11 | `core/room/adapter/out/persistence/RoomOptionJpaAdapter.java` | 옵션 저장 구현 | [ V ] |
+| 12 | `extranet/room/adapter/in/web/RoomDetailResponse.java` | 응답 DTO | [ V ] |
+
+## FLOW 4. 객실/객실옵션 등록 (파트너) 피드백
+1. ~~RoomMapper.java에 default Room toDomain(RoomJpaEntity entity) 이런식으로 직접 구현할 필요가 없지않아?~~ → [V] MapStruct `@Mapping` + `@AfterMapping` 패턴으로 전환 완료
+2. ~~RoomOptionJpaEntity 얘는 다국어 처리가 없나봐?~~ → [V] `RegisterRoomOptionRequest`에 translations 추가, `PersistRoomOptionTranslationPort` + Adapter 생성 완료
 
 ---
 
@@ -92,23 +104,23 @@
 > `POST /api/v1/extranet/room-options/{id}/inventory` (숙박)
 > `POST /api/v1/extranet/room-options/{id}/time-slots` (대실)
 
-| 순서 | 파일 | 확인 포인트 | 완료 |
-|------|------|-------------|------|
-| 1 | `extranet/inventory/adapter/in/web/ExtranetInventoryController.java` | 숙박/대실 분기 | [ ] |
-| 2 | `extranet/inventory/adapter/in/web/ExtranetHourlySettingController.java` | 대실 설정 엔드포인트 | [ ] |
-| 3 | `extranet/inventory/adapter/in/web/SetInventoryRequest.java` | 날짜 범위, 재고 수량 | [ ] |
-| 4 | `extranet/inventory/adapter/in/web/OpenTimeSlotsRequest.java` | 시간 슬롯 요청 | [ ] |
-| 5 | `extranet/inventory/application/port/in/ExtranetSetInventoryUseCase.java` | Command | [ ] |
-| 6 | `extranet/inventory/application/service/ExtranetSetInventoryService.java` | 날짜별 재고 생성/수정 | [ ] |
-| 7 | `extranet/inventory/application/service/ExtranetSetTimeSlotInventoryService.java` | 시간 슬롯 생성 | [ ] |
-| 8 | `extranet/inventory/application/service/ExtranetSetHourlySettingService.java` | 대실 기본 설정 저장 | [ ] |
-| 9 | `core/inventory/domain/model/Inventory.java` | 재고 도메인, 차감/복원 메서드 | [ ] |
-| 10 | `core/inventory/domain/model/TimeSlotInventory.java` | 시간 슬롯 모델 | [ ] |
-| 11 | `core/inventory/domain/service/InventoryDomainService.java` | 재고 비즈니스 규칙 | [ ] |
-| 12 | `core/inventory/adapter/out/persistence/InventoryMapper.java` | 변환 + restoreTimestamps | [ ] |
-| 13 | `core/inventory/adapter/out/persistence/InventoryJpaEntity.java` | 재고 테이블 | [ ] |
-| 14 | `core/inventory/adapter/out/persistence/TimeSlotInventoryJpaEntity.java` | 시간 슬롯 테이블 | [ ] |
-| 15 | `core/inventory/adapter/out/persistence/InventoryJpaAdapter.java` | 저장 구현 | [ ] |
+| 순서 | 파일 | 확인 포인트 | 완료    |
+|------|------|-------------|-------|
+| 1 | `extranet/inventory/adapter/in/web/ExtranetInventoryController.java` | 숙박/대실 분기 | [ V ] |
+| 2 | `extranet/inventory/adapter/in/web/ExtranetHourlySettingController.java` | 대실 설정 엔드포인트 | [ ]   |
+| 3 | `extranet/inventory/adapter/in/web/SetInventoryRequest.java` | 날짜 범위, 재고 수량 | [ ]   |
+| 4 | `extranet/inventory/adapter/in/web/OpenTimeSlotsRequest.java` | 시간 슬롯 요청 | [ ]   |
+| 5 | `extranet/inventory/application/port/in/ExtranetSetInventoryUseCase.java` | Command | [ ]   |
+| 6 | `extranet/inventory/application/service/ExtranetSetInventoryService.java` | 날짜별 재고 생성/수정 | [ ]   |
+| 7 | `extranet/inventory/application/service/ExtranetSetTimeSlotInventoryService.java` | 시간 슬롯 생성 | [ ]   |
+| 8 | `extranet/inventory/application/service/ExtranetSetHourlySettingService.java` | 대실 기본 설정 저장 | [ ]   |
+| 9 | `core/inventory/domain/model/Inventory.java` | 재고 도메인, 차감/복원 메서드 | [ ]   |
+| 10 | `core/inventory/domain/model/TimeSlotInventory.java` | 시간 슬롯 모델 | [ ]   |
+| 11 | `core/inventory/domain/service/InventoryDomainService.java` | 재고 비즈니스 규칙 | [ ]   |
+| 12 | `core/inventory/adapter/out/persistence/InventoryMapper.java` | 변환 + restoreTimestamps | [ ]   |
+| 13 | `core/inventory/adapter/out/persistence/InventoryJpaEntity.java` | 재고 테이블 | [ ]   |
+| 14 | `core/inventory/adapter/out/persistence/TimeSlotInventoryJpaEntity.java` | 시간 슬롯 테이블 | [ ]   |
+| 15 | `core/inventory/adapter/out/persistence/InventoryJpaAdapter.java` | 저장 구현 | [ ]   |
 
 ---
 
@@ -255,15 +267,18 @@
 | `common/exception/BusinessException.java` | RuntimeException 계열 | [ ] |
 | `common/exception/GlobalExceptionHandler.java` | 전역 예외 처리, 404/400/500 | [ ] |
 | `common/response/ApiResponse.java` | SUCCESS/ERROR 포맷 | [ ] |
-| `common/config/DomainServiceConfig.java` | 도메인 서비스 @Bean 등록 | [ ] |
+| ~~`common/config/DomainServiceConfig.java`~~ | 삭제됨. 도메인 서비스에 `@Service` 직접 적용 | [V] |
+| `common/security/SecurityConfig.java` | JWT 인증/인가, URL별 Role 접근 제어 | [ ] |
+| `common/security/JwtTokenProvider.java` | JWT 생성/검증 (HMAC-SHA512) | [ ] |
+| `common/security/JwtAuthenticationFilter.java` | Bearer 토큰 → SecurityContext + 헤더 주입 | [ ] |
+| `common/security/AuthController.java` | 토큰 발급 엔드포인트 | [ ] |
 | `common/config/JacksonConfig.java` | snake_case, Instant 직렬화 | [ ] |
 | `common/config/QuerydslConfig.java` | JPAQueryFactory 빈 | [ ] |
 
 ---
 
-## Admin UI
+## API 테스트 페이지
 
 | 파일 | 확인 포인트 | 완료 |
 |------|-------------|------|
-| `src/main/resources/static/admin.html` | 대시보드 링크, API 호출 | [ ] |
-| `src/main/resources/static/admin-tags.html` | 인라인 편집 패널, 활성화/비활성화 버튼 | [ ] |
+| `src/main/resources/static/api-test.html` | 역할별 토큰 발급, API 호출/응답, 보안 테스트 | [ ] |
