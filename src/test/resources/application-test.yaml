@@ -1,4 +1,8 @@
 spring:
+  sql:
+    init:
+      mode: never
+
   datasource:
     driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
     url: jdbc:tc:mysql:8.0.36:///test?TC_REUSABLE=true
@@ -17,6 +21,10 @@ spring:
 
   jackson:
     property-naming-strategy: SNAKE_CASE
+
+jwt:
+  secret: test-jwt-secret-key-for-testing-only-minimum-256-bits-required-here
+  expiration: 86400000
 
 logging:
   level:

@@ -1,0 +1,25 @@
+package com.accommodation.platform.common.config;
+
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+
+/**
+ * 테스트용 Security 설정 — 모든 요청 허용, JWT 필터 없음.
+ * @WebMvcTest에서 @Import(TestSecurityConfig.class)와 함께 사용.
+ * JwtTokenProvider는 @MockitoBean으로 개별 테스트에서 선언 필요.
+ */
+@TestConfiguration
+@EnableWebSecurity
+public class TestSecurityConfig {
+
+    @Bean
+    public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+        return http.build();
+    }
+}

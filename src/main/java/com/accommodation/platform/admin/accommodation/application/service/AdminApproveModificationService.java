@@ -1,7 +1,6 @@
 package com.accommodation.platform.admin.accommodation.application.service;
 
 import java.time.LocalTime;
-import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,10 +12,11 @@ import tools.jackson.databind.ObjectMapper;
 import com.accommodation.platform.admin.accommodation.application.port.in.AdminApproveModificationUseCase;
 import com.accommodation.platform.common.exception.BusinessException;
 import com.accommodation.platform.common.exception.ErrorCode;
-import com.accommodation.platform.core.accommodation.adapter.out.persistence.AccommodationModificationRequestJpaEntity;
-import com.accommodation.platform.core.accommodation.adapter.out.persistence.AccommodationModificationRequestJpaRepository;
 import com.accommodation.platform.core.accommodation.application.port.out.LoadAccommodationPort;
+import com.accommodation.platform.core.accommodation.application.port.out.LoadModificationRequestPort;
+import com.accommodation.platform.core.accommodation.application.port.out.LoadModificationRequestPort.ModificationRequestData;
 import com.accommodation.platform.core.accommodation.application.port.out.PersistAccommodationPort;
+import com.accommodation.platform.core.accommodation.application.port.out.PersistModificationRequestPort;
 import com.accommodation.platform.core.accommodation.domain.enums.ModificationStatus;
 import com.accommodation.platform.core.accommodation.domain.model.Accommodation;
 import com.accommodation.platform.extranet.accommodation.application.port.in.ExtranetUpdateAccommodationUseCase.UpdateAccommodationCommand;
@@ -27,27 +27,21 @@ import com.accommodation.platform.extranet.accommodation.application.port.in.Ext
 @Transactional
 public class AdminApproveModificationService implements AdminApproveModificationUseCase {
 
-    private final AccommodationModificationRequestJpaRepository modificationRequestRepository;
+    private final LoadModificationRequestPort loadModificationRequestPort;
+    private final PersistModificationRequestPort persistModificationRequestPort;
     private final LoadAccommodationPort loadAccommodationPort;
     private final PersistAccommodationPort persistAccommodationPort;
     private final ObjectMapper objectMapper;
 
     @Override
-    @Transactional(readOnly = true)
-    public List<AccommodationModificationRequestJpaEntity> listPending() {
-
-        return modificationRequestRepository.findByStatus(ModificationStatus.PENDING);
-    }
-
-    @Override
     public void approve(Long modificationRequestId) {
 
-        AccommodationModificationRequestJpaEntity request = findRequest(modificationRequestId);
+        ModificationRequestData request = findRequest(modificationRequestId);
         validatePending(request);
 
-        UpdateAccommodationCommand command = deserializeCommand(request.getRequestData());
+        UpdateAccommodationCommand command = deserializeCommand(request.requestData());
 
-        Accommodation accommodation = loadAccommodationPort.findById(request.getAccommodationId())
+        Accommodation accommodation = loadAccommodationPort.findById(request.accommodationId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.ACCOMMODATION_NOT_FOUND));
 
         // null인 필드는 기존 값을 유지하여 덮어쓰기를 방지한다.
@@ -75,26 +69,26 @@ public class AdminApproveModificationService implements AdminApproveModification
                 checkOutTime);
 
         persistAccommodationPort.save(accommodation);
-        request.approve();
+        persistModificationRequestPort.approve(modificationRequestId);
     }
 
     @Override
     public void reject(Long modificationRequestId, String reason) {
 
-        AccommodationModificationRequestJpaEntity request = findRequest(modificationRequestId);
+        ModificationRequestData request = findRequest(modificationRequestId);
         validatePending(request);
-        request.reject(reason);
+        persistModificationRequestPort.reject(modificationRequestId, reason);
     }
 
-    private AccommodationModificationRequestJpaEntity findRequest(Long id) {
+    private ModificationRequestData findRequest(Long id) {
 
-        return modificationRequestRepository.findById(id)
+        return loadModificationRequestPort.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MODIFICATION_NOT_FOUND));
     }
 
-    private void validatePending(AccommodationModificationRequestJpaEntity request) {
+    private void validatePending(ModificationRequestData request) {
 
-        if (request.getStatus() != ModificationStatus.PENDING) {
+        if (request.status() != ModificationStatus.PENDING) {
             throw new BusinessException(ErrorCode.MODIFICATION_ALREADY_PROCESSED);
         }
     }

@@ -81,6 +81,11 @@ public class Room extends BaseEntity {
         return Collections.unmodifiableList(tagIds);
     }
 
+    public void restoreStatus(RoomStatus status) {
+
+        this.status = status;
+    }
+
     void setId(Long id) {
 
         this.id = id;

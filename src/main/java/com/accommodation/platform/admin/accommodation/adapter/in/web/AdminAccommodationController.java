@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 
 import com.accommodation.platform.admin.accommodation.application.port.in.AdminApproveAccommodationUseCase;
 import com.accommodation.platform.admin.accommodation.application.port.in.AdminApproveModificationUseCase;
+import com.accommodation.platform.admin.accommodation.application.port.in.AdminGetModificationQuery;
+import com.accommodation.platform.admin.accommodation.application.port.in.AdminGetModificationQuery.ModificationRequestSummary;
 import com.accommodation.platform.admin.accommodation.application.port.in.AdminListAccommodationQuery;
 import com.accommodation.platform.admin.accommodation.application.port.in.AdminListAccommodationQuery.AccommodationDetail;
 import com.accommodation.platform.common.response.ApiResponse;
@@ -26,6 +28,7 @@ public class AdminAccommodationController {
 
     private final AdminApproveAccommodationUseCase approveUseCase;
     private final AdminApproveModificationUseCase modificationUseCase;
+    private final AdminGetModificationQuery modificationQuery;
     private final AdminListAccommodationQuery listQuery;
 
     @GetMapping
@@ -66,9 +69,9 @@ public class AdminAccommodationController {
     }
 
     @GetMapping("/modifications/pending")
-    public ApiResponse<List<?>> listPendingModifications() {
+    public ApiResponse<List<ModificationRequestSummary>> listPendingModifications() {
 
-        return ApiResponse.success(modificationUseCase.listPending());
+        return ApiResponse.success(modificationQuery.listPending());
     }
 
     @PatchMapping("/modifications/{modificationRequestId}/approve")
@@ -85,8 +88,5 @@ public class AdminAccommodationController {
 
         modificationUseCase.reject(modificationRequestId, request.reason());
         return ApiResponse.success(null);
-    }
-
-    public record RejectModificationRequest(String reason) {
     }
 }

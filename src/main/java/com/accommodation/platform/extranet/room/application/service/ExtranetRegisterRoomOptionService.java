@@ -1,5 +1,7 @@
 package com.accommodation.platform.extranet.room.application.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -8,8 +10,10 @@ import lombok.RequiredArgsConstructor;
 import com.accommodation.platform.common.exception.BusinessException;
 import com.accommodation.platform.common.exception.ErrorCode;
 import com.accommodation.platform.core.accommodation.application.port.out.LoadAccommodationPort;
+import com.accommodation.platform.core.room.adapter.out.persistence.RoomOptionTranslationJpaEntity;
 import com.accommodation.platform.core.room.application.port.out.LoadRoomPort;
 import com.accommodation.platform.core.room.application.port.out.PersistRoomOptionPort;
+import com.accommodation.platform.core.room.application.port.out.PersistRoomOptionTranslationPort;
 import com.accommodation.platform.core.room.domain.enums.CancellationPolicy;
 import com.accommodation.platform.core.room.domain.model.Room;
 import com.accommodation.platform.core.room.domain.model.RoomOption;
@@ -21,6 +25,7 @@ import com.accommodation.platform.extranet.room.application.port.in.ExtranetRegi
 public class ExtranetRegisterRoomOptionService implements ExtranetRegisterRoomOptionUseCase {
 
     private final PersistRoomOptionPort persistRoomOptionPort;
+    private final PersistRoomOptionTranslationPort persistTranslationPort;
     private final LoadRoomPort loadRoomPort;
     private final LoadAccommodationPort loadAccommodationPort;
 
@@ -41,6 +46,23 @@ public class ExtranetRegisterRoomOptionService implements ExtranetRegisterRoomOp
                 .additionalPrice(command.additionalPrice())
                 .build();
 
-        return persistRoomOptionPort.save(roomOption);
+        RoomOption saved = persistRoomOptionPort.save(roomOption);
+
+        saveTranslations(saved.getId(), command.translations());
+
+        return saved;
+    }
+
+    private void saveTranslations(Long roomOptionId, List<TranslationCommand> translations) {
+
+        if (translations == null || translations.isEmpty()) {
+            return;
+        }
+
+        List<RoomOptionTranslationJpaEntity> entities = translations.stream()
+                .map(t -> new RoomOptionTranslationJpaEntity(roomOptionId, t.locale(), t.name()))
+                .toList();
+
+        persistTranslationPort.saveAll(entities);
     }
 }
