@@ -3,44 +3,590 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OTA 숙박 플랫폼 Demo</title>
+    <title>OTA 숙박 플랫폼 — 아키텍처 데모</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --orange: #FF5722;
+            --orange-dark: #E64A19;
+            --orange-light: #FBE9E7;
+            --blue: #1565C0;
+            --blue-mid: #2196F3;
+            --blue-light: #E3F2FD;
+            --green: #2E7D32;
+            --green-mid: #4CAF50;
+            --green-light: #E8F5E9;
+            --purple: #6A1B9A;
+            --purple-mid: #9C27B0;
+            --purple-light: #F3E5F5;
+            --ink: #1a1a1a;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --bg: #f8f7f5;
+            --white: #ffffff;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, sans-serif; background: #f5f5f5; }
-        .container { max-width: 800px; margin: 40px auto; padding: 20px; }
-        h1 { text-align: center; margin-bottom: 40px; color: #333; }
-        .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .card { background: white; border-radius: 12px; padding: 30px; text-align: center;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
-        .card:hover { transform: translateY(-4px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
-        .card h2 { margin-bottom: 10px; }
-        .card p { color: #666; font-size: 14px; }
-        .card.partner { border-top: 4px solid #2196F3; }
-        .card.admin { border-top: 4px solid #FF5722; }
-        .card.customer { border-top: 4px solid #4CAF50; }
-        .emoji { font-size: 48px; margin-bottom: 15px; }
+
+        body {
+            font-family: 'DM Sans', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            min-height: 100vh;
+        }
+
+        /* ── HEADER ── */
+        .site-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .site-header .logo {
+            font-family: 'DM Serif Display', serif;
+            font-size: 20px;
+            color: var(--orange);
+            letter-spacing: -0.3px;
+        }
+        .site-header nav a {
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 500;
+            margin-left: 24px;
+            transition: color .15s;
+        }
+        .site-header nav a:hover { color: var(--ink); }
+
+        /* ── HERO ── */
+        .hero {
+            max-width: 900px;
+            margin: 72px auto 0;
+            padding: 0 24px;
+            text-align: center;
+        }
+        .hero-eyebrow {
+            display: inline-block;
+            background: var(--orange-light);
+            color: var(--orange);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: 100px;
+            margin-bottom: 20px;
+        }
+        .hero h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: clamp(38px, 6vw, 64px);
+            line-height: 1.1;
+            letter-spacing: -1.5px;
+            color: var(--ink);
+            margin-bottom: 20px;
+        }
+        .hero h1 span { color: var(--orange); }
+        .hero p {
+            font-size: 18px;
+            color: var(--muted);
+            line-height: 1.7;
+            max-width: 580px;
+            margin: 0 auto 48px;
+            font-weight: 300;
+        }
+
+        /* ── ARCH DIAGRAM ── */
+        .arch-section {
+            max-width: 1000px;
+            margin: 0 auto 80px;
+            padding: 0 24px;
+        }
+        .section-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .arch-diagram {
+            background: var(--white);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            padding: 40px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+
+        /* layers */
+        .arch-layers {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .arch-layer {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .layer-label {
+            width: 90px;
+            flex-shrink: 0;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+            color: var(--muted);
+            text-align: right;
+        }
+        .layer-boxes {
+            flex: 1;
+            display: flex;
+            gap: 8px;
+        }
+        .layer-box {
+            flex: 1;
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+            border: 1.5px solid;
+        }
+        .layer-box.adapter-in {
+            background: #FFF8F5;
+            border-color: #FFCCBC;
+            color: var(--orange-dark);
+        }
+        .layer-box.application {
+            background: #E8EAF6;
+            border-color: #9FA8DA;
+            color: #283593;
+        }
+        .layer-box.domain {
+            background: #E8F5E9;
+            border-color: #A5D6A7;
+            color: var(--green);
+        }
+        .layer-box.adapter-out {
+            background: #FFF9C4;
+            border-color: #FFF176;
+            color: #F57F17;
+        }
+        .layer-box small {
+            display: block;
+            font-weight: 300;
+            font-size: 10px;
+            margin-top: 2px;
+            opacity: .7;
+        }
+
+        .arch-arrow {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--muted);
+            font-size: 18px;
+            height: 16px;
+        }
+
+        /* channels row */
+        .channels-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+        .channel-pill {
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .channel-pill.admin { background: var(--orange-light); color: var(--orange); }
+        .channel-pill.extranet { background: var(--blue-light); color: var(--blue); }
+        .channel-pill.customer { background: var(--green-light); color: var(--green); }
+        .channel-pill small { display: block; font-weight: 400; font-size: 10px; margin-top: 2px; }
+
+        /* ── CHANNEL CARDS ── */
+        .channels-section {
+            max-width: 1000px;
+            margin: 0 auto 80px;
+            padding: 0 24px;
+        }
+        .channel-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        .channel-card {
+            background: var(--white);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 28px 24px;
+            cursor: pointer;
+            transition: transform .2s, box-shadow .2s, border-color .2s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .channel-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.10);
+        }
+        .channel-card.partner:hover { border-color: var(--blue-mid); }
+        .channel-card.admin-card:hover { border-color: var(--orange); }
+        .channel-card.customer-card:hover { border-color: var(--green-mid); }
+        .channel-card.supplier-card:hover { border-color: var(--purple-mid); }
+
+        .card-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+        .card-badge.partner { background: var(--blue-light); color: var(--blue); }
+        .card-badge.admin-b { background: var(--orange-light); color: var(--orange); }
+        .card-badge.customer-b { background: var(--green-light); color: var(--green); }
+        .card-badge.supplier-b { background: var(--purple-light); color: var(--purple); }
+
+        .channel-card h3 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 22px;
+            margin-bottom: 8px;
+            letter-spacing: -.3px;
+        }
+        .channel-card p {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .card-features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .card-features li {
+            font-size: 12px;
+            color: var(--muted);
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+        .card-features li::before {
+            content: '→';
+            color: var(--orange);
+            flex-shrink: 0;
+            font-weight: 600;
+        }
+        .card-cta {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .channel-card.partner .card-cta { color: var(--blue); }
+        .channel-card.admin-card .card-cta { color: var(--orange); }
+        .channel-card.customer-card .card-cta { color: var(--green); }
+        .channel-card.supplier-card .card-cta { color: var(--purple); }
+
+        /* supplier card spans full width in 2nd row */
+        .channel-cards-bottom {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        /* ── DESIGN DECISIONS ── */
+        .decisions-section {
+            max-width: 1000px;
+            margin: 0 auto 80px;
+            padding: 0 24px;
+        }
+        .decisions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        .decision-card {
+            background: var(--white);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 24px;
+        }
+        .decision-num {
+            font-family: 'DM Serif Display', serif;
+            font-size: 36px;
+            color: var(--orange-light);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        .decision-card h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .decision-card p {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.65;
+        }
+        .decision-card code {
+            display: inline-block;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 11px;
+            font-family: 'Fira Mono', monospace;
+            color: var(--orange-dark);
+            margin-top: 6px;
+        }
+
+        /* ── TECH STACK ── */
+        .stack-section {
+            max-width: 1000px;
+            margin: 0 auto 100px;
+            padding: 0 24px;
+        }
+        .stack-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+        .stack-pill {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--ink);
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            text-align: center;
+            padding: 32px;
+            font-size: 12px;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 700px) {
+            .channel-cards, .channel-cards-bottom { grid-template-columns: 1fr; }
+            .decisions-grid { grid-template-columns: 1fr; }
+            .channels-row { grid-template-columns: 1fr; }
+            .site-header { padding: 14px 20px; }
+            .arch-diagram { padding: 20px; }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>OTA 숙박 플랫폼 Demo</h1>
-        <div class="cards">
-            <div class="card partner" onclick="location.href='/partner.html'">
-                <div class="emoji">🏢</div>
-                <h2>숙소 파트너</h2>
-                <p>숙소/객실 등록, 재고/가격 설정</p>
+
+<header class="site-header">
+    <div class="logo">StayPlatform</div>
+    <nav>
+        <a href="#architecture">아키텍처</a>
+        <a href="#channels">채널</a>
+        <a href="#decisions">설계 결정</a>
+        <a href="demo-partner.html">파트너 데모</a>
+    </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-eyebrow">Architecture Demo</div>
+    <h1>OTA 숙박 플랫폼<br><span>백엔드 설계</span></h1>
+    <p>헥사고날 아키텍처 + 채널별 분리로 설계된<br>학습&실서비스 수준의 OTA 백엔드 시스템</p>
+</section>
+
+<!-- ARCHITECTURE DIAGRAM -->
+<section class="arch-section" id="architecture">
+    <p class="section-label">Hexagonal Architecture</p>
+    <div class="arch-diagram">
+        <div class="arch-layers">
+            <div class="arch-layer">
+                <div class="layer-label">Adapter In</div>
+                <div class="layer-boxes">
+                    <div class="layer-box adapter-in">Admin Controller<small>관리자 REST API</small></div>
+                    <div class="layer-box adapter-in">Extranet Controller<small>파트너 REST API</small></div>
+                    <div class="layer-box adapter-in">Customer Controller<small>고객 REST API</small></div>
+                </div>
             </div>
-            <div class="card admin" onclick="location.href='/admin.html'">
-                <div class="emoji">⚙️</div>
-                <h2>관리자</h2>
-                <p>숙소 승인, 태그 관리, 가격 조정</p>
+            <div class="arch-arrow">↓</div>
+            <div class="arch-layer">
+                <div class="layer-label">Application</div>
+                <div class="layer-boxes">
+                    <div class="layer-box application">Inbound Port<small>UseCase / Query 인터페이스</small></div>
+                    <div class="layer-box application">UseCase Service<small>유스케이스 구현체 + 트랜잭션</small></div>
+                    <div class="layer-box application">Outbound Port<small>Repository / Client 인터페이스</small></div>
+                </div>
             </div>
-            <div class="card customer" onclick="location.href='/customer.html'">
-                <div class="emoji">🔍</div>
-                <h2>고객</h2>
-                <p>숙소 검색, 예약</p>
+            <div class="arch-arrow">↓</div>
+            <div class="arch-layer">
+                <div class="layer-label">Domain</div>
+                <div class="layer-boxes">
+                    <div class="layer-box domain">Entity / VO<small>순수 Java, 프레임워크 의존성 0</small></div>
+                    <div class="layer-box domain">Domain Service<small>DomainServiceConfig @Bean 등록</small></div>
+                    <div class="layer-box domain">Domain Event<small>POJO 이벤트</small></div>
+                </div>
+            </div>
+            <div class="arch-arrow">↓</div>
+            <div class="arch-layer">
+                <div class="layer-label">Adapter Out</div>
+                <div class="layer-boxes">
+                    <div class="layer-box adapter-out">JPA Adapter<small>JpaEntity + Spring Data</small></div>
+                    <div class="layer-box adapter-out">Supplier REST<small>외부 공급사 클라이언트</small></div>
+                    <div class="layer-box adapter-out">Redis / Cache<small>재고 동시성 제어</small></div>
+                </div>
             </div>
         </div>
+
+        <div class="channels-row">
+            <div class="channel-pill admin">Admin 채널<small>관리자 전용 포트</small></div>
+            <div class="channel-pill extranet">Extranet 채널<small>파트너 전용 포트</small></div>
+            <div class="channel-pill customer">Customer 채널<small>고객 전용 포트</small></div>
+        </div>
     </div>
+</section>
+
+<!-- CHANNEL CARDS -->
+<section class="channels-section" id="channels">
+    <p class="section-label">시나리오 데모</p>
+    <div class="channel-cards">
+        <a class="channel-card partner" href="demo-partner.html">
+            <span class="card-badge partner">Extranet</span>
+            <h3>숙소 파트너</h3>
+            <p>파트너가 숙소를 등록하고 객실·가격·재고를 설정하는 전체 플로우</p>
+            <ul class="card-features">
+                <li>숙소 등록 → 객실 등록 → 가격·재고 설정</li>
+                <li>수정 요청 시 관리자 승인 대기 상태</li>
+                <li>숙박 / 대실 2가지 타입 재고</li>
+            </ul>
+            <div class="card-cta">파트너 시나리오 보기 →</div>
+        </a>
+
+        <a class="channel-card admin-card" href="demo-admin.html">
+            <span class="card-badge admin-b">Admin</span>
+            <h3>관리자</h3>
+            <p>숙소 승인·정지, 파트너 수정 요청 처리, 태그 시스템 관리</p>
+            <ul class="card-features">
+                <li>숙소 상태 전환 (PENDING → ACTIVE)</li>
+                <li>수정 요청 승인 시 즉시 데이터 반영</li>
+                <li>채널별 독립 태그 그룹 관리</li>
+            </ul>
+            <div class="card-cta">관리자 시나리오 보기 →</div>
+        </a>
+
+        <a class="channel-card customer-card" href="demo-customer.html">
+            <span class="card-badge customer-b">Customer</span>
+            <h3>고객</h3>
+            <p>숙소 검색 → 상세 조회 → 예약 → 동시성 처리까지의 전체 플로우</p>
+            <ul class="card-features">
+                <li>날짜·지역·가격 필터 동적 검색</li>
+                <li>숙박 / 대실 예약 분리</li>
+                <li>재고 차감 동시성 충돌 방지 시나리오</li>
+            </ul>
+            <div class="card-cta">고객 시나리오 보기 →</div>
+        </a>
+    </div>
+
+    <div class="channel-cards-bottom">
+        <a class="channel-card" href="partner.html" style="border-color: var(--border);">
+            <span class="card-badge" style="background:#f3f4f6;color:#374151;">기존 데모</span>
+            <h3>기존 파트너 센터</h3>
+            <p>Phase 1~8에서 구축한 기존 운영 데모 페이지들</p>
+            <ul class="card-features">
+                <li>파트너 대시보드 (partner.html)</li>
+                <li>관리자 대시보드 (admin.html)</li>
+                <li>고객 검색 (customer.html)</li>
+            </ul>
+            <div class="card-cta" style="color: var(--muted);">기존 데모 보기 →</div>
+        </a>
+    </div>
+</section>
+
+<!-- DESIGN DECISIONS -->
+<section class="decisions-section" id="decisions">
+    <p class="section-label">핵심 설계 결정</p>
+    <div class="decisions-grid">
+        <div class="decision-card">
+            <div class="decision-num">01</div>
+            <h4>채널별 완전 분리</h4>
+            <p>admin / extranet / customer 각 채널이 독립적인 Inbound Port와 UseCase를 갖습니다. 채널 간 직접 참조는 컴파일 레벨에서 금지되어 있으며, 공유 로직만 <code>core</code> 패키지로 올라갑니다.</p>
+        </div>
+        <div class="decision-card">
+            <div class="decision-num">02</div>
+            <h4>수정 승인 구조</h4>
+            <p>파트너가 숙소 정보를 변경하면 즉시 반영되지 않고 <code>ModificationRequest</code> 레코드가 생성됩니다. 관리자가 승인하는 순간 실제 데이터에 반영되며, 변경 데이터는 JSON으로 저장해 유연성을 확보합니다.</p>
+        </div>
+        <div class="decision-card">
+            <div class="decision-num">03</div>
+            <h4>숙박 vs 대실 타입 분리</h4>
+            <p>재고와 예약 모두 <code>STAY</code> / <code>HOURLY</code> 두 타입으로 분리됩니다. 대실은 시간 슬롯 단위로 재고가 관리되며, 가격 설정·예약 API 엔드포인트도 별도로 설계되어 있습니다.</p>
+        </div>
+        <div class="decision-card">
+            <div class="decision-num">04</div>
+            <h4>예약 동시성 처리</h4>
+            <p>동일 재고에 동시 예약 요청이 들어올 때 오버부킹을 방지합니다. Pessimistic Lock(DB) 또는 Redis Distributed Lock을 통해 원자성을 보장하며, <code>CountDownLatch</code> 기반 동시성 테스트로 검증합니다.</p>
+        </div>
+        <div class="decision-card">
+            <div class="decision-num">05</div>
+            <h4>공급사 연동 어댑터</h4>
+            <p>외부 OTA 공급사(Expedia, Agoda 등)를 <code>SupplierClient</code> Outbound Port로 추상화합니다. 공급사별 구현체는 어댑터 레이어에 격리되며, 공급사 전용 태그 그룹으로 데이터를 구분합니다.</p>
+        </div>
+        <div class="decision-card">
+            <div class="decision-num">06</div>
+            <h4>도메인 순수성 유지</h4>
+            <p>엔티티와 VO는 순수 Java로 작성되며 JPA / Spring 어노테이션이 없습니다. 도메인 서비스는 <code>@Service</code> 대신 <code>DomainServiceConfig</code>에서 <code>@Bean</code>으로 등록해 프레임워크 의존성을 분리합니다.</p>
+        </div>
+    </div>
+</section>
+
+<!-- TECH STACK -->
+<section class="stack-section">
+    <p class="section-label">Tech Stack</p>
+    <div class="stack-pills">
+        <span class="stack-pill">Java 21</span>
+        <span class="stack-pill">Spring Boot 4.0</span>
+        <span class="stack-pill">Hexagonal Architecture</span>
+        <span class="stack-pill">MySQL</span>
+        <span class="stack-pill">QueryDSL</span>
+        <span class="stack-pill">JUnit 5</span>
+        <span class="stack-pill">Testcontainers</span>
+        <span class="stack-pill">Spring REST Docs</span>
+        <span class="stack-pill">Lombok</span>
+        <span class="stack-pill">Gradle</span>
+    </div>
+</section>
+
+<footer>
+    OTA 숙박 플랫폼 아키텍처 데모 — Spring Boot 4 + Hexagonal Architecture
+</footer>
+
 </body>
 </html>

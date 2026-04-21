@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 시나리오 — OTA 플랫폼 데모</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --orange: #FF5722;
+            --orange-dark: #E64A19;
+            --orange-light: #FBE9E7;
+            --ink: #1a1a1a;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --bg: #f8f7f5;
+            --white: #fff;
+            --success: #2E7D32;
+            --success-bg: #E8F5E9;
+            --warn: #E65100;
+            --warn-bg: #FFF3E0;
+            --blue: #1565C0;
+            --blue-mid: #2196F3;
+            --blue-light: #E3F2FD;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'DM Sans',-apple-system,sans-serif; background:var(--bg); color:var(--ink); }
+
+        .site-header {
+            background:var(--white); border-bottom:1px solid var(--border);
+            padding:14px 32px; display:flex; align-items:center; justify-content:space-between;
+            position:sticky; top:0; z-index:50;
+        }
+        .site-header .logo { font-family:'DM Serif Display',serif; font-size:18px; color:var(--orange); }
+        .site-header nav a { text-decoration:none; color:var(--muted); font-size:13px; margin-left:20px; }
+        .site-header nav a:hover { color:var(--ink); }
+
+        .page-hero {
+            background:linear-gradient(135deg, #BF360C 0%, var(--orange) 100%);
+            color:var(--white); padding:48px 32px; text-align:center;
+        }
+        .page-hero .channel-tag {
+            display:inline-block; background:rgba(255,255,255,.15);
+            border:1px solid rgba(255,255,255,.3); border-radius:100px;
+            padding:4px 14px; font-size:11px; font-weight:600;
+            letter-spacing:1.5px; text-transform:uppercase; margin-bottom:16px;
+        }
+        .page-hero h1 { font-family:'DM Serif Display',serif; font-size:36px; margin-bottom:10px; }
+        .page-hero p { font-size:15px; opacity:.8; max-width:540px; margin:0 auto; font-weight:300; }
+
+        .main { max-width:1040px; margin:0 auto; padding:40px 24px 80px; }
+
+        /* flow steps */
+        .flow-steps {
+            display:flex; gap:0; margin-bottom:32px;
+            background:var(--white); border:1px solid var(--border);
+            border-radius:12px; overflow:hidden;
+        }
+        .flow-step {
+            flex:1; padding:14px 16px; cursor:pointer;
+            border-right:1px solid var(--border); transition:background .15s;
+        }
+        .flow-step:last-child { border-right:none; }
+        .flow-step:hover { background:#f9fafb; }
+        .flow-step.active { background:var(--orange-light); }
+        .flow-step .step-num { font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+        .flow-step.active .step-num { color:var(--orange); }
+        .flow-step .step-name { font-size:13px; font-weight:600; }
+        .flow-step .step-desc { font-size:11px; color:var(--muted); margin-top:2px; }
+
+        .panel { display:none; background:var(--white); border:1px solid var(--border); border-radius:16px; padding:28px; box-shadow:0 2px 12px rgba(0,0,0,.04); }
+        .panel.active { display:block; }
+        .panel h3 { font-family:'DM Serif Display',serif; font-size:20px; margin-bottom:6px; }
+        .panel .rationale {
+            background:#f9fafb; border-left:3px solid var(--orange);
+            border-radius:0 8px 8px 0; padding:10px 14px;
+            font-size:12px; color:var(--muted); margin-bottom:24px; line-height:1.65;
+        }
+        .panel .rationale strong { color:var(--ink); }
+
+        .btn { padding:10px 20px; border:none; border-radius:8px; cursor:pointer; font-size:13px; font-weight:600; font-family:inherit; transition:opacity .15s, transform .1s; }
+        .btn:hover { opacity:.88; transform:translateY(-1px); }
+        .btn-orange { background:var(--orange); color:var(--white); }
+        .btn-green { background:#4CAF50; color:var(--white); }
+        .btn-blue { background:var(--blue-mid); color:var(--white); }
+        .btn-red { background:#f44336; color:var(--white); }
+        .btn-gray { background:#9E9E9E; color:var(--white); }
+        .btn-sm { padding:6px 14px; font-size:12px; }
+
+        .api-call { margin-top:20px; border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+        .api-call-header { background:#1e293b; color:#94a3b8; padding:10px 16px; font-size:12px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+        .method { background:var(--orange); color:var(--white); padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:.5px; }
+        .method.GET { background:#4CAF50; }
+        .method.POST { background:#2196F3; }
+        .method.PATCH { background:#FF9800; }
+        .api-call-header .url { color:#e2e8f0; font-family:'Fira Mono',monospace; font-size:12px; }
+        .api-result { background:#0f172a; color:#a5f3fc; padding:16px; font-family:'Fira Mono',monospace; font-size:12px; line-height:1.6; max-height:260px; overflow-y:auto; white-space:pre-wrap; }
+        .api-result.error { color:#fca5a5; }
+        .api-result.idle { color:#475569; font-style:italic; }
+
+        /* table */
+        .data-table { width:100%; border-collapse:collapse; margin-top:16px; }
+        .data-table th, .data-table td { padding:10px 12px; text-align:left; border-bottom:1px solid var(--border); font-size:13px; }
+        .data-table th { background:#f9fafb; font-weight:600; font-size:11px; letter-spacing:.4px; text-transform:uppercase; color:var(--muted); }
+        .data-table tr:last-child td { border-bottom:none; }
+        .data-table tr:hover td { background:#fafafa; }
+
+        .badge { display:inline-block; padding:3px 10px; border-radius:100px; font-size:11px; font-weight:600; }
+        .badge.ACTIVE { background:var(--success-bg); color:var(--success); }
+        .badge.PENDING { background:var(--warn-bg); color:var(--warn); }
+        .badge.SUSPENDED { background:#FFEBEE; color:#C62828; }
+        .badge.CLOSED { background:#ECEFF1; color:#546E7A; }
+        .badge.approved { background:var(--success-bg); color:var(--success); }
+        .badge.rejected { background:#FFEBEE; color:#C62828; }
+
+        .actions { display:flex; gap:6px; flex-wrap:wrap; }
+
+        /* mod detail panel */
+        .mod-detail {
+            margin-top:20px; background:#FFF8F5; border:1.5px solid #FFCCBC;
+            border-radius:12px; padding:20px; display:none;
+        }
+        .mod-detail.show { display:block; }
+        .mod-detail h4 { font-size:14px; font-weight:700; color:var(--orange-dark); margin-bottom:14px; }
+        .diff-table { width:100%; border-collapse:collapse; font-size:13px; }
+        .diff-table th, .diff-table td { padding:8px 12px; border-bottom:1px solid #FFE0B2; text-align:left; }
+        .diff-table th { background:#FFE0B2; font-weight:600; font-size:11px; text-transform:uppercase; color:#E65100; }
+        .diff-table .changed { color:var(--orange-dark); font-weight:700; }
+        .mod-actions { display:flex; gap:10px; margin-top:16px; }
+
+        /* form elements */
+        .form-group { display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+        .form-group label { font-size:11px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; color:var(--muted); }
+        .form-group input, .form-group select {
+            padding:9px 12px; border:1.5px solid var(--border);
+            border-radius:8px; font-size:14px; font-family:inherit; outline:none; max-width:320px;
+        }
+        .form-group input:focus, .form-group select:focus { border-color:var(--orange); }
+
+        .form-row { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-bottom:16px; }
+        .form-row .form-group { margin-bottom:0; }
+
+        .empty-state { text-align:center; padding:40px; color:var(--muted); font-size:14px; }
+
+        /* cascading select */
+        .cascade-row {
+            display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;
+            margin-bottom:16px;
+        }
+        .cascade-row .form-group { flex:1; min-width:160px; }
+        .cascade-row .refresh-btn {
+            padding:9px 12px; border:1.5px solid var(--border); border-radius:8px;
+            background:var(--white); cursor:pointer; font-size:13px;
+            font-family:inherit; color:var(--muted); transition:border-color .15s;
+            white-space:nowrap; align-self:flex-end;
+        }
+        .cascade-row .refresh-btn:hover { border-color:var(--orange); color:var(--ink); }
+        .cascade-hint { font-size:11px; color:var(--muted); padding:4px 0 12px; }
+
+        .toast {
+            position:fixed; bottom:24px; right:24px; z-index:9999;
+            background:#1e293b; color:#e2e8f0; padding:12px 20px;
+            border-radius:10px; font-size:13px; max-width:320px;
+            box-shadow:0 8px 24px rgba(0,0,0,.25);
+            animation:slideIn .25s ease;
+            display:flex; align-items:center; gap:10px;
+        }
+        .toast.success { border-left:4px solid #4CAF50; }
+        .toast.error { border-left:4px solid #f44336; }
+        .toast.info { border-left:4px solid #2196F3; }
+        @keyframes slideIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+        @media(max-width:640px) {
+            .flow-steps { flex-direction:column; }
+            .flow-step { border-right:none; border-bottom:1px solid var(--border); }
+            .data-table th:nth-child(3), .data-table td:nth-child(3) { display:none; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="site-header">
+    <div class="logo">StayPlatform</div>
+    <nav>
+        <a href="index.html">← 홈</a>
+        <a href="demo-partner.html">파트너</a>
+        <a href="demo-customer.html">고객</a>
+    </nav>
+</header>
+
+<div class="page-hero">
+    <div class="channel-tag">Admin Channel</div>
+    <h1>관리자 시나리오</h1>
+    <p>숙소 승인·정지, 파트너 수정 요청 처리,<br>태그 시스템 관리까지 관리자 채널 전체 플로우</p>
+</div>
+
+<div class="main">
+
+    <div class="flow-steps">
+        <div class="flow-step active" onclick="showStep(0)">
+            <div class="step-num">Step 1</div>
+            <div class="step-name">숙소 목록</div>
+            <div class="step-desc">전체 숙소 조회·승인</div>
+        </div>
+        <div class="flow-step" onclick="showStep(1)">
+            <div class="step-num">Step 2</div>
+            <div class="step-name">수정 요청 처리</div>
+            <div class="step-desc">승인 / 거절</div>
+        </div>
+        <div class="flow-step" onclick="showStep(2)">
+            <div class="step-num">Step 3</div>
+            <div class="step-name">태그 그룹 관리</div>
+            <div class="step-desc">태그 CRUD</div>
+        </div>
+        <div class="flow-step" onclick="showStep(3)">
+            <div class="step-num">Step 4</div>
+            <div class="step-name">숙소 상세 (다국어)</div>
+            <div class="step-desc">translations 조회</div>
+        </div>
+    </div>
+
+    <!-- STEP 0: 숙소 목록 -->
+    <div class="panel active" id="panel-0">
+        <h3>전체 숙소 목록</h3>
+        <div class="rationale">
+            <strong>왜 이렇게 설계했나:</strong> 관리자는 모든 파트너의 숙소를 조회하고 상태를 전환할 수 있습니다.
+            파트너가 등록한 숙소는 <code>PENDING</code> 상태로 시작하며, 관리자가 <strong>승인</strong>해야 <code>ACTIVE</code>로 전환되어 고객에게 노출됩니다.
+            채널 분리 덕분에 관리자 전용 포트(<code>AdminManageAccommodationUseCase</code>)가 파트너 포트와 완전히 격리됩니다.
+        </div>
+
+        <button class="btn btn-orange" onclick="loadAccommodations()">숙소 목록 불러오기 →</button>
+
+        <div class="api-call">
+            <div class="api-call-header">
+                <span class="method GET">GET</span>
+                <span class="url">/api/v1/admin/accommodations</span>
+            </div>
+            <div class="api-result idle" id="s0_result">버튼을 눌러 API를 호출하세요</div>
+        </div>
+
+        <table class="data-table" id="s0_table" style="display:none">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>숙소명</th>
+                    <th>유형</th>
+                    <th>상태</th>
+                    <th>관리</th>
+                </tr>
+            </thead>
+            <tbody id="s0_tbody"></tbody>
+        </table>
+
+        <div id="s0_detail" style="display:none;margin-top:20px;background:#E3F2FD;border-radius:12px;padding:20px">
+            <p style="font-size:13px;font-weight:700;color:#1565C0;margin-bottom:14px" id="s0_detail_title">숙소 상세</p>
+            <div id="s0_detail_body"></div>
+        </div>
+    </div>
+
+    <!-- STEP 1: 수정 요청 -->
+    <div class="panel" id="panel-1">
+        <h3>파트너 수정 요청 처리</h3>
+        <div class="rationale">
+            <strong>왜 이렇게 설계했나:</strong> 파트너가 숙소를 수정하면 <strong>즉시 반영되지 않습니다.</strong>
+            <code>ModificationRequest</code> 레코드가 생성되고 변경 데이터는 JSON으로 저장됩니다.
+            관리자가 현재 값과 변경 요청 값을 비교한 뒤 승인/거절을 결정합니다.
+            승인 시 실제 숙소 데이터에 반영되고, 거절 시 사유와 함께 반려됩니다.
+        </div>
+
+        <button class="btn btn-orange" onclick="loadModifications()">수정 요청 목록 불러오기 →</button>
+
+        <div class="api-call">
+            <div class="api-call-header">
+                <span class="method GET">GET</span>
+                <span class="url">/api/v1/admin/accommodations/modifications/pending</span>
+            </div>
+            <div class="api-result idle" id="s1_result">버튼을 눌러 API를 호출하세요</div>
+        </div>
+
+        <table class="data-table" id="s1_table" style="display:none">
+            <thead>
+                <tr><th>요청 ID</th><th>숙소 ID</th><th>파트너 ID</th><th>상태</th><th>요청일</th><th>처리</th></tr>
+            </thead>
+            <tbody id="s1_tbody"></tbody>
+        </table>
+
+        <div class="mod-detail" id="mod_detail">
+            <h4 id="mod_detail_title">수정 요청 상세</h4>
+            <table class="diff-table">
+                <thead><tr><th>항목</th><th>현재 값</th><th>변경 요청</th></tr></thead>
+                <tbody id="mod_diff_body"></tbody>
+            </table>
+            <div class="mod-actions">
+                <button class="btn btn-green" onclick="approveMod()">승인 — 즉시 반영</button>
+                <button class="btn btn-red" onclick="rejectMod()">거절 — 사유 입력</button>
+                <button class="btn btn-gray btn-sm" onclick="document.getElementById('mod_detail').classList.remove('show')">닫기</button>
+            </div>
+            <input type="hidden" id="current_mod_id">
+        </div>
+    </div>
+
+    <!-- STEP 2: 태그 관리 -->
+    <div class="panel" id="panel-2">
+        <h3>태그 그룹 관리</h3>
+        <div class="rationale">
+            <strong>왜 이렇게 설계했나:</strong> 태그 시스템은 숙소/객실 분류를 위한 유연한 메타데이터입니다.
+            태그 그룹은 <code>accommodation_type</code>으로 특정 숙소 유형에만 표시하거나 전체 적용할 수 있습니다.
+            공급사 연동 시에는 <strong>공급사 전용 태그 그룹</strong>을 별도로 생성해 일반 태그와 분리합니다.
+            태그는 즉시 활성/비활성 전환이 가능하며, 삭제 대신 <strong>Soft Deactivate</strong> 방식을 사용합니다.
+        </div>
+
+        <div style="margin-bottom:20px;padding:14px;background:#EDE7F6;border-radius:8px;font-size:12px;color:#4A148C;line-height:1.7;">
+            <strong>공급사 연동 태그 설계 포인트</strong><br>
+            <code>TagGroup.supplierId = null</code> → 플랫폼 공용 태그 (파트너가 설정)<br>
+            <code>TagGroup.supplierId = 1</code> → Expedia 전용 태그 그룹 (동기화 시 자동 생성)<br>
+            공급사 재동기화 시 플랫폼 태그를 덮어쓰지 않고 공급사 전용 그룹만 업데이트합니다.<br>
+            <code>SupplierCategoryMapping</code> 테이블로 공급사 카테고리 → 내부 태그 매핑 상태(<code>MAPPED / PENDING / IGNORED</code>)를 관리합니다.
+        </div>
+
+        <button class="btn btn-orange" onclick="loadTagGroups()">태그 그룹 목록 불러오기 →</button>
+        <a href="admin-tags.html" class="btn btn-gray btn-sm" style="text-decoration:none;margin-left:8px">전체 태그 관리 페이지 →</a>
+
+        <div class="api-call">
+            <div class="api-call-header">
+                <span class="method GET">GET</span>
+                <span class="url">/api/v1/admin/tag-groups</span>
+            </div>
+            <div class="api-result idle" id="s2_result">버튼을 눌러 API를 호출하세요</div>
+        </div>
+
+        <table class="data-table" id="s2_table" style="display:none">
+            <thead>
+                <tr><th>ID</th><th>그룹명</th><th>대상</th><th>숙소유형</th><th>상태</th><th>관리</th></tr>
+            </thead>
+            <tbody id="s2_tbody"></tbody>
+        </table>
+
+        <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+            <p style="font-size:13px;font-weight:600;margin-bottom:14px">새 태그 그룹 추가</p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>그룹명</label>
+                    <input id="tg_name" placeholder="예: 편의시설, 조식 옵션">
+                </div>
+                <div class="form-group">
+                    <label>대상</label>
+                    <select id="tg_target">
+                        <option value="ACCOMMODATION">숙소</option>
+                        <option value="ROOM">객실</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>숙소유형 (전체=비워두기)</label>
+                    <select id="tg_acctype">
+                        <option value="">전체</option>
+                        <option>HOTEL</option><option>MOTEL</option><option>PENSION</option>
+                        <option>RESORT</option><option>GUEST_HOUSE</option><option>POOL_VILLA</option>
+                    </select>
+                </div>
+                <div class="form-group" style="justify-content:flex-end">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-green" onclick="createTagGroup()">추가</button>
+                </div>
+            </div>
+
+            <div class="api-call">
+                <div class="api-call-header">
+                    <span class="method POST">POST</span>
+                    <span class="url">/api/v1/admin/tag-groups</span>
+                </div>
+                <div class="api-result idle" id="s2_create_result">태그 그룹 추가 후 결과가 표시됩니다</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STEP 3: 숙소 상세 (다국어) -->
+    <div class="panel" id="panel-3">
+        <h3>숙소 상세 조회 — 다국어 정보</h3>
+        <div class="rationale">
+            <strong>왜 이렇게 설계했나:</strong> 관리자는 숙소 상세 조회 시 모든 언어의 번역 콘텐츠를 확인합니다.
+            <code>GET /api/v1/admin/accommodations/{id}</code>는 기본 정보와 함께 <code>translations[]</code>를 반환하여
+            관리자가 승인·정지·폐쇄 결정 전에 다국어 콘텐츠를 검토할 수 있도록 합니다.
+            번역 데이터는 <code>accommodation_translation</code> 테이블에 locale별로 분리 저장됩니다.
+        </div>
+
+        <div class="cascade-row">
+            <div class="form-group">
+                <label>숙소 선택</label>
+                <select id="d_accSel" onchange="document.getElementById('d_accId').value=this.value">
+                    <option value="">-- 숙소 선택 --</option>
+                </select>
+            </div>
+            <div class="form-group" style="max-width:120px">
+                <label>직접 입력</label>
+                <input id="d_accId" type="number" placeholder="숙소 ID">
+            </div>
+            <button class="refresh-btn" onclick="loadAdminAccSelect()">새로고침</button>
+            <button class="btn btn-orange" onclick="loadAccDetail()">상세 조회 →</button>
+        </div>
+        <p class="cascade-hint">드롭다운에서 선택하거나 ID를 직접 입력하세요. Step 1에서 숙소를 클릭하면 자동으로 이동합니다.</p>
+
+        <div class="api-call">
+            <div class="api-call-header">
+                <span class="method GET">GET</span>
+                <span class="url">/api/v1/admin/accommodations/{id}</span>
+            </div>
+            <div class="api-result idle" id="s3_result">버튼을 눌러 API를 호출하세요</div>
+        </div>
+
+        <div id="s3_detail" style="display:none;margin-top:20px">
+            <div style="background:#f9fafb;border-radius:10px;padding:16px;margin-bottom:16px">
+                <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:12px">기본 정보</p>
+                <table class="diff-table"><tbody id="s3_basic"></tbody></table>
+            </div>
+            <div style="background:var(--blue-light);border-radius:10px;padding:16px">
+                <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--blue);margin-bottom:12px">다국어 번역 (translations)</p>
+                <div id="s3_translations"></div>
+            </div>
+        </div>
+
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">
+            관리자 가격 조정 기능은 <a href="admin-price.html" style="color:var(--orange)">admin-price.html</a>에서 제공됩니다.
+            관리자의 직접 판매가 수정이 파트너 정책과 충돌할 수 있어 별도 페이지로 분리했습니다.
+        </div>
+    </div>
+</div>
+
+<script>
+    const ACC_TYPE = { HOTEL:'호텔', MOTEL:'모텔', PENSION:'펜션', RESORT:'리조트', GUEST_HOUSE:'게스트하우스', POOL_VILLA:'풀빌라' };
+    const ACC_STATUS = { ACTIVE:'운영중', PENDING:'승인대기', SUSPENDED:'정지', CLOSED:'폐쇄' };
+    const RES_STATUS = { PAYMENT_WAITING:'결제대기', CONFIRMED:'예약확정', COMPLETED:'이용완료', CANCELLED:'취소됨', HOLD_EXPIRED:'홀드만료' };
+    const RES_TYPE = { STAY:'숙박', HOURLY:'대실' };
+    const CANCEL_POLICY = { FREE_CANCELLATION:'무료취소', NON_REFUNDABLE:'환불불가', PARTIAL_REFUND:'부분환불' };
+    const TARGET_TYPE = { ACCOMMODATION:'숙소', ROOM:'객실' };
+
+    function fmtDate(d) {
+        if (!d) return '-';
+        const dt = new Date(d);
+        if (isNaN(dt)) return d;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d.replace(/-/g, '.');
+        return dt.toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' }).replace(/\. /g, '.').replace('.', '.');
+    }
+    function fmtPrice(p) {
+        if (!p && p !== 0) return '-';
+        return Number(p).toLocaleString('ko-KR') + '원';
+    }
+
+    function toast(msg, type='info', duration=3000) {
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        el.innerHTML = `<span>${msg}</span>`;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), duration);
+    }
+
+    function showStep(idx) {
+        document.querySelectorAll('.flow-step').forEach((el, i) => el.classList.toggle('active', i === idx));
+        document.querySelectorAll('.panel').forEach((el, i) => el.classList.toggle('active', i === idx));
+    }
+
+    function setResult(id, data, isError = false) {
+        const el = document.getElementById(id);
+        el.className = 'api-result' + (isError ? ' error' : '');
+        el.textContent = JSON.stringify(data, null, 2);
+    }
+
+    // ── Cascading select helper ───────────────────────────────────────────
+
+    async function loadAdminAccSelect() {
+        const sel = document.getElementById('d_accSel');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">로딩 중...</option>';
+        try {
+            const res = await fetch('/api/v1/admin/accommodations');
+            const json = await res.json();
+            const list = json.data || [];
+            sel.innerHTML = '<option value="">-- 숙소 선택 --</option>';
+            list.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.id;
+                opt.textContent = `${a.name} (ID:${a.id}) [${a.status}]`;
+                sel.appendChild(opt);
+            });
+        } catch(e) {
+            sel.innerHTML = '<option value="">로드 실패 — 새로고침</option>';
+        }
+    }
+
+    // Pre-load select when Step 3 (index 3) becomes visible
+    document.querySelectorAll('.flow-step').forEach((el, i) => {
+        el.addEventListener('click', () => {
+            if (i === 3) loadAdminAccSelect();
+        });
+    });
+
+    // ─────────────────────────────────────────────────────────────────────
+
+    async function loadAccommodations() {
+        document.getElementById('s0_result').className = 'api-result idle';
+        document.getElementById('s0_result').textContent = '요청 중...';
+        try {
+            const res = await fetch('/api/v1/admin/accommodations');
+            const json = await res.json();
+            setResult('s0_result', json, json.status !== 'SUCCESS');
+            const list = json.data || [];
+            document.getElementById('s0_table').style.display = list.length ? 'table' : 'none';
+            // Also refresh the detail step select
+            loadAdminAccSelect();
+            document.getElementById('s0_tbody').innerHTML = list.length === 0
+                ? '<tr><td colspan="5" class="empty-state">숙소가 없습니다</td></tr>'
+                : list.map(a => `
+                    <tr>
+                        <td>${a.id}</td>
+                        <td><strong>${a.name}</strong></td>
+                        <td><span style="font-size:11px;color:var(--muted)">${ACC_TYPE[a.type] || a.type}</span></td>
+                        <td><span class="badge ${a.status}">${ACC_STATUS[a.status] || a.status}</span></td>
+                        <td>
+                            <div class="actions">
+                                <button class="btn btn-blue btn-sm" onclick="showAccDetail(${a.id})">상세</button>
+                                ${a.status === 'PENDING' ? `<button class="btn btn-green btn-sm" onclick="accAction(${a.id},'approve')">승인</button>` : ''}
+                                ${a.status === 'ACTIVE' ? `<button class="btn btn-gray btn-sm" onclick="accAction(${a.id},'suspend')">정지</button>` : ''}
+                                ${a.status === 'SUSPENDED' ? `<button class="btn btn-green btn-sm" onclick="accAction(${a.id},'approve')">재활성</button>` : ''}
+                                ${a.status !== 'CLOSED' ? `<button class="btn btn-red btn-sm" onclick="accAction(${a.id},'close')">폐쇄</button>` : ''}
+                            </div>
+                        </td>
+                    </tr>`).join('');
+        } catch(e) {
+            setResult('s0_result', { error: e.message }, true);
+        }
+    }
+
+    async function accAction(id, action) {
+        if (action === 'close' && !confirm('정말 폐쇄하시겠습니까?')) return;
+        const res = await fetch(`/api/v1/admin/accommodations/${id}/${action}`, { method: 'PATCH' });
+        const json = await res.json();
+        if (json.status === 'SUCCESS') { toast('숙소 상태가 변경되었습니다.', 'success'); loadAccommodations(); }
+        else toast('실패: ' + (json.error?.message || '알 수 없는 오류'), 'error');
+    }
+
+    async function loadModifications() {
+        document.getElementById('s1_result').className = 'api-result idle';
+        document.getElementById('s1_result').textContent = '요청 중...';
+        document.getElementById('mod_detail').classList.remove('show');
+        try {
+            const res = await fetch('/api/v1/admin/accommodations/modifications/pending');
+            const json = await res.json();
+            setResult('s1_result', json, json.status !== 'SUCCESS');
+            const list = json.data || [];
+            document.getElementById('s1_table').style.display = list.length ? 'table' : 'none';
+            document.getElementById('s1_tbody').innerHTML = list.length === 0
+                ? '<tr><td colspan="6" class="empty-state">대기 중인 수정 요청이 없습니다</td></tr>'
+                : list.map(m => `
+                    <tr>
+                        <td>#${m.id}</td>
+                        <td>${m.accommodation_id}</td>
+                        <td>${m.partner_id}</td>
+                        <td><span class="badge PENDING">PENDING</span></td>
+                        <td><small style="color:var(--muted)">${m.created_at || '-'}</small></td>
+                        <td>
+                            <div class="actions">
+                                <button class="btn btn-blue btn-sm" onclick="showModDetail(${m.id}, ${m.accommodation_id}, ${JSON.stringify(JSON.stringify(m.request_data||{}))})">상세</button>
+                                <button class="btn btn-green btn-sm" onclick="document.getElementById('current_mod_id').value=${m.id};approveMod()">승인</button>
+                                <button class="btn btn-red btn-sm" onclick="document.getElementById('current_mod_id').value=${m.id};rejectMod()">거절</button>
+                            </div>
+                        </td>
+                    </tr>`).join('');
+        } catch(e) {
+            setResult('s1_result', { error: e.message }, true);
+        }
+    }
+
+    async function showModDetail(modId, accId, requestDataStr) {
+        document.getElementById('current_mod_id').value = modId;
+        document.getElementById('mod_detail_title').textContent = `수정 요청 #${modId} — 숙소 ID: ${accId}`;
+        let reqData = {};
+        try { reqData = JSON.parse(requestDataStr); } catch(e) {}
+
+        let current = {};
+        try {
+            const res = await fetch(`/api/v1/admin/accommodations/${accId}`);
+            const json = await res.json();
+            current = json.data || {};
+        } catch(e) {}
+
+        const fields = [
+            { key: 'name', label: '숙소명' },
+            { key: 'full_address', label: '주소' },
+            { key: 'check_in_time', label: '체크인 시간' },
+            { key: 'check_out_time', label: '체크아웃 시간' },
+            { key: 'location_description', label: '위치 설명' },
+        ];
+
+        document.getElementById('mod_diff_body').innerHTML = fields.map(f => {
+            const cur = current[f.key] || '-';
+            const req = reqData[f.key] || '-';
+            const changed = req !== '-' && req !== cur;
+            return `<tr>
+                <td>${f.label}</td>
+                <td>${cur}</td>
+                <td class="${changed ? 'changed' : ''}">${req}</td>
+            </tr>`;
+        }).join('');
+
+        const translations = current.translations || [];
+        const existingTrSection = document.getElementById('mod_translations_section');
+        if (existingTrSection) existingTrSection.remove();
+        if (translations.length > 0) {
+            const trHtml = `<div id="mod_translations_section" style="margin-top:16px;padding-top:14px;border-top:1px solid #FFE0B2">
+                <p style="font-size:12px;font-weight:700;color:var(--orange-dark);margin-bottom:10px">다국어 번역 정보</p>
+                ${translations.map(t => `
+                    <div style="margin-bottom:10px;background:white;border-radius:8px;padding:12px;border:1px solid #FFE0B2">
+                        <p style="font-size:11px;font-weight:700;color:var(--orange-dark);margin-bottom:8px">🌐 ${t.locale.toUpperCase()}</p>
+                        <table class="diff-table"><tbody>
+                            <tr><td style="width:130px;font-weight:600">숙소명</td><td>${t.name||'-'}</td></tr>
+                            <tr><td style="font-weight:600">주소</td><td>${t.full_address||'-'}</td></tr>
+                            <tr><td style="font-weight:600">소개</td><td>${t.introduction||'-'}</td></tr>
+                            <tr><td style="font-weight:600">이용 안내</td><td>${t.usage_info||'-'}</td></tr>
+                            <tr><td style="font-weight:600">취소·환불 정책</td><td>${t.cancellation_and_refund_policy||'-'}</td></tr>
+                        </tbody></table>
+                    </div>`).join('')}
+            </div>`;
+            document.getElementById('mod_detail').insertAdjacentHTML('beforeend', trHtml);
+        }
+
+        document.getElementById('mod_detail').classList.add('show');
+        document.getElementById('mod_detail').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    async function approveMod() {
+        const id = document.getElementById('current_mod_id').value;
+        if (!id) { toast('수정 요청을 선택하세요', 'info'); return; }
+        if (!confirm(`수정 요청 #${id}를 승인하시겠습니까?\n승인 즉시 숙소 데이터에 반영됩니다.`)) return;
+        const res = await fetch(`/api/v1/admin/accommodations/modifications/${id}/approve`, { method: 'PATCH' });
+        const json = await res.json();
+        if (json.status === 'SUCCESS') {
+            toast('승인 완료 — 숙소 정보가 즉시 반영되었습니다.', 'success');
+            loadModifications();
+        } else {
+            toast('실패: ' + (json.error?.message || '알 수 없는 오류'), 'error');
+        }
+    }
+
+    async function rejectMod() {
+        const id = document.getElementById('current_mod_id').value;
+        if (!id) { toast('수정 요청을 선택하세요', 'info'); return; }
+        const reason = prompt('거절 사유를 입력하세요:');
+        if (!reason) return;
+        const res = await fetch(`/api/v1/admin/accommodations/modifications/${id}/reject`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+        const json = await res.json();
+        if (json.status === 'SUCCESS') {
+            toast('거절 완료 — 파트너에게 사유가 전달됩니다.', 'info');
+            loadModifications();
+        } else {
+            toast('실패: ' + (json.error?.message || '알 수 없는 오류'), 'error');
+        }
+    }
+
+    async function loadTagGroups() {
+        document.getElementById('s2_result').className = 'api-result idle';
+        document.getElementById('s2_result').textContent = '요청 중...';
+        try {
+            const res = await fetch('/api/v1/admin/tag-groups');
+            const json = await res.json();
+            setResult('s2_result', json, json.status !== 'SUCCESS');
+            const list = json.data || [];
+            document.getElementById('s2_table').style.display = list.length ? 'table' : 'none';
+            document.getElementById('s2_tbody').innerHTML = list.length === 0
+                ? '<tr><td colspan="6" class="empty-state">태그 그룹이 없습니다</td></tr>'
+                : list.map(g => `
+                    <tr>
+                        <td>${g.id}</td>
+                        <td><strong>${g.name}</strong></td>
+                        <td><span style="font-size:11px">${TARGET_TYPE[g.target_type] || g.target_type}</span></td>
+                        <td><span style="font-size:11px;color:var(--muted)">${g.accommodation_type || '전체'}</span></td>
+                        <td>
+                            <span class="badge ${g.is_active ? 'ACTIVE' : 'SUSPENDED'}" style="font-size:10px">
+                                ${g.is_active ? '활성' : '비활성'}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="actions">
+                                ${g.is_active
+                                    ? `<button class="btn btn-gray btn-sm" onclick="toggleTagGroup(${g.id}, false)">비활성화</button>`
+                                    : `<button class="btn btn-green btn-sm" onclick="toggleTagGroup(${g.id}, true)">활성화</button>`}
+                            </div>
+                        </td>
+                    </tr>`).join('');
+        } catch(e) {
+            setResult('s2_result', { error: e.message }, true);
+        }
+    }
+
+    async function toggleTagGroup(id, activate) {
+        const action = activate ? 'activate' : 'deactivate';
+        await fetch(`/api/v1/admin/tag-groups/${id}/${action}`, { method: 'PATCH' });
+        loadTagGroups();
+    }
+
+    async function createTagGroup() {
+        const name = document.getElementById('tg_name').value;
+        if (!name) { toast('그룹명을 입력하세요', 'info'); return; }
+        const accType = document.getElementById('tg_acctype').value;
+        const body = {
+            name,
+            target_type: document.getElementById('tg_target').value,
+            accommodation_type: accType || null,
+            display_order: 0
+        };
+        document.getElementById('s2_create_result').className = 'api-result idle';
+        document.getElementById('s2_create_result').textContent = '요청 중...';
+        try {
+            const res = await fetch('/api/v1/admin/tag-groups', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const json = await res.json();
+            const el = document.getElementById('s2_create_result');
+            el.className = 'api-result' + (json.status !== 'SUCCESS' ? ' error' : '');
+            el.textContent = JSON.stringify(json, null, 2);
+            if (json.status === 'SUCCESS') {
+                document.getElementById('tg_name').value = '';
+                loadTagGroups();
+            }
+        } catch(e) {
+            document.getElementById('s2_create_result').className = 'api-result error';
+            document.getElementById('s2_create_result').textContent = JSON.stringify({ error: e.message }, null, 2);
+        }
+    }
+
+    async function showAccDetail(id) {
+        document.getElementById('d_accId').value = id;
+        showStep(3);
+        // Populate the select if needed
+        const sel = document.getElementById('d_accSel');
+        if (sel && !sel.querySelector(`option[value="${id}"]`)) {
+            await loadAdminAccSelect();
+        }
+        if (sel) sel.value = id;
+        await loadAccDetail();
+    }
+
+    async function loadAccDetail() {
+        const accId = document.getElementById('d_accId').value || document.getElementById('d_accSel').value;
+        if (!accId) { toast('숙소를 선택하거나 ID를 입력하세요', 'info'); return; }
+        document.getElementById('d_accId').value = accId;
+        document.getElementById('s3_result').className = 'api-result idle';
+        document.getElementById('s3_result').textContent = '요청 중...';
+        document.getElementById('s3_detail').style.display = 'none';
+        try {
+            const res = await fetch(`/api/v1/admin/accommodations/${accId}`);
+            const json = await res.json();
+            setResult('s3_result', json, json.status !== 'SUCCESS');
+            if (json.status === 'SUCCESS') {
+                const d = json.data;
+                document.getElementById('s3_detail').style.display = 'block';
+                document.getElementById('s3_basic').innerHTML = [
+                    ['ID', d.id], ['숙소명', d.name], ['유형', d.type],
+                    ['상태', `<span class="badge ${d.status}">${d.status}</span>`],
+                    ['주소', d.full_address || '-'],
+                    ['좌표', `${d.latitude}, ${d.longitude}`],
+                    ['체크인', d.check_in_time || '-'], ['체크아웃', d.check_out_time || '-'],
+                ].map(([k, v]) => `<tr><td style="font-weight:600;width:120px">${k}</td><td>${v}</td></tr>`).join('');
+
+                const translations = d.translations || [];
+                document.getElementById('s3_translations').innerHTML = translations.length === 0
+                    ? '<p style="font-size:13px;color:var(--blue)">등록된 다국어 번역이 없습니다.</p>'
+                    : translations.map(t => `
+                        <div style="margin-bottom:12px;background:white;border-radius:8px;padding:14px">
+                            <p style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:10px">🌐 ${t.locale.toUpperCase()}</p>
+                            <table class="diff-table"><tbody>
+                                <tr><td style="width:140px;font-weight:600">숙소명</td><td>${t.name||'-'}</td></tr>
+                                <tr><td style="font-weight:600">주소</td><td>${t.full_address||'-'}</td></tr>
+                                <tr><td style="font-weight:600">위치 설명</td><td>${t.location_description||'-'}</td></tr>
+                                <tr><td style="font-weight:600">소개</td><td>${t.introduction||'-'}</td></tr>
+                                <tr><td style="font-weight:600">서비스/시설</td><td>${t.service_and_facilities||'-'}</td></tr>
+                                <tr><td style="font-weight:600">이용 안내</td><td>${t.usage_info||'-'}</td></tr>
+                                <tr><td style="font-weight:600">취소·환불 정책</td><td>${t.cancellation_and_refund_policy||'-'}</td></tr>
+                            </tbody></table>
+                        </div>`).join('');
+            }
+        } catch(e) {
+            setResult('s3_result', { error: e.message }, true);
+        }
+    }
+</script>
+</body>
+</html>

@@ -14,8 +14,11 @@
         .form-row label{display:block;font-size:12px;color:#666;margin-bottom:3px}
         .form-row input,.form-row select{padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px}
         .btn{padding:5px 12px;border:none;border-radius:4px;cursor:pointer;font-size:11px;color:white;margin:1px}
-        .btn-create{background:#4CAF50}.btn-edit{background:#2196F3}.btn-deact{background:#FF9800}.btn-del{background:#f44336}
+        .btn-create{background:#4CAF50}.btn-edit{background:#2196F3}.btn-deact{background:#FF9800}.btn-del{background:#f44336}.btn-cancel{background:#9E9E9E}
         .active{color:#2E7D32}.inactive{color:#C62828}
+        .edit-panel{background:#E3F2FD;border-radius:8px;padding:12px;margin-top:10px;display:none}
+        .edit-panel.open{display:block}
+        .edit-panel strong{font-size:13px;color:#1565C0}
     </style>
 </head>
 <body>
@@ -23,14 +26,43 @@
     <div class="container">
         <div class="section">
             <h3>태그 그룹</h3>
-            <table><thead><tr><th>ID</th><th>그룹명</th><th>대상</th><th>숙소유형</th><th>순서</th><th>상태</th><th>관리</th></tr></thead>
+            <table><thead><tr><th>ID</th><th>그룹명</th><th>대상</th><th>숙소유형</th><th>공급사</th><th>순서</th><th>상태</th><th>관리</th></tr></thead>
             <tbody id="groupList"></tbody></table>
+
+            <!-- 태그 그룹 수정 패널 -->
+            <div class="edit-panel" id="groupEditPanel">
+                <strong>태그 그룹 수정</strong>
+                <input type="hidden" id="editGroupId">
+                <div class="form-row" style="margin-top:8px">
+                    <div><label>그룹명</label><input id="editGroupName"></div>
+                    <div><label>숙소유형</label>
+                        <select id="editGroupAccType">
+                            <option value="">전체</option>
+                            <option>HOTEL</option><option>RESORT</option><option>MOTEL</option>
+                            <option>PENSION</option><option>POOL_VILLA</option><option>GUEST_HOUSE</option>
+                        </select>
+                    </div>
+                    <div><label>순서</label><input id="editGroupOrder" type="number" style="width:60px"></div>
+                    <div style="align-self:flex-end">
+                        <button class="btn btn-edit" onclick="submitEditGroup()">저장</button>
+                        <button class="btn btn-cancel" onclick="closeGroupEdit()">취소</button>
+                    </div>
+                </div>
+            </div>
+
             <div style="margin-top:12px;padding-top:10px;border-top:1px solid #eee">
                 <strong style="font-size:13px">태그 그룹 추가</strong>
                 <div class="form-row" style="margin-top:5px">
                     <div><label>그룹명</label><input id="newGroupName"></div>
                     <div><label>대상</label><select id="newGroupTarget"><option value="ACCOMMODATION">숙소</option><option value="ROOM">객실</option></select></div>
-                    <div><label>숙소유형</label><select id="newGroupAccType"><option value="">전체</option><option>HOTEL</option><option>RESORT</option><option>MOTEL</option><option>PENSION</option><option>GUEST_HOUSE</option></select></div>
+                    <div><label>숙소유형</label>
+                        <select id="newGroupAccType">
+                            <option value="">전체</option>
+                            <option>HOTEL</option><option>RESORT</option><option>MOTEL</option>
+                            <option>PENSION</option><option>POOL_VILLA</option><option>GUEST_HOUSE</option>
+                        </select>
+                    </div>
+                    <div><label>공급사 ID <span style="color:#999;font-size:11px">(연동전용)</span></label><input id="newGroupSupplierId" type="number" placeholder="없으면 비워두기" style="width:120px"></div>
                     <div><label>순서</label><input id="newGroupOrder" type="number" value="0" style="width:50px"></div>
                     <div><button class="btn btn-create" onclick="createGroup()">추가</button></div>
                 </div>
@@ -44,6 +76,21 @@
             </div>
             <table><thead><tr><th>ID</th><th>태그명</th><th>순서</th><th>상태</th><th>관리</th></tr></thead>
             <tbody id="tagList"></tbody></table>
+
+            <!-- 태그 수정 패널 -->
+            <div class="edit-panel" id="tagEditPanel">
+                <strong>태그 수정</strong>
+                <input type="hidden" id="editTagId">
+                <div class="form-row" style="margin-top:8px">
+                    <div><label>태그명</label><input id="editTagName"></div>
+                    <div><label>순서</label><input id="editTagOrder" type="number" style="width:60px"></div>
+                    <div style="align-self:flex-end">
+                        <button class="btn btn-edit" onclick="submitEditTag()">저장</button>
+                        <button class="btn btn-cancel" onclick="closeTagEdit()">취소</button>
+                    </div>
+                </div>
+            </div>
+
             <div style="margin-top:12px;padding-top:10px;border-top:1px solid #eee">
                 <strong style="font-size:13px">태그 추가</strong>
                 <div class="form-row" style="margin-top:5px">
@@ -60,11 +107,15 @@
             const list = (await res.json()).data || [];
             document.getElementById('groupList').innerHTML = list.map(g => `
                 <tr><td>${g.id}</td><td id="gname_${g.id}">${g.name}</td><td>${g.target_type}</td>
-                <td>${g.accommodation_type||'전체'}</td><td>${g.display_order}</td>
+                <td id="gacctype_${g.id}">${g.accommodation_type||''}<span style="display:${g.accommodation_type?'none':'inline'};color:#999;font-size:11px">전체</span></td>
+                <td>${g.supplier_id ? `<span style="background:#E3F2FD;color:#1565C0;padding:2px 6px;border-radius:3px;font-size:11px">공급사 ${g.supplier_id}</span>` : ''}</td>
+                <td id="gorder_${g.id}">${g.display_order}</td>
                 <td class="${g.is_active?'active':'inactive'}">${g.is_active?'활성':'비활성'}</td>
                 <td>
                     <button class="btn btn-edit" onclick="editGroup(${g.id})">수정</button>
-                    ${g.is_active?`<button class="btn btn-deact" onclick="deactGroup(${g.id})">비활성화</button>`:''}
+                    ${g.is_active
+                        ? `<button class="btn btn-deact" onclick="deactGroup(${g.id})">비활성화</button>`
+                        : `<button class="btn btn-create" onclick="activateGroup(${g.id})">활성화</button>`}
                 </td></tr>`).join('');
             document.getElementById('groupSelect').innerHTML = list.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
             if (list.length > 0) loadTags();
@@ -78,40 +129,71 @@
             document.getElementById('tagList').innerHTML = list.length === 0
                 ? '<tr><td colspan="5" style="text-align:center;color:#999">태그 없음</td></tr>'
                 : list.map(t => `
-                <tr><td>${t.id}</td><td id="tname_${t.id}">${t.name}</td><td>${t.display_order}</td>
+                <tr><td>${t.id}</td><td id="tname_${t.id}">${t.name}</td>
+                <td id="torder_${t.id}">${t.display_order}</td>
                 <td class="${t.is_active?'active':'inactive'}">${t.is_active?'활성':'비활성'}</td>
                 <td>
                     <button class="btn btn-edit" onclick="editTag(${t.id})">수정</button>
-                    ${t.is_active?`<button class="btn btn-deact" onclick="deactTag(${t.id})">비활성화</button>`:''}
+                    ${t.is_active
+                        ? `<button class="btn btn-deact" onclick="deactTag(${t.id})">비활성화</button>`
+                        : `<button class="btn btn-create" onclick="activateTag(${t.id})">활성화</button>`}
                 </td></tr>`).join('');
         }
 
         async function createGroup() {
             const accType = document.getElementById('newGroupAccType').value;
+            const supplierIdVal = document.getElementById('newGroupSupplierId').value;
             await fetch('/api/v1/admin/tag-groups', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: document.getElementById('newGroupName').value,
                     display_order: +document.getElementById('newGroupOrder').value,
                     target_type: document.getElementById('newGroupTarget').value,
-                    accommodation_type: accType || null })
+                    accommodation_type: accType || null,
+                    supplier_id: supplierIdVal ? +supplierIdVal : null })
             });
             document.getElementById('newGroupName').value = '';
+            document.getElementById('newGroupSupplierId').value = '';
+            closeGroupEdit();
             loadGroups();
         }
 
-        async function editGroup(id) {
-            const name = prompt('새 그룹명:', document.getElementById(`gname_${id}`).textContent);
-            if (!name) return;
+        function editGroup(id) {
+            document.getElementById('editGroupId').value = id;
+            document.getElementById('editGroupName').value = document.getElementById(`gname_${id}`).textContent;
+            document.getElementById('editGroupOrder').value = document.getElementById(`gorder_${id}`).textContent;
+            const accType = document.getElementById(`gacctype_${id}`).textContent;
+            document.getElementById('editGroupAccType').value = accType || '';
+            document.getElementById('groupEditPanel').classList.add('open');
+            document.getElementById('editGroupName').focus();
+        }
+
+        function closeGroupEdit() {
+            document.getElementById('groupEditPanel').classList.remove('open');
+        }
+
+        async function submitEditGroup() {
+            const id = document.getElementById('editGroupId').value;
+            const accType = document.getElementById('editGroupAccType').value;
             await fetch(`/api/v1/admin/tag-groups/${id}`, {
                 method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, display_order: 0, accommodation_type: null })
+                body: JSON.stringify({
+                    name: document.getElementById('editGroupName').value,
+                    display_order: +document.getElementById('editGroupOrder').value,
+                    accommodation_type: accType || null
+                })
             });
+            closeGroupEdit();
             loadGroups();
         }
 
         async function deactGroup(id) {
             if (!confirm('비활성화하시겠습니까?')) return;
             await fetch(`/api/v1/admin/tag-groups/${id}/deactivate`, { method: 'PATCH' });
+            loadGroups();
+        }
+
+        async function activateGroup(id) {
+            await fetch(`/api/v1/admin/tag-groups/${id}/activate`, { method: 'PATCH' });
             loadGroups();
         }
 
@@ -123,23 +205,45 @@
                     display_order: +document.getElementById('newTagOrder').value })
             });
             document.getElementById('newTagName').value = '';
+            closeTagEdit();
             loadTags();
         }
 
-        async function editTag(id) {
+        function editTag(id) {
+            document.getElementById('editTagId').value = id;
+            document.getElementById('editTagName').value = document.getElementById(`tname_${id}`).textContent;
+            document.getElementById('editTagOrder').value = document.getElementById(`torder_${id}`).textContent;
+            document.getElementById('tagEditPanel').classList.add('open');
+            document.getElementById('editTagName').focus();
+        }
+
+        function closeTagEdit() {
+            document.getElementById('tagEditPanel').classList.remove('open');
+        }
+
+        async function submitEditTag() {
+            const id = document.getElementById('editTagId').value;
             const gid = document.getElementById('groupSelect').value;
-            const name = prompt('새 태그명:', document.getElementById(`tname_${id}`).textContent);
-            if (!name) return;
             await fetch(`/api/v1/admin/tag-groups/${gid}/tags/${id}`, {
                 method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, display_order: 0 })
+                body: JSON.stringify({
+                    name: document.getElementById('editTagName').value,
+                    display_order: +document.getElementById('editTagOrder').value
+                })
             });
+            closeTagEdit();
             loadTags();
         }
 
         async function deactTag(id) {
             const gid = document.getElementById('groupSelect').value;
             await fetch(`/api/v1/admin/tag-groups/${gid}/tags/${id}/deactivate`, { method: 'PATCH' });
+            loadTags();
+        }
+
+        async function activateTag(id) {
+            const gid = document.getElementById('groupSelect').value;
+            await fetch(`/api/v1/admin/tag-groups/${gid}/tags/${id}/activate`, { method: 'PATCH' });
             loadTags();
         }
 
