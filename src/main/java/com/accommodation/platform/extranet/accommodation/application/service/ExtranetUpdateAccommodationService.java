@@ -9,10 +9,8 @@ import tools.jackson.databind.ObjectMapper;
 
 import com.accommodation.platform.common.exception.BusinessException;
 import com.accommodation.platform.common.exception.ErrorCode;
-import com.accommodation.platform.core.accommodation.adapter.out.persistence.AccommodationModificationRequestJpaEntity;
-import com.accommodation.platform.core.accommodation.adapter.out.persistence.AccommodationModificationRequestJpaRepository;
 import com.accommodation.platform.core.accommodation.application.port.out.LoadAccommodationPort;
-import com.accommodation.platform.core.accommodation.domain.enums.ModificationStatus;
+import com.accommodation.platform.core.accommodation.application.port.out.PersistModificationRequestPort;
 import com.accommodation.platform.core.accommodation.domain.model.Accommodation;
 import com.accommodation.platform.extranet.accommodation.application.port.in.ExtranetUpdateAccommodationUseCase;
 
@@ -23,7 +21,7 @@ import com.accommodation.platform.extranet.accommodation.application.port.in.Ext
 public class ExtranetUpdateAccommodationService implements ExtranetUpdateAccommodationUseCase {
 
     private final LoadAccommodationPort loadAccommodationPort;
-    private final AccommodationModificationRequestJpaRepository modificationRequestRepository;
+    private final PersistModificationRequestPort persistModificationRequestPort;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -37,12 +35,7 @@ public class ExtranetUpdateAccommodationService implements ExtranetUpdateAccommo
         }
 
         String requestData = serializeCommand(command);
-
-        AccommodationModificationRequestJpaEntity request = new AccommodationModificationRequestJpaEntity(
-                accommodationId, partnerId, ModificationStatus.PENDING, requestData);
-
-        AccommodationModificationRequestJpaEntity saved = modificationRequestRepository.save(request);
-        return saved.getId();
+        return persistModificationRequestPort.save(accommodationId, partnerId, requestData);
     }
 
     private String serializeCommand(UpdateAccommodationCommand command) {
