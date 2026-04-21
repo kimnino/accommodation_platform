@@ -12,6 +12,8 @@ public interface AdminManageTagUseCase {
 
     void deactivate(Long tagId);
 
+    void activate(Long tagId);
+
     List<Tag> listByTagGroupId(Long tagGroupId);
 
     record CreateTagCommand(
@@ -22,7 +24,7 @@ public interface AdminManageTagUseCase {
 
     record UpdateTagCommand(
             String name,
-            int displayOrder
+            Integer displayOrder
     ) {
     }
 }

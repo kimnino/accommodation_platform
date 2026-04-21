@@ -12,19 +12,22 @@ public interface AdminManageTagGroupUseCase {
 
     void deactivate(Long tagGroupId);
 
+    void activate(Long tagGroupId);
+
     List<TagGroup> listAll();
 
     record CreateTagGroupCommand(
             String name,
             int displayOrder,
             String targetType,
-            String accommodationType
+            String accommodationType,
+            Long supplierId
     ) {
     }
 
     record UpdateTagGroupCommand(
             String name,
-            int displayOrder,
+            Integer displayOrder,
             String accommodationType
     ) {
     }

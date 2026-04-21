@@ -10,6 +10,7 @@ public record TagGroupResponse(
         int displayOrder,
         String targetType,
         String accommodationType,
+        Long supplierId,
         boolean isActive,
         Instant createdAt,
         Instant updatedAt
@@ -23,6 +24,7 @@ public record TagGroupResponse(
                 tagGroup.getDisplayOrder(),
                 tagGroup.getTargetType().name(),
                 tagGroup.getAccommodationType() != null ? tagGroup.getAccommodationType().name() : null,
+                tagGroup.getSupplierId(),
                 tagGroup.isActive(),
                 tagGroup.getCreatedAt(),
                 tagGroup.getUpdatedAt());

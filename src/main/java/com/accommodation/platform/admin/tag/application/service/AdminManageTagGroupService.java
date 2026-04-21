@@ -36,6 +36,7 @@ public class AdminManageTagGroupService implements AdminManageTagGroupUseCase {
                 .displayOrder(command.displayOrder())
                 .targetType(TagTarget.valueOf(command.targetType()))
                 .accommodationType(accommodationType)
+                .supplierId(command.supplierId())
                 .build();
 
         return persistTagGroupPort.save(tagGroup);
@@ -62,6 +63,16 @@ public class AdminManageTagGroupService implements AdminManageTagGroupUseCase {
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "태그 그룹을 찾을 수 없습니다."));
 
         tagGroup.deactivate();
+        persistTagGroupPort.save(tagGroup);
+    }
+
+    @Override
+    public void activate(Long tagGroupId) {
+
+        TagGroup tagGroup = loadTagGroupPort.findById(tagGroupId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "태그 그룹을 찾을 수 없습니다."));
+
+        tagGroup.activate();
         persistTagGroupPort.save(tagGroup);
     }
 

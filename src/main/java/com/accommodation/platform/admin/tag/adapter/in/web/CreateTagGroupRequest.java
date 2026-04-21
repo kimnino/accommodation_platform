@@ -8,11 +8,12 @@ public record CreateTagGroupRequest(
         @NotBlank(message = "태그 그룹명은 필수입니다.") String name,
         int displayOrder,
         @NotBlank(message = "태그 대상 유형은 필수입니다.") String targetType,
-        String accommodationType
+        String accommodationType,
+        Long supplierId
 ) {
 
     public CreateTagGroupCommand toCommand() {
 
-        return new CreateTagGroupCommand(name, displayOrder, targetType, accommodationType);
+        return new CreateTagGroupCommand(name, displayOrder, targetType, accommodationType, supplierId);
     }
 }

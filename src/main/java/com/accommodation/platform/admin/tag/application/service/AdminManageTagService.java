@@ -60,9 +60,19 @@ public class AdminManageTagService implements AdminManageTagUseCase {
     }
 
     @Override
+    public void activate(Long tagId) {
+
+        Tag tag = loadTagPort.findTagById(tagId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "태그를 찾을 수 없습니다."));
+
+        tag.activate();
+        persistTagPort.save(tag);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<Tag> listByTagGroupId(Long tagGroupId) {
 
-        return loadTagPort.findByTagGroupId(tagGroupId);
+        return loadTagPort.findAllByTagGroupId(tagGroupId);
     }
 }

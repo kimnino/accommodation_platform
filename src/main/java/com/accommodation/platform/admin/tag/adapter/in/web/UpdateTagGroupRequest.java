@@ -4,7 +4,7 @@ import com.accommodation.platform.admin.tag.application.port.in.AdminManageTagGr
 
 public record UpdateTagGroupRequest(
         String name,
-        int displayOrder,
+        Integer displayOrder,
         String accommodationType
 ) {
 

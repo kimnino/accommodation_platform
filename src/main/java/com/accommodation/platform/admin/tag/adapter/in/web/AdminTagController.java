@@ -56,6 +56,13 @@ public class AdminTagController {
         return ApiResponse.success(null);
     }
 
+    @PatchMapping("/{tagGroupId}/activate")
+    public ApiResponse<Void> activateTagGroup(@PathVariable Long tagGroupId) {
+
+        tagGroupUseCase.activate(tagGroupId);
+        return ApiResponse.success(null);
+    }
+
     @GetMapping
     public ApiResponse<List<TagGroupResponse>> listTagGroups() {
 
@@ -91,6 +98,15 @@ public class AdminTagController {
             @PathVariable Long tagId) {
 
         tagUseCase.deactivate(tagId);
+        return ApiResponse.success(null);
+    }
+
+    @PatchMapping("/{tagGroupId}/tags/{tagId}/activate")
+    public ApiResponse<Void> activateTag(
+            @PathVariable Long tagGroupId,
+            @PathVariable Long tagId) {
+
+        tagUseCase.activate(tagId);
         return ApiResponse.success(null);
     }
 
