@@ -10,4 +10,6 @@ public interface LoadTagPort {
     Optional<Tag> findTagById(Long id);
 
     List<Tag> findByTagGroupId(Long tagGroupId);
+
+    List<Tag> findAllByTagGroupId(Long tagGroupId);
 }

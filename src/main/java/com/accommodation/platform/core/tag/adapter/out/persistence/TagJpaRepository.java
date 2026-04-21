@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface TagJpaRepository extends JpaRepository<TagJpaEntity, Long> {
 
     List<TagJpaEntity> findByTagGroupIdAndIsActiveTrueOrderByDisplayOrderAsc(Long tagGroupId);
+
+    List<TagJpaEntity> findByTagGroupIdOrderByDisplayOrderAsc(Long tagGroupId);
 }

@@ -15,11 +15,12 @@ public class TagGroup extends BaseEntity {
     private int displayOrder;
     private final TagTarget targetType;
     private AccommodationType accommodationType;
+    private Long supplierId;
     private boolean isActive;
 
     @Builder
     public TagGroup(Long id, String name, int displayOrder,
-                    TagTarget targetType, AccommodationType accommodationType) {
+                    TagTarget targetType, AccommodationType accommodationType, Long supplierId) {
 
         validateRequired(name, targetType);
         this.id = id;
@@ -27,16 +28,19 @@ public class TagGroup extends BaseEntity {
         this.displayOrder = displayOrder;
         this.targetType = targetType;
         this.accommodationType = accommodationType;
+        this.supplierId = supplierId;
         this.isActive = true;
         initTimestamps();
     }
 
-    public void updateInfo(String name, int displayOrder, AccommodationType accommodationType) {
+    public void updateInfo(String name, Integer displayOrder, AccommodationType accommodationType) {
 
         if (name != null && !name.isBlank()) {
             this.name = name;
         }
-        this.displayOrder = displayOrder;
+        if (displayOrder != null) {
+            this.displayOrder = displayOrder;
+        }
         this.accommodationType = accommodationType;
         updateTimestamp();
     }

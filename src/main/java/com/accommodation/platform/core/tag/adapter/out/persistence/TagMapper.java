@@ -1,70 +1,53 @@
 package com.accommodation.platform.core.tag.adapter.out.persistence;
 
-import org.springframework.stereotype.Component;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.ReportingPolicy;
 
 import com.accommodation.platform.core.tag.domain.model.Tag;
 import com.accommodation.platform.core.tag.domain.model.TagGroup;
 
-@Component
-public class TagMapper {
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.ERROR)
+interface TagMapper {
 
-    public TagGroup toTagGroupDomain(TagGroupJpaEntity entity) {
+    TagGroup toTagGroupDomain(TagGroupJpaEntity entity);
 
-        TagGroup tagGroup = TagGroup.builder()
-                .id(entity.getId())
-                .name(entity.getName())
-                .displayOrder(entity.getDisplayOrder())
-                .targetType(entity.getTargetType())
-                .accommodationType(entity.getAccommodationType())
-                .build();
+    @Mapping(source = "active", target = "isActive")
+    TagGroupJpaEntity toJpaEntity(TagGroup domain);
 
-        tagGroup.setCreatedAt(entity.getCreatedAt());
-        tagGroup.setUpdatedAt(entity.getUpdatedAt());
+    Tag toTagDomain(TagJpaEntity entity);
 
+    @Mapping(source = "active", target = "isActive")
+    TagJpaEntity toJpaEntity(Tag domain);
+
+    @AfterMapping
+    default void restoreTagGroupActive(@MappingTarget TagGroup tagGroup, TagGroupJpaEntity entity) {
         if (!entity.isActive()) {
             tagGroup.deactivate();
         }
-
-        return tagGroup;
     }
 
-    public TagGroupJpaEntity toJpaEntity(TagGroup domain) {
-
-        return new TagGroupJpaEntity(
-                domain.getId(),
-                domain.getName(),
-                domain.getDisplayOrder(),
-                domain.getTargetType(),
-                domain.getAccommodationType(),
-                domain.isActive());
-    }
-
-    public Tag toTagDomain(TagJpaEntity entity) {
-
-        Tag tag = Tag.builder()
-                .id(entity.getId())
-                .tagGroupId(entity.getTagGroupId())
-                .name(entity.getName())
-                .displayOrder(entity.getDisplayOrder())
-                .build();
-
-        tag.setCreatedAt(entity.getCreatedAt());
-        tag.setUpdatedAt(entity.getUpdatedAt());
-
+    @AfterMapping
+    default void restoreTagActive(@MappingTarget Tag tag, TagJpaEntity entity) {
         if (!entity.isActive()) {
             tag.deactivate();
         }
-
-        return tag;
     }
 
-    public TagJpaEntity toJpaEntity(Tag domain) {
+    @AfterMapping
+    default void restoreTagGroupJpaTimestamps(@MappingTarget TagGroupJpaEntity entity, TagGroup domain) {
+        if (domain.getCreatedAt() != null) {
+            entity.restoreTimestamps(domain.getCreatedAt(), domain.getUpdatedAt());
+        }
+    }
 
-        return new TagJpaEntity(
-                domain.getId(),
-                domain.getTagGroupId(),
-                domain.getName(),
-                domain.getDisplayOrder(),
-                domain.isActive());
+    @AfterMapping
+    default void restoreTagJpaTimestamps(@MappingTarget TagJpaEntity entity, Tag domain) {
+        if (domain.getCreatedAt() != null) {
+            entity.restoreTimestamps(domain.getCreatedAt(), domain.getUpdatedAt());
+        }
     }
 }

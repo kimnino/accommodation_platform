@@ -14,4 +14,6 @@ public interface LoadTagGroupPort {
     List<TagGroup> findAll();
 
     List<TagGroup> findByTargetTypeAndAccommodationType(TagTarget targetType, AccommodationType accommodationType);
+
+    List<TagGroup> findBySupplierIdAndTargetTypeAndAccommodationType(Long supplierId, TagTarget targetType, AccommodationType accommodationType);
 }

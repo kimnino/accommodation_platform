@@ -58,18 +58,25 @@ public class TagGroupJpaEntity extends BaseJpaEntity {
     private AccommodationType accommodationType;
 
     /**
+     * 공급사 ID (null이면 자체 플랫폼 태그, 값 있으면 해당 공급사 전용 태그)
+     */
+    private Long supplierId;
+
+    /**
      * 활성 여부
      */
     private boolean isActive;
 
     public TagGroupJpaEntity(Long id, String name, int displayOrder,
-                             TagTarget targetType, AccommodationType accommodationType, boolean isActive) {
+                             TagTarget targetType, AccommodationType accommodationType,
+                             Long supplierId, boolean isActive) {
 
         this.id = id;
         this.name = name;
         this.displayOrder = displayOrder;
         this.targetType = targetType;
         this.accommodationType = accommodationType;
+        this.supplierId = supplierId;
         this.isActive = isActive;
     }
 }

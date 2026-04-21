@@ -26,12 +26,14 @@ public class Tag extends BaseEntity {
         initTimestamps();
     }
 
-    public void updateInfo(String name, int displayOrder) {
+    public void updateInfo(String name, Integer displayOrder) {
 
         if (name != null && !name.isBlank()) {
             this.name = name;
         }
-        this.displayOrder = displayOrder;
+        if (displayOrder != null) {
+            this.displayOrder = displayOrder;
+        }
         updateTimestamp();
     }
 

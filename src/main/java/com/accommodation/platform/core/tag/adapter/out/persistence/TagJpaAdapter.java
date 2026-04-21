@@ -28,7 +28,7 @@ public class TagJpaAdapter implements PersistTagGroupPort, LoadTagGroupPort, Per
     public TagGroup save(TagGroup tagGroup) {
 
         TagGroupJpaEntity entity = mapper.toJpaEntity(tagGroup);
-        TagGroupJpaEntity saved = tagGroupJpaRepository.save(entity);
+        TagGroupJpaEntity saved = tagGroupJpaRepository.saveAndFlush(entity);
         return mapper.toTagGroupDomain(saved);
     }
 
@@ -64,10 +64,21 @@ public class TagJpaAdapter implements PersistTagGroupPort, LoadTagGroupPort, Per
     }
 
     @Override
+    public List<TagGroup> findBySupplierIdAndTargetTypeAndAccommodationType(Long supplierId,
+                                                                            TagTarget targetType,
+                                                                            AccommodationType accommodationType) {
+
+        return tagGroupJpaRepository.findBySupplierIdAndTargetTypeAndAccommodationType(supplierId, targetType, accommodationType)
+                .stream()
+                .map(mapper::toTagGroupDomain)
+                .toList();
+    }
+
+    @Override
     public Tag save(Tag tag) {
 
         TagJpaEntity entity = mapper.toJpaEntity(tag);
-        TagJpaEntity saved = tagJpaRepository.save(entity);
+        TagJpaEntity saved = tagJpaRepository.saveAndFlush(entity);
         return mapper.toTagDomain(saved);
     }
 
@@ -82,6 +93,15 @@ public class TagJpaAdapter implements PersistTagGroupPort, LoadTagGroupPort, Per
     public List<Tag> findByTagGroupId(Long tagGroupId) {
 
         return tagJpaRepository.findByTagGroupIdAndIsActiveTrueOrderByDisplayOrderAsc(tagGroupId)
+                .stream()
+                .map(mapper::toTagDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Tag> findAllByTagGroupId(Long tagGroupId) {
+
+        return tagJpaRepository.findByTagGroupIdOrderByDisplayOrderAsc(tagGroupId)
                 .stream()
                 .map(mapper::toTagDomain)
                 .toList();

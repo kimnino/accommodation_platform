@@ -13,8 +13,18 @@ public interface TagGroupJpaRepository extends JpaRepository<TagGroupJpaEntity, 
     @Query("SELECT tg FROM TagGroupJpaEntity tg " +
             "WHERE tg.targetType = :targetType " +
             "AND (tg.accommodationType IS NULL OR tg.accommodationType = :accommodationType) " +
+            "AND tg.supplierId IS NULL " +
             "AND tg.isActive = true " +
             "ORDER BY tg.displayOrder ASC")
     List<TagGroupJpaEntity> findByTargetTypeAndAccommodationType(
             TagTarget targetType, AccommodationType accommodationType);
+
+    @Query("SELECT tg FROM TagGroupJpaEntity tg " +
+            "WHERE tg.supplierId = :supplierId " +
+            "AND tg.targetType = :targetType " +
+            "AND (tg.accommodationType IS NULL OR tg.accommodationType = :accommodationType) " +
+            "AND tg.isActive = true " +
+            "ORDER BY tg.displayOrder ASC")
+    List<TagGroupJpaEntity> findBySupplierIdAndTargetTypeAndAccommodationType(
+            Long supplierId, TagTarget targetType, AccommodationType accommodationType);
 }
