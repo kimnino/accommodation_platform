@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import com.accommodation.platform.admin.accommodation.application.port.in.AdminApproveAccommodationUseCase;
 import com.accommodation.platform.admin.accommodation.application.port.in.AdminApproveModificationUseCase;
 import com.accommodation.platform.admin.accommodation.application.port.in.AdminListAccommodationQuery;
+import com.accommodation.platform.admin.accommodation.application.port.in.AdminListAccommodationQuery.AccommodationDetail;
 import com.accommodation.platform.common.response.ApiResponse;
 import com.accommodation.platform.core.accommodation.domain.model.Accommodation;
 import com.accommodation.platform.extranet.accommodation.adapter.in.web.AccommodationDetailResponse;
@@ -37,10 +38,10 @@ public class AdminAccommodationController {
     }
 
     @GetMapping("/{accommodationId}")
-    public ApiResponse<AccommodationDetailResponse> getById(@PathVariable Long accommodationId) {
+    public ApiResponse<AdminAccommodationDetailResponse> getById(@PathVariable Long accommodationId) {
 
-        Accommodation accommodation = listQuery.getById(accommodationId);
-        return ApiResponse.success(AccommodationDetailResponse.from(accommodation));
+        AccommodationDetail detail = listQuery.getDetailById(accommodationId);
+        return ApiResponse.success(AdminAccommodationDetailResponse.from(detail.accommodation(), detail.translations()));
     }
 
     @PatchMapping("/{accommodationId}/approve")

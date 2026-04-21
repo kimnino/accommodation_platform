@@ -50,14 +50,29 @@ public class AdminApproveModificationService implements AdminApproveModification
         Accommodation accommodation = loadAccommodationPort.findById(request.getAccommodationId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.ACCOMMODATION_NOT_FOUND));
 
+        // null인 필드는 기존 값을 유지하여 덮어쓰기를 방지한다.
+        String name = command.name() != null ? command.name() : accommodation.getName();
+        String fullAddress = command.fullAddress() != null ? command.fullAddress() : accommodation.getFullAddress();
+        Double latitude = command.latitude() != null ? command.latitude() : accommodation.getLatitude();
+        Double longitude = command.longitude() != null ? command.longitude() : accommodation.getLongitude();
+        String locationDescription = command.locationDescription() != null
+                ? command.locationDescription()
+                : accommodation.getLocationDescription();
+        LocalTime checkInTime = command.checkInTime() != null
+                ? LocalTime.parse(command.checkInTime())
+                : accommodation.getCheckInTime();
+        LocalTime checkOutTime = command.checkOutTime() != null
+                ? LocalTime.parse(command.checkOutTime())
+                : accommodation.getCheckOutTime();
+
         accommodation.updateInfo(
-                command.name(),
-                command.fullAddress(),
-                command.latitude(),
-                command.longitude(),
-                command.locationDescription(),
-                command.checkInTime() != null ? LocalTime.parse(command.checkInTime()) : null,
-                command.checkOutTime() != null ? LocalTime.parse(command.checkOutTime()) : null);
+                name,
+                fullAddress,
+                latitude,
+                longitude,
+                locationDescription,
+                checkInTime,
+                checkOutTime);
 
         persistAccommodationPort.save(accommodation);
         request.approve();

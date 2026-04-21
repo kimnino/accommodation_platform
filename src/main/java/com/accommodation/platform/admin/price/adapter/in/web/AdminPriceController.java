@@ -13,27 +13,22 @@ import org.springframework.web.bind.annotation.RestController;
 import com.accommodation.platform.admin.price.application.port.in.AdminAdjustPriceUseCase;
 import com.accommodation.platform.common.response.ApiResponse;
 import com.accommodation.platform.core.price.domain.model.RoomPrice;
-import com.accommodation.platform.extranet.price.adapter.in.web.PriceResponse;
 
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/admin/room-options/{roomOptionId}/prices")
+@RequestMapping("/api/v1/admin/room-options")
 public class AdminPriceController {
 
     private final AdminAdjustPriceUseCase adjustPriceUseCase;
 
-    @PatchMapping
-    public ApiResponse<List<PriceResponse>> adjustPrice(
+    @PatchMapping("/{roomOptionId}/price")
+    public ApiResponse<List<RoomPrice>> adjustPrice(
             @PathVariable Long roomOptionId,
             @Valid @RequestBody AdjustPriceRequest request) {
 
         List<RoomPrice> prices = adjustPriceUseCase.adjustPrice(roomOptionId, request.toCommand());
-
-        List<PriceResponse> responses = prices.stream()
-                .map(PriceResponse::from)
-                .toList();
-        return ApiResponse.success(responses);
+        return ApiResponse.success(prices);
     }
 }
