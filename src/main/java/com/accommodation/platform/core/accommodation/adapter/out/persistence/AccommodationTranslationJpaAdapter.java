@@ -6,11 +6,12 @@ import org.springframework.stereotype.Repository;
 
 import lombok.RequiredArgsConstructor;
 
+import com.accommodation.platform.core.accommodation.application.port.out.LoadAccommodationTranslationPort;
 import com.accommodation.platform.core.accommodation.application.port.out.PersistAccommodationTranslationPort;
 
 @Repository
 @RequiredArgsConstructor
-public class AccommodationTranslationJpaAdapter implements PersistAccommodationTranslationPort {
+public class AccommodationTranslationJpaAdapter implements PersistAccommodationTranslationPort, LoadAccommodationTranslationPort {
 
     private final AccommodationTranslationJpaRepository jpaRepository;
 
@@ -24,5 +25,11 @@ public class AccommodationTranslationJpaAdapter implements PersistAccommodationT
     public void deleteByAccommodationId(Long accommodationId) {
 
         jpaRepository.deleteByAccommodationId(accommodationId);
+    }
+
+    @Override
+    public List<AccommodationTranslationJpaEntity> findByAccommodationId(Long accommodationId) {
+
+        return jpaRepository.findByAccommodationId(accommodationId);
     }
 }

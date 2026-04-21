@@ -22,7 +22,7 @@ public class AccommodationJpaAdapter implements PersistAccommodationPort, LoadAc
     public Accommodation save(Accommodation accommodation) {
 
         AccommodationJpaEntity entity = mapper.toJpaEntity(accommodation);
-        AccommodationJpaEntity saved = jpaRepository.save(entity);
+        AccommodationJpaEntity saved = jpaRepository.saveAndFlush(entity);
         return mapper.toDomain(saved);
     }
 

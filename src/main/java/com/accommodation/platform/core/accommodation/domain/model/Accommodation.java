@@ -69,14 +69,14 @@ public class Accommodation extends BaseEntity {
 
     public void close() {
 
-        if (this.status == AccommodationStatus.CLOSED) {
-            throw new IllegalStateException("이미 폐쇄된 숙소입니다.");
+        if (this.status != AccommodationStatus.ACTIVE && this.status != AccommodationStatus.SUSPENDED) {
+            throw new IllegalStateException("ACTIVE 또는 SUSPENDED 상태에서만 폐쇄할 수 있습니다.");
         }
         this.status = AccommodationStatus.CLOSED;
         updateTimestamp();
     }
 
-    public void updateInfo(String name, String fullAddress, double latitude, double longitude,
+    public void updateInfo(String name, String fullAddress, Double latitude, Double longitude,
                            String locationDescription, LocalTime checkInTime, LocalTime checkOutTime) {
 
         if (name != null && !name.isBlank()) {
@@ -85,11 +85,21 @@ public class Accommodation extends BaseEntity {
         if (fullAddress != null && !fullAddress.isBlank()) {
             this.fullAddress = fullAddress;
         }
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.locationDescription = locationDescription;
-        this.checkInTime = checkInTime;
-        this.checkOutTime = checkOutTime;
+        if (latitude != null) {
+            this.latitude = latitude;
+        }
+        if (longitude != null) {
+            this.longitude = longitude;
+        }
+        if (locationDescription != null) {
+            this.locationDescription = locationDescription;
+        }
+        if (checkInTime != null) {
+            this.checkInTime = checkInTime;
+        }
+        if (checkOutTime != null) {
+            this.checkOutTime = checkOutTime;
+        }
         updateTimestamp();
     }
 
@@ -127,11 +137,6 @@ public class Accommodation extends BaseEntity {
     public List<AccommodationImage> getImages() {
 
         return Collections.unmodifiableList(images);
-    }
-
-    void setId(Long id) {
-
-        this.id = id;
     }
 
     public void restoreStatus(AccommodationStatus status) {

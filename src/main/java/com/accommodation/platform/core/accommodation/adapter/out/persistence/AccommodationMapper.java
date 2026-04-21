@@ -1,67 +1,38 @@
 package com.accommodation.platform.core.accommodation.adapter.out.persistence;
 
-import org.springframework.stereotype.Component;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.ReportingPolicy;
 
 import com.accommodation.platform.core.accommodation.domain.model.Accommodation;
 import com.accommodation.platform.core.accommodation.domain.model.AccommodationImage;
 
-@Component
-public class AccommodationMapper {
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.ERROR)
+interface AccommodationMapper {
 
-    public Accommodation toDomain(AccommodationJpaEntity entity) {
+    Accommodation toDomain(AccommodationJpaEntity entity);
 
-        Accommodation accommodation = Accommodation.builder()
-                .id(entity.getId())
-                .partnerId(entity.getPartnerId())
-                .name(entity.getName())
-                .type(entity.getType())
-                .fullAddress(entity.getFullAddress())
-                .latitude(entity.getLatitude())
-                .longitude(entity.getLongitude())
-                .locationDescription(entity.getLocationDescription())
-                .checkInTime(entity.getCheckInTime())
-                .checkOutTime(entity.getCheckOutTime())
-                .build();
+    @Mapping(target = "images", ignore = true)
+    AccommodationJpaEntity toJpaEntity(Accommodation domain);
 
+    @AfterMapping
+    default void restoreAccommodationState(@MappingTarget Accommodation accommodation, AccommodationJpaEntity entity) {
         accommodation.restoreStatus(entity.getStatus());
-        accommodation.setCreatedAt(entity.getCreatedAt());
-        accommodation.setUpdatedAt(entity.getUpdatedAt());
-
-        for (AccommodationImageJpaEntity imageEntity : entity.getImages()) {
-            accommodation.addImage(new AccommodationImage(
-                    imageEntity.getRelativePath(),
-                    imageEntity.getCategory(),
-                    imageEntity.getDisplayOrder(),
-                    imageEntity.isPrimary()));
-        }
-
-        return accommodation;
+        entity.getImages().forEach(img -> accommodation.addImage(
+                new AccommodationImage(img.getRelativePath(), img.getCategory(), img.getDisplayOrder(), img.isPrimary())));
     }
 
-    public AccommodationJpaEntity toJpaEntity(Accommodation domain) {
-
-        AccommodationJpaEntity entity = new AccommodationJpaEntity(
-                domain.getId(),
-                domain.getPartnerId(),
-                domain.getName(),
-                domain.getType(),
-                domain.getFullAddress(),
-                domain.getLatitude(),
-                domain.getLongitude(),
-                domain.getLocationDescription(),
-                domain.getStatus(),
-                domain.getCheckInTime(),
-                domain.getCheckOutTime());
-
+    @AfterMapping
+    default void populateJpaImages(@MappingTarget AccommodationJpaEntity entity, Accommodation domain) {
         domain.getImages().stream()
-                .map(image -> new AccommodationImageJpaEntity(
-                        domain.getId(),
-                        image.relativePath(),
-                        image.category(),
-                        image.displayOrder(),
-                        image.isPrimary()))
+                .map(img -> new AccommodationImageJpaEntity(
+                        domain.getId(), img.relativePath(), img.category(), img.displayOrder(), img.isPrimary()))
                 .forEach(entity.getImages()::add);
-
-        return entity;
+        if (domain.getCreatedAt() != null) {
+            entity.restoreTimestamps(domain.getCreatedAt(), domain.getUpdatedAt());
+        }
     }
 }
