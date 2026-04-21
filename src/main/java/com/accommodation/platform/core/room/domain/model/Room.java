@@ -86,6 +86,21 @@ public class Room extends BaseEntity {
         this.id = id;
     }
 
+    public static Room reconstruct(Long id, Long accommodationId, String name, String roomTypeName,
+                                   int standardCapacity, int maxCapacity, RoomStatus status) {
+
+        Room room = Room.builder()
+                .id(id)
+                .accommodationId(accommodationId)
+                .name(name)
+                .roomTypeName(roomTypeName)
+                .standardCapacity(standardCapacity)
+                .maxCapacity(maxCapacity)
+                .build();
+        room.status = status;
+        return room;
+    }
+
     private void validateRequired(Long accommodationId, String name) {
 
         if (accommodationId == null) {

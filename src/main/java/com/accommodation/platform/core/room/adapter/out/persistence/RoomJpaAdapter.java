@@ -22,7 +22,7 @@ public class RoomJpaAdapter implements PersistRoomPort, LoadRoomPort {
     public Room save(Room room) {
 
         RoomJpaEntity entity = mapper.toJpaEntity(room);
-        RoomJpaEntity saved = jpaRepository.save(entity);
+        RoomJpaEntity saved = jpaRepository.saveAndFlush(entity);
         return mapper.toDomain(saved);
     }
 

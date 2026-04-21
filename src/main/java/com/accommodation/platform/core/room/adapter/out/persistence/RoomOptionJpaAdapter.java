@@ -22,7 +22,7 @@ public class RoomOptionJpaAdapter implements PersistRoomOptionPort, LoadRoomOpti
     public RoomOption save(RoomOption roomOption) {
 
         RoomOptionJpaEntity entity = mapper.toJpaEntity(roomOption);
-        RoomOptionJpaEntity saved = jpaRepository.save(entity);
+        RoomOptionJpaEntity saved = jpaRepository.saveAndFlush(entity);
         return mapper.toDomain(saved);
     }
 

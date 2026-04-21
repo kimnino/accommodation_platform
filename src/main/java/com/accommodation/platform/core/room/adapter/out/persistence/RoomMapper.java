@@ -1,65 +1,48 @@
 package com.accommodation.platform.core.room.adapter.out.persistence;
 
-import org.springframework.stereotype.Component;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingConstants;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.ReportingPolicy;
 
 import com.accommodation.platform.core.room.domain.model.Room;
 import com.accommodation.platform.core.room.domain.model.RoomOption;
 
-@Component
-public class RoomMapper {
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.ERROR)
+interface RoomMapper {
 
-    public Room toDomain(RoomJpaEntity entity) {
-
-        Room room = Room.builder()
-                .id(entity.getId())
-                .accommodationId(entity.getAccommodationId())
-                .name(entity.getName())
-                .roomTypeName(entity.getRoomTypeName())
-                .standardCapacity(entity.getStandardCapacity())
-                .maxCapacity(entity.getMaxCapacity())
-                .build();
-
+    default Room toDomain(RoomJpaEntity entity) {
+        Room room = Room.reconstruct(
+                entity.getId(),
+                entity.getAccommodationId(),
+                entity.getName(),
+                entity.getRoomTypeName(),
+                entity.getStandardCapacity(),
+                entity.getMaxCapacity(),
+                entity.getStatus());
         room.setCreatedAt(entity.getCreatedAt());
         room.setUpdatedAt(entity.getUpdatedAt());
-
         return room;
     }
 
-    public RoomJpaEntity toJpaEntity(Room domain) {
+    RoomJpaEntity toJpaEntity(Room domain);
 
-        return new RoomJpaEntity(
-                domain.getId(),
-                domain.getAccommodationId(),
-                domain.getName(),
-                domain.getRoomTypeName(),
-                domain.getStandardCapacity(),
-                domain.getMaxCapacity(),
-                domain.getStatus());
+    RoomOption toDomain(RoomOptionJpaEntity entity);
+
+    RoomOptionJpaEntity toJpaEntity(RoomOption domain);
+
+    @AfterMapping
+    default void restoreRoomJpaTimestamps(@MappingTarget RoomJpaEntity entity, Room domain) {
+        if (domain.getCreatedAt() != null) {
+            entity.restoreTimestamps(domain.getCreatedAt(), domain.getUpdatedAt());
+        }
     }
 
-    public RoomOption toDomain(RoomOptionJpaEntity entity) {
-
-        RoomOption option = RoomOption.builder()
-                .id(entity.getId())
-                .roomId(entity.getRoomId())
-                .name(entity.getName())
-                .cancellationPolicy(entity.getCancellationPolicy())
-                .additionalPrice(entity.getAdditionalPrice())
-                .build();
-
-        option.setCreatedAt(entity.getCreatedAt());
-        option.setUpdatedAt(entity.getUpdatedAt());
-
-        return option;
-    }
-
-    public RoomOptionJpaEntity toJpaEntity(RoomOption domain) {
-
-        return new RoomOptionJpaEntity(
-                domain.getId(),
-                domain.getRoomId(),
-                domain.getName(),
-                domain.getCancellationPolicy(),
-                domain.getAdditionalPrice());
+    @AfterMapping
+    default void restoreRoomOptionJpaTimestamps(@MappingTarget RoomOptionJpaEntity entity, RoomOption domain) {
+        if (domain.getCreatedAt() != null) {
+            entity.restoreTimestamps(domain.getCreatedAt(), domain.getUpdatedAt());
+        }
     }
 }
