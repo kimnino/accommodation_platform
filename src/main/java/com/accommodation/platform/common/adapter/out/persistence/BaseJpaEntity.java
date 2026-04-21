@@ -30,4 +30,9 @@ public abstract class BaseJpaEntity {
     protected void onUpdate() {
         this.updatedAt = Instant.now();
     }
+
+    public void restoreTimestamps(Instant createdAt, Instant updatedAt) {
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
 }
