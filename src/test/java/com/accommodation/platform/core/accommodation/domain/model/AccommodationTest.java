@@ -74,7 +74,7 @@ class AccommodationTest {
 
         assertThatThrownBy(accommodation::close)
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("이미 폐쇄된");
+                .hasMessageContaining("ACTIVE 또는 SUSPENDED");
     }
 
     @Test

@@ -11,7 +11,7 @@ import com.accommodation.platform.customer.accommodation.application.port.in.Cus
 import com.accommodation.platform.customer.accommodation.application.port.in.CustomerGetAccommodationDetailQuery.RoomImageInfo;
 import com.accommodation.platform.customer.accommodation.application.port.in.CustomerGetAccommodationDetailQuery.RoomWithOptions;
 import com.accommodation.platform.customer.accommodation.application.port.in.CustomerSearchAccommodationQuery;
-import com.accommodation.platform.customer.accommodation.application.port.in.CustomerSearchAccommodationQuery.AccommodationSummary;
+import com.accommodation.platform.core.accommodation.application.port.out.SearchAccommodationPort.AccommodationSummary;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

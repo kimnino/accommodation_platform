@@ -8,6 +8,7 @@ import com.accommodation.platform.core.accommodation.domain.enums.AccommodationS
 import com.accommodation.platform.core.accommodation.domain.enums.AccommodationType;
 import com.accommodation.platform.core.accommodation.domain.model.Accommodation;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,14 @@ class AccommodationJpaAdapterTest extends IntegrationTestBase {
 
     @Autowired
     private AccommodationJpaAdapter adapter;
+
+    @Autowired
+    private AccommodationJpaRepository jpaRepository;
+
+    @BeforeEach
+    void setUp() {
+        jpaRepository.deleteAll();
+    }
 
     @Test
     void 숙소를_저장하고_조회한다() {
