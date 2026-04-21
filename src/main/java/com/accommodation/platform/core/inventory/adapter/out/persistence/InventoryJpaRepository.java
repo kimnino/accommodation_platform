@@ -19,4 +19,6 @@ public interface InventoryJpaRepository extends JpaRepository<InventoryJpaEntity
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT i FROM InventoryJpaEntity i WHERE i.roomOptionId = :roomOptionId AND i.date = :date")
     Optional<InventoryJpaEntity> findWithLock(Long roomOptionId, LocalDate date);
+
+    void deleteByRoomOptionId(Long roomOptionId);
 }

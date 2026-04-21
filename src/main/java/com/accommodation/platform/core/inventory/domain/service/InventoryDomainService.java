@@ -4,9 +4,12 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+
 import com.accommodation.platform.core.inventory.domain.model.Inventory;
 import com.accommodation.platform.core.inventory.domain.model.TimeSlotInventory;
 
+@Service
 public class InventoryDomainService {
 
     private static final int SLOT_UNIT_MINUTES = 30;

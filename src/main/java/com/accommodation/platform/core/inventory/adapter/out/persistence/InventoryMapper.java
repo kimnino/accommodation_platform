@@ -1,36 +1,36 @@
 package com.accommodation.platform.core.inventory.adapter.out.persistence;
 
-import org.springframework.stereotype.Component;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingConstants;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.ReportingPolicy;
 
 import com.accommodation.platform.core.inventory.domain.model.Inventory;
+import com.accommodation.platform.core.inventory.domain.model.TimeSlotInventory;
 
-@Component
-public class InventoryMapper {
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.ERROR)
+interface InventoryMapper {
 
-    public Inventory toDomain(InventoryJpaEntity entity) {
+    Inventory toDomain(InventoryJpaEntity entity);
 
-        Inventory inventory = Inventory.builder()
-                .id(entity.getId())
-                .roomOptionId(entity.getRoomOptionId())
-                .date(entity.getDate())
-                .totalQuantity(entity.getTotalQuantity())
-                .remainingQuantity(entity.getRemainingQuantity())
-                .build();
+    InventoryJpaEntity toJpaEntity(Inventory domain);
 
-        inventory.setCreatedAt(entity.getCreatedAt());
-        inventory.setUpdatedAt(entity.getUpdatedAt());
+    TimeSlotInventory toTimeSlotDomain(TimeSlotInventoryJpaEntity entity);
 
-        return inventory;
+    TimeSlotInventoryJpaEntity toTimeSlotJpaEntity(TimeSlotInventory domain);
+
+    @AfterMapping
+    default void restoreInventoryJpaTimestamps(@MappingTarget InventoryJpaEntity entity, Inventory domain) {
+        if (domain.getCreatedAt() != null) {
+            entity.restoreTimestamps(domain.getCreatedAt(), domain.getUpdatedAt());
+        }
     }
 
-    public InventoryJpaEntity toJpaEntity(Inventory domain) {
-
-        return new InventoryJpaEntity(
-                domain.getId(),
-                domain.getRoomOptionId(),
-                domain.getDate(),
-                domain.getTotalQuantity(),
-                domain.getRemainingQuantity(),
-                domain.getStatus());
+    @AfterMapping
+    default void restoreTimeSlotJpaTimestamps(@MappingTarget TimeSlotInventoryJpaEntity entity, TimeSlotInventory domain) {
+        if (domain.getCreatedAt() != null) {
+            entity.restoreTimestamps(domain.getCreatedAt(), domain.getUpdatedAt());
+        }
     }
 }
