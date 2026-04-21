@@ -1,55 +1,49 @@
 package com.accommodation.platform.core.reservation.adapter.out.persistence;
 
-import org.springframework.stereotype.Component;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.ReportingPolicy;
 
 import com.accommodation.platform.core.reservation.domain.model.GuestInfo;
 import com.accommodation.platform.core.reservation.domain.model.Reservation;
 
-@Component
-public class ReservationMapper {
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.ERROR)
+interface ReservationMapper {
 
-    public Reservation toDomain(ReservationJpaEntity entity) {
-
-        Reservation reservation = Reservation.builder()
-                .id(entity.getId())
-                .reservationRequestId(entity.getReservationRequestId())
-                .memberId(entity.getMemberId())
-                .accommodationId(entity.getAccommodationId())
-                .roomOptionId(entity.getRoomOptionId())
-                .reservationType(entity.getReservationType())
-                .checkInDate(entity.getCheckInDate())
-                .checkOutDate(entity.getCheckOutDate())
-                .hourlyStartTime(entity.getHourlyStartTime())
-                .hourlyUsageMinutes(entity.getHourlyUsageMinutes())
-                .guestInfo(new GuestInfo(entity.getGuestName(), entity.getGuestPhone(), entity.getGuestEmail()))
-                .totalPrice(entity.getTotalPrice())
-                .build();
-
+    default Reservation toDomain(ReservationJpaEntity entity) {
+        Reservation reservation = Reservation.reconstruct(
+                entity.getId(),
+                entity.getReservationNumber(),
+                entity.getReservationRequestId(),
+                entity.getMemberId(),
+                entity.getAccommodationId(),
+                entity.getRoomOptionId(),
+                entity.getReservationType(),
+                entity.getCheckInDate(),
+                entity.getCheckOutDate(),
+                entity.getHourlyStartTime(),
+                entity.getHourlyUsageMinutes(),
+                new GuestInfo(entity.getGuestName(), entity.getGuestPhone(), entity.getGuestEmail()),
+                entity.getTotalPrice(),
+                entity.getStatus(),
+                entity.getHoldExpiredAt());
         reservation.setCreatedAt(entity.getCreatedAt());
         reservation.setUpdatedAt(entity.getUpdatedAt());
-
         return reservation;
     }
 
-    public ReservationJpaEntity toJpaEntity(Reservation domain) {
+    @Mapping(source = "guestInfo.name", target = "guestName")
+    @Mapping(source = "guestInfo.phone", target = "guestPhone")
+    @Mapping(source = "guestInfo.email", target = "guestEmail")
+    ReservationJpaEntity toJpaEntity(Reservation domain);
 
-        return new ReservationJpaEntity(
-                domain.getId(),
-                domain.getReservationNumber(),
-                domain.getReservationRequestId(),
-                domain.getMemberId(),
-                domain.getAccommodationId(),
-                domain.getRoomOptionId(),
-                domain.getReservationType(),
-                domain.getCheckInDate(),
-                domain.getCheckOutDate(),
-                domain.getHourlyStartTime(),
-                domain.getHourlyUsageMinutes(),
-                domain.getGuestInfo().name(),
-                domain.getGuestInfo().phone(),
-                domain.getGuestInfo().email(),
-                domain.getTotalPrice(),
-                domain.getStatus(),
-                domain.getHoldExpiredAt());
+    @AfterMapping
+    default void restoreJpaTimestamps(@MappingTarget ReservationJpaEntity entity, Reservation domain) {
+        if (domain.getCreatedAt() != null) {
+            entity.restoreTimestamps(domain.getCreatedAt(), domain.getUpdatedAt());
+        }
     }
 }

@@ -23,7 +23,7 @@ public class ReservationJpaAdapter implements PersistReservationPort, LoadReserv
     public Reservation save(Reservation reservation) {
 
         ReservationJpaEntity entity = mapper.toJpaEntity(reservation);
-        ReservationJpaEntity saved = jpaRepository.save(entity);
+        ReservationJpaEntity saved = jpaRepository.saveAndFlush(entity);
         return mapper.toDomain(saved);
     }
 

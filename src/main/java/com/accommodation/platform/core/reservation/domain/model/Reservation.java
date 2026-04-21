@@ -111,6 +111,22 @@ public class Reservation extends BaseEntity {
                 && Instant.now().isAfter(this.holdExpiredAt);
     }
 
+    public static Reservation reconstruct(Long id, String reservationNumber, String reservationRequestId,
+                                          Long memberId, Long accommodationId, Long roomOptionId,
+                                          ReservationType reservationType,
+                                          LocalDate checkInDate, LocalDate checkOutDate,
+                                          LocalTime hourlyStartTime, int hourlyUsageMinutes,
+                                          GuestInfo guestInfo, BigDecimal totalPrice,
+                                          ReservationStatus status, Instant holdExpiredAt) {
+
+        Reservation r = new Reservation(id, reservationRequestId, memberId, accommodationId, roomOptionId,
+                reservationType, checkInDate, checkOutDate, hourlyStartTime, hourlyUsageMinutes, guestInfo, totalPrice);
+        r.reservationNumber = reservationNumber;
+        r.status = status;
+        r.holdExpiredAt = holdExpiredAt;
+        return r;
+    }
+
     private String generateReservationNumber() {
 
         return "RSV-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase();

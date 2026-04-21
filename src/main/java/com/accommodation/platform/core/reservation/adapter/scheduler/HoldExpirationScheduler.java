@@ -1,6 +1,7 @@
 package com.accommodation.platform.core.reservation.adapter.scheduler;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 import org.springframework.scheduling.annotation.Scheduled;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.accommodation.platform.core.inventory.application.port.out.LoadInventoryPort;
 import com.accommodation.platform.core.inventory.application.port.out.PersistInventoryPort;
+import com.accommodation.platform.core.inventory.domain.model.TimeSlotInventory;
 import com.accommodation.platform.core.reservation.application.port.out.LoadReservationPort;
 import com.accommodation.platform.core.reservation.application.port.out.PersistReservationPort;
 import com.accommodation.platform.core.reservation.domain.enums.ReservationStatus;
@@ -40,6 +42,8 @@ public class HoldExpirationScheduler {
 
                 if (reservation.getReservationType() == ReservationType.STAY) {
                     restoreStayInventory(reservation);
+                } else if (reservation.getReservationType() == ReservationType.HOURLY) {
+                    restoreHourlyInventory(reservation);
                 }
 
                 persistReservationPort.save(reservation);
@@ -59,6 +63,25 @@ public class HoldExpirationScheduler {
                         inventory.increase(1);
                         persistInventoryPort.save(inventory);
                     });
+        }
+    }
+
+    private void restoreHourlyInventory(Reservation reservation) {
+
+        LocalTime startTime = reservation.getHourlyStartTime();
+        // 점유 슬롯 범위 + 버퍼 슬롯 1개(endTime)까지 포함하여 조회
+        LocalTime bufferEnd = startTime.plusMinutes(reservation.getHourlyUsageMinutes() + 30L);
+
+        List<TimeSlotInventory> slots = loadInventoryPort.findTimeSlotsWithLock(
+                reservation.getRoomOptionId(), reservation.getCheckInDate(), startTime, bufferEnd);
+
+        List<TimeSlotInventory> toRelease = slots.stream()
+                .filter(s -> !s.isAvailable())
+                .toList();
+
+        toRelease.forEach(TimeSlotInventory::release);
+        if (!toRelease.isEmpty()) {
+            persistInventoryPort.saveAllTimeSlots(toRelease);
         }
     }
 }
