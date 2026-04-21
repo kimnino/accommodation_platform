@@ -24,6 +24,10 @@ spring:
   jackson:
     property-naming-strategy: SNAKE_CASE
 
+jwt:
+  secret: accommodation-platform-jwt-secret-key-for-development-only-minimum-256-bits
+  expiration: 86400000
+
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{trace_id:-}] %-5level %logger{36} - %msg%n"
