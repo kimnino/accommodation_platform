@@ -10,9 +10,10 @@
 | 3 | 검색 (Customer Search) | ✅ 완료 (피드백 1차 반영) |
 | 4 | 예약 + 동시성 (Reservation) | ✅ 완료 (피드백 2차 반영) |
 | 5 | Supplier 연동 (MINHYUK_HOUSE) | ✅ 완료 (피드백 1차 반영) |
-| 6 | 설계 중심 도메인 (Member, Coupon, Payment, Review, Wishlist) | 🔜 다음 |
-| 7 | 횡단 관심사 (Security, i18n, Image, Logging) | 대기 (Phase 6과 병렬 가능) |
-| 8 | Demo UI & 실행 환경 (HTML 12페이지, 44개 API) | 🔜 진행 중 (버그 수정 대기) |
+| 6 | 설계 중심 도메인 (Member, Coupon, Payment, Review, Wishlist) | ✅ 완료 |
+| 7 | 횡단 관심사 (Security, i18n, Image, Logging) | ✅ 완료 |
+| 8 | Demo UI & 실행 환경 (HTML 12페이지, 44개 API) | ✅ 완료 (버그 수정 완료) |
+| 9 | 최종 점검 (코드 리뷰, 버그 수정, 설계 문서화) | ✅ 완료 (Demo UI QA만 남음) |
 
 > Phase 6, 7은 병렬 진행 가능
 
@@ -569,3 +570,42 @@ TagGroup (공용시설, accommodationType: ALL)
 | 멱등성(Idempotency) — 예약 중복 요청 방지 | Phase 4 | ✅ 구현 (reservationRequestId UUID) |
 | Supplier Canonical Model 변환 | Phase 5 | ✅ 구현 (CanonicalRoom/Price + Normalizer) |
 | Virtual Threads 적용 (외부 API 호출) | Phase 5 | 미적용 (현재 Mock, 실 연동 시 적용) |
+
+---
+
+## Phase 9: 최종 점검
+
+### 9-1. 설계 결정 확정
+
+| 항목 | 결정 내용 |
+|------|----------|
+| `AccommodationType.EXTERNAL` | 외부 공급사 단일 타입. 공급사 구분은 `supplier_accommodation_mapping` |
+| `supplierManaged` 플래그 | 관리자 전용 ON/OFF. 파트너 변경 불가 |
+| 관리자 가격 조정 범위 | 이 프로젝트에서 관리자 역할 = 승인 한정. 가격 조정은 설계 수준 완료 |
+| `AccommodationSummary.lowestPrice` null | 재고 없음 = 해당 날짜 판매 안 함. null 표시는 정상 |
+
+### 9-2. 설계 문서 추가
+
+| 파일 | 내용 |
+|------|------|
+| `docs/design/supplier-sync-design.md` | Supplier 연동 구조, Virtual Thread 병렬 동기화 설계, 미구현 항목 목록 |
+| `docs/design/search-performance-design.md` | 스냅샷 테이블, Redis 캐시, CQRS 확장 전략, 구현 우선순위 |
+
+### 9-3. 버그 수정
+
+| 파일 | 버그 | 수정 내용 |
+|------|------|----------|
+| `AdminApproveModificationService` | `latitude`/`longitude` null 체크 누락으로 기존 좌표 덮어씀 | 기존 좌표 보존 로직 추가 |
+| `HoldExpirationScheduler` | HOURLY 예약 만료 시 TimeSlotInventory 복구 없음 | `restoreHourlyInventory()` 추가 |
+
+### 9-4. 테스트 추가
+
+| 테스트 | 내용 |
+|--------|------|
+| `HoldExpirationSchedulerTest` | 만료 예약 → CANCELLED + 재고 복구 확인, 미만료 예약 → 상태 유지 확인 |
+
+### 9-5. 미완료 항목
+
+| 항목 | 사유 |
+|------|------|
+| Demo UI QA (Section 5) | 서버 실행 후 직접 확인 필요 |
