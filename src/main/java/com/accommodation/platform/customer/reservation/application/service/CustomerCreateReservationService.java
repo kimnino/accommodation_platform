@@ -3,7 +3,9 @@ package com.accommodation.platform.customer.reservation.application.service;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -14,6 +16,7 @@ import com.accommodation.platform.common.exception.ErrorCode;
 import com.accommodation.platform.core.inventory.application.port.out.LoadInventoryPort;
 import com.accommodation.platform.core.inventory.application.port.out.PersistInventoryPort;
 import com.accommodation.platform.core.inventory.domain.model.Inventory;
+import com.accommodation.platform.core.inventory.domain.model.TimeSlotInventory;
 import com.accommodation.platform.core.price.application.port.out.LoadRoomPricePort;
 import com.accommodation.platform.core.price.domain.enums.PriceType;
 import com.accommodation.platform.core.price.domain.model.RoomPrice;
@@ -101,6 +104,41 @@ public class CustomerCreateReservationService implements CustomerCreateReservati
                     throw new BusinessException(ErrorCode.INVALID_INPUT, "이미 처리된 예약 요청입니다.");
                 });
 
+        // 시간 슬롯 비관적 락 조회 (startTime 이상 endTime 미만)
+        List<TimeSlotInventory> slots = loadInventoryPort.findTimeSlotsWithLock(
+                command.roomOptionId(), command.date(), command.startTime(), command.endTime());
+
+        if (slots.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVENTORY_NOT_AVAILABLE, "해당 시간대에 예약 가능한 슬롯이 없습니다.");
+        }
+
+        // 요청 슬롯 수 검증 (30분 단위)
+        long requiredSlots = ChronoUnit.MINUTES.between(command.startTime(), command.endTime()) / 30;
+        if (slots.size() < requiredSlots) {
+            throw new BusinessException(ErrorCode.INVENTORY_NOT_AVAILABLE, "요청한 시간 범위의 슬롯을 찾을 수 없습니다.");
+        }
+
+        // 모든 슬롯 가용 여부 확인 후 점유
+        slots.forEach(slot -> {
+            if (!slot.isAvailable()) {
+                throw new BusinessException(ErrorCode.INVENTORY_NOT_AVAILABLE,
+                        slot.getSlotTime() + " 슬롯이 이미 예약되어 있습니다.");
+            }
+            slot.occupy();
+        });
+
+        // 버퍼 슬롯 차단 (청소 시간 — endTime 슬롯 1개)
+        List<TimeSlotInventory> toSave = new ArrayList<>(slots);
+        loadInventoryPort.findTimeSlot(command.roomOptionId(), command.date(), command.endTime())
+                .ifPresent(buffer -> {
+                    if (buffer.isAvailable()) {
+                        buffer.block();
+                        toSave.add(buffer);
+                    }
+                });
+
+        persistInventoryPort.saveAllTimeSlots(toSave);
+
         // 대실 가격 조회
         List<RoomPrice> prices = loadRoomPricePort.findByRoomOptionIdAndPriceTypeAndDateRange(
                 command.roomOptionId(), PriceType.HOURLY, command.date(), command.date());
@@ -116,6 +154,7 @@ public class CustomerCreateReservationService implements CustomerCreateReservati
                 .checkInDate(command.date())
                 .checkOutDate(command.date())
                 .hourlyStartTime(command.startTime())
+                .hourlyUsageMinutes((int) ChronoUnit.MINUTES.between(command.startTime(), command.endTime()))
                 .guestInfo(new GuestInfo(command.guestName(), command.guestPhone(), command.guestEmail()))
                 .totalPrice(totalPrice)
                 .build();
@@ -123,7 +162,8 @@ public class CustomerCreateReservationService implements CustomerCreateReservati
         reservation.holdForPayment(Instant.now().plus(HOLD_MINUTES, ChronoUnit.MINUTES));
 
         Reservation saved = persistReservationPort.save(reservation);
-        log.info("대실 예약 생성: {} (PAYMENT_WAITING)", saved.getReservationNumber());
+        log.info("대실 예약 생성: {} {}~{} (PAYMENT_WAITING)", saved.getReservationNumber(),
+                command.startTime(), command.endTime());
 
         return saved;
     }

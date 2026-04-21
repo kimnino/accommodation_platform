@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.accommodation.platform.core.accommodation.application.port.out.SearchAccommodationPort;
+import com.accommodation.platform.core.accommodation.application.port.out.SearchAccommodationPort.AccommodationSummary;
+import com.accommodation.platform.core.accommodation.application.port.out.SearchAccommodationPort.SearchCriteria;
 import com.accommodation.platform.customer.accommodation.application.port.in.CustomerSearchAccommodationQuery;
 
 import lombok.RequiredArgsConstructor;

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.accommodation.platform.common.response.ApiResponse;
 import com.accommodation.platform.core.reservation.domain.model.Reservation;
 import com.accommodation.platform.customer.reservation.application.port.in.CustomerCancelReservationUseCase;
+import com.accommodation.platform.customer.reservation.application.port.in.CustomerConfirmPaymentUseCase;
 import com.accommodation.platform.customer.reservation.application.port.in.CustomerCreateReservationUseCase;
 import com.accommodation.platform.customer.reservation.application.port.in.CustomerGetReservationQuery;
 
@@ -30,6 +31,7 @@ public class CustomerReservationController {
 
     private final CustomerCreateReservationUseCase createUseCase;
     private final CustomerCancelReservationUseCase cancelUseCase;
+    private final CustomerConfirmPaymentUseCase confirmPaymentUseCase;
     private final CustomerGetReservationQuery getQuery;
 
     @PostMapping("/stay")
@@ -49,6 +51,15 @@ public class CustomerReservationController {
             @Valid @RequestBody CreateHourlyReservationRequest request) {
 
         Reservation reservation = createUseCase.createHourlyReservation(request.toCommand(memberId));
+        return ApiResponse.success(ReservationResponse.from(reservation));
+    }
+
+    @PostMapping("/{reservationId}/confirm-payment")
+    public ApiResponse<ReservationResponse> confirmPayment(
+            @PathVariable Long reservationId,
+            @RequestHeader("X-Member-Id") Long memberId) {
+
+        Reservation reservation = confirmPaymentUseCase.confirmPayment(reservationId, memberId);
         return ApiResponse.success(ReservationResponse.from(reservation));
     }
 

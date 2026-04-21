@@ -31,6 +31,7 @@ public interface CustomerCreateReservationUseCase {
             Long roomOptionId,
             LocalDate date,
             LocalTime startTime,
+            LocalTime endTime,
             String guestName,
             String guestPhone,
             String guestEmail

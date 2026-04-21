@@ -14,6 +14,7 @@ public record CreateHourlyReservationRequest(
         @NotNull(message = "객실 옵션 ID는 필수입니다.") Long roomOptionId,
         @NotNull(message = "이용 날짜는 필수입니다.") LocalDate date,
         @NotNull(message = "시작 시간은 필수입니다.") LocalTime startTime,
+        @NotNull(message = "종료 시간은 필수입니다.") LocalTime endTime,
         @NotBlank(message = "투숙객 이름은 필수입니다.") String guestName,
         @NotBlank(message = "투숙객 연락처는 필수입니다.") String guestPhone,
         String guestEmail
@@ -23,6 +24,6 @@ public record CreateHourlyReservationRequest(
 
         return new CreateHourlyReservationCommand(
                 reservationRequestId, memberId, accommodationId, roomOptionId,
-                date, startTime, guestName, guestPhone, guestEmail);
+                date, startTime, endTime, guestName, guestPhone, guestEmail);
     }
 }

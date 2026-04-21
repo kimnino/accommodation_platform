@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.accommodation.platform.common.response.ApiResponse;
 import com.accommodation.platform.customer.accommodation.application.port.in.CustomerGetAccommodationDetailQuery;
 import com.accommodation.platform.customer.accommodation.application.port.in.CustomerGetAccommodationDetailQuery.AccommodationDetail;
+import com.accommodation.platform.core.accommodation.application.port.out.SearchAccommodationPort.AccommodationSummary;
 import com.accommodation.platform.customer.accommodation.application.port.in.CustomerSearchAccommodationQuery;
-import com.accommodation.platform.customer.accommodation.application.port.in.CustomerSearchAccommodationQuery.AccommodationSummary;
 
 import lombok.RequiredArgsConstructor;
 

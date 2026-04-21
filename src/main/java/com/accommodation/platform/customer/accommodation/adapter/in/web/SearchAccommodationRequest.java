@@ -3,7 +3,7 @@ package com.accommodation.platform.customer.accommodation.adapter.in.web;
 import java.time.LocalDate;
 import java.util.List;
 
-import com.accommodation.platform.customer.accommodation.application.port.in.CustomerSearchAccommodationQuery.SearchCriteria;
+import com.accommodation.platform.core.accommodation.application.port.out.SearchAccommodationPort.SearchCriteria;
 
 public record SearchAccommodationRequest(
         String region,
