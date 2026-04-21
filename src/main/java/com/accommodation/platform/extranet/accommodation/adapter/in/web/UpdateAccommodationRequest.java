@@ -5,8 +5,8 @@ import com.accommodation.platform.extranet.accommodation.application.port.in.Ext
 public record UpdateAccommodationRequest(
         String name,
         String fullAddress,
-        double latitude,
-        double longitude,
+        Double latitude,
+        Double longitude,
         String locationDescription,
         String checkInTime,
         String checkOutTime

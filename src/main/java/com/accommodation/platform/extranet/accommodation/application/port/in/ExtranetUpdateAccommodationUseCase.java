@@ -7,8 +7,8 @@ public interface ExtranetUpdateAccommodationUseCase {
     record UpdateAccommodationCommand(
             String name,
             String fullAddress,
-            double latitude,
-            double longitude,
+            Double latitude,
+            Double longitude,
             String locationDescription,
             String checkInTime,
             String checkOutTime

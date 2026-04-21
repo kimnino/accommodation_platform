@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import com.accommodation.platform.common.exception.BusinessException;
 import com.accommodation.platform.common.exception.ErrorCode;
 import com.accommodation.platform.core.accommodation.application.port.out.LoadAccommodationPort;
+import com.accommodation.platform.core.inventory.application.port.out.PersistInventoryPort;
+import com.accommodation.platform.core.price.application.port.out.PersistRoomPricePort;
 import com.accommodation.platform.core.room.application.port.out.LoadRoomOptionPort;
 import com.accommodation.platform.core.room.application.port.out.LoadRoomPort;
 import com.accommodation.platform.core.room.application.port.out.PersistRoomOptionPort;
@@ -24,6 +26,8 @@ public class ExtranetDeleteRoomOptionService implements ExtranetDeleteRoomOption
     private final PersistRoomOptionPort persistRoomOptionPort;
     private final LoadRoomPort loadRoomPort;
     private final LoadAccommodationPort loadAccommodationPort;
+    private final PersistInventoryPort persistInventoryPort;
+    private final PersistRoomPricePort persistRoomPricePort;
 
     @Override
     public void delete(Long roomOptionId, Long partnerId) {
@@ -38,6 +42,9 @@ public class ExtranetDeleteRoomOptionService implements ExtranetDeleteRoomOption
                 .filter(acc -> acc.getPartnerId().equals(partnerId))
                 .orElseThrow(() -> new BusinessException(ErrorCode.ACCOMMODATION_NOT_FOUND, "해당 숙소에 대한 접근 권한이 없습니다."));
 
+        // 하위 데이터 고아 방지: 옵션에 속한 재고/요금을 먼저 삭제한 뒤 옵션 삭제
+        persistInventoryPort.deleteByRoomOptionId(roomOptionId);
+        persistRoomPricePort.deleteByRoomOptionId(roomOptionId);
         persistRoomOptionPort.delete(roomOptionId);
     }
 }

@@ -47,8 +47,8 @@ public class ExtranetRegisterAccommodationService implements ExtranetRegisterAcc
 
         Accommodation saved = persistAccommodationPort.save(accommodation);
 
-        saveSupportedLocales(saved.getId(), command.supportedLocales());
-        saveTranslations(saved.getId(), command.translations());
+        this.saveSupportedLocales(saved.getId(), command.supportedLocales());
+        this.saveTranslations(saved.getId(), command.translations());
 
         return saved;
     }
