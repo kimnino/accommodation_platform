@@ -12,4 +12,7 @@ public interface LoadRoomPricePort {
 
     List<RoomPrice> findByRoomOptionIdAndPriceTypeAndDateRange(
             Long roomOptionId, PriceType priceType, LocalDate startDate, LocalDate endDate);
+
+    List<RoomPrice> findByRoomOptionIdInAndPriceTypeAndDateRange(
+            List<Long> roomOptionIds, PriceType priceType, LocalDate startDate, LocalDate endDate);
 }

@@ -2,9 +2,9 @@ package com.accommodation.platform.admin.accommodation.application.port.in;
 
 import java.util.List;
 
-import com.accommodation.platform.core.accommodation.adapter.out.persistence.AccommodationTranslationJpaEntity;
 import com.accommodation.platform.core.accommodation.domain.enums.AccommodationStatus;
 import com.accommodation.platform.core.accommodation.domain.model.Accommodation;
+import com.accommodation.platform.core.accommodation.domain.model.AccommodationTranslation;
 
 public interface AdminListAccommodationQuery {
 
@@ -16,6 +16,6 @@ public interface AdminListAccommodationQuery {
 
     AccommodationDetail getDetailById(Long accommodationId);
 
-    record AccommodationDetail(Accommodation accommodation, List<AccommodationTranslationJpaEntity> translations) {
+    record AccommodationDetail(Accommodation accommodation, List<AccommodationTranslation> translations) {
     }
 }

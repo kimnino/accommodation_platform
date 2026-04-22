@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import lombok.RequiredArgsConstructor;
 
 import com.accommodation.platform.core.room.application.port.out.LoadRoomTranslationPort;
+import com.accommodation.platform.core.room.domain.model.RoomTranslation;
 
 @Repository
 @RequiredArgsConstructor
@@ -16,14 +17,26 @@ public class RoomTranslationJpaAdapter implements LoadRoomTranslationPort {
     private final RoomTranslationJpaRepository jpaRepository;
 
     @Override
-    public Optional<RoomTranslationJpaEntity> findByRoomIdAndLocale(Long roomId, String locale) {
+    public Optional<RoomTranslation> findByRoomIdAndLocale(Long roomId, String locale) {
 
-        return jpaRepository.findByRoomIdAndLocale(roomId, locale);
+        return jpaRepository.findByRoomIdAndLocale(roomId, locale)
+                .map(this::toRecord);
     }
 
     @Override
-    public List<RoomTranslationJpaEntity> findByRoomIdInAndLocale(List<Long> roomIds, String locale) {
+    public List<RoomTranslation> findByRoomIdInAndLocale(List<Long> roomIds, String locale) {
 
-        return jpaRepository.findByRoomIdInAndLocale(roomIds, locale);
+        return jpaRepository.findByRoomIdInAndLocale(roomIds, locale).stream()
+                .map(this::toRecord)
+                .toList();
+    }
+
+    private RoomTranslation toRecord(RoomTranslationJpaEntity entity) {
+
+        return new RoomTranslation(
+                entity.getRoomId(),
+                entity.getLocale(),
+                entity.getName(),
+                entity.getRoomTypeName());
     }
 }

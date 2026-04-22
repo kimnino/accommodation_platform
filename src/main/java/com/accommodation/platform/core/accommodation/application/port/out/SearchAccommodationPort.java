@@ -7,9 +7,9 @@ import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-public interface SearchAccommodationPort {
+import com.accommodation.platform.core.accommodation.domain.enums.AccommodationType;
 
-    Page<AccommodationSummary> search(SearchCriteria criteria, Pageable pageable);
+public interface SearchAccommodationPort {
 
     /** 필터/정렬/페이징 결과로 숙소 ID만 반환 — 카드 데이터는 별도 포트에서 조회 */
     Page<Long> searchIds(SearchCriteria criteria, Pageable pageable);
@@ -22,7 +22,7 @@ public interface SearchAccommodationPort {
             LocalDate checkInDate,
             LocalDate checkOutDate,
             int guestCount,
-            String accommodationType,
+            AccommodationType accommodationType,
             Long minPrice,
             Long maxPrice,
             List<Long> tagIds,

@@ -14,6 +14,8 @@ public interface LoadInventoryPort {
 
     List<Inventory> findByRoomOptionIdAndDateRange(Long roomOptionId, LocalDate startDate, LocalDate endDate);
 
+    List<Inventory> findByRoomOptionIdInAndDateRange(List<Long> roomOptionIds, LocalDate startDate, LocalDate endDate);
+
     /**
      * 비관적 락으로 재고 조회 (동시성 제어).
      * 예약 시 SELECT ... FOR UPDATE로 잠금.

@@ -139,15 +139,20 @@
 
 | 순서 | 파일 | 확인 포인트 | 완료 |
 |------|------|-------------|------|
-| 1 | `extranet/price/adapter/in/web/ExtranetPriceController.java` | 엔드포인트 | [   ] |
-| 2 | `extranet/price/adapter/in/web/SetPriceRequest.java` | BigDecimal 금액 필드 | [   ] |
-| 3 | `extranet/price/application/port/in/ExtranetSetPriceUseCase.java` | Command | [   ] |
-| 4 | `extranet/price/application/service/ExtranetSetPriceService.java` | 날짜별 가격 등록 | [   ] |
-| 5 | `core/price/domain/model/RoomPrice.java` | BigDecimal, PriceType | [   ] |
-| 6 | `core/price/domain/service/PriceDomainService.java` | 가격 계산 도메인 서비스 | [   ] |
-| 7 | `core/price/adapter/out/persistence/RoomPriceMapper.java` | 변환 + restoreTimestamps | [   ] |
-| 8 | `core/price/adapter/out/persistence/RoomPriceJpaEntity.java` | 가격 테이블 | [   ] |
-| 9 | `core/price/adapter/out/persistence/RoomPriceJpaAdapter.java` | 저장 구현 | [   ] |
+| 1 | `extranet/price/adapter/in/web/ExtranetPriceController.java` | `@Valid` 적용, Inbound Port만 의존, `ApiResponse` 래핑 | [ V ] |
+| 2 | `extranet/price/adapter/in/web/SetPriceRequest.java` | BigDecimal 금액 필드, `@NotNull`/`@NotBlank` 검증 | [ V ] |
+| 3 | `extranet/price/application/port/in/ExtranetSetPriceUseCase.java` | Command record, `getTargetDates()` 날짜범위/개별날짜 양쪽 지원 | [ V ] |
+| 4 | `extranet/price/application/service/ExtranetSetPriceService.java` | `@Transactional`, 소유권 3단계 검증(옵션→객실→숙소), 기존 가격 있으면 업데이트 | [ V ] |
+| 5 | `core/price/domain/model/RoomPrice.java` | BigDecimal, 불변식(null/음수 검증), `updatePrice` 상태 변경 메서드 | [ V ] |
+| 6 | `core/price/domain/service/PriceDomainService.java` | 순수 Java, `@Service` 없음, `DomainServiceConfig`에서 `@Bean` 등록, VAT 계산 | [ V ] |
+| 7 | `core/price/adapter/out/persistence/RoomPriceMapper.java` | MapStruct, `@AfterMapping` restoreTimestamps | [ V ] |
+| 8 | `core/price/adapter/out/persistence/RoomPriceJpaEntity.java` | 필드 주석 완비, `BaseJpaEntity` 상속, `precision=12, scale=2` | [ V ] |
+| 9 | `core/price/adapter/out/persistence/RoomPriceJpaAdapter.java` | `PersistRoomPricePort` + `LoadRoomPricePort` 구현, `saveAllAndFlush` | [ V ] |
+
+## FLOW 6. 피드백
+1. `ExtranetSetPriceService`와 `ExtranetGetPriceService`의 소유권 검증 로직(옵션→객실→숙소→partnerId)이 완전히 동일하게 중복됨. FLOW 5에서도 비슷한 패턴 지적. 공통 도메인 서비스나 헬퍼로 추출 검토 필요.
+2. `SetPriceRequest.priceType`이 `@NotBlank String`으로 되어있어서, 잘못된 값(예: "INVALID") 입력 시 Service에서 `PriceType.valueOf()`가 `IllegalArgumentException` 발생 → 500 에러. Request DTO에서 `PriceType` Enum으로 직접 받으면 Jackson이 변환하고 실패 시 자동 400 반환.
+3. `final-checklist.md`에 "DomainServiceConfig 삭제됨"이라 기술되어 있으나, 실제로는 `common/config/DomainServiceConfig.java`가 존재하며 `PriceDomainService`, `InventoryDomainService`를 `@Bean` 등록 중. 문서-코드 불일치 수정 필요.
 
 ---
 
@@ -157,14 +162,25 @@
 
 | 순서 | 파일 | 확인 포인트 | 완료 |
 |------|------|-------------|------|
-| 1 | `customer/accommodation/adapter/in/web/SearchAccommodationRequest.java` | 검색 파라미터 | [   ] |
-| 2 | `customer/accommodation/adapter/in/web/CustomerAccommodationController.java` | 검색 + 상세 엔드포인트 | [   ] |
-| 3 | `customer/accommodation/application/port/in/CustomerSearchAccommodationQuery.java` | Criteria record | [   ] |
-| 4 | `customer/accommodation/application/service/CustomerSearchAccommodationService.java` | 검색 오케스트레이션 | [   ] |
-| 5 | `core/accommodation/application/port/out/SearchAccommodationPort.java` | QueryDSL 검색 포트 | [   ] |
-| 6 | `core/accommodation/adapter/out/persistence/AccommodationSearchJpaAdapter.java` | QueryDSL 구현, 2단계 배치 조회 | [   ] |
-| 7 | `customer/accommodation/application/port/in/CustomerGetAccommodationDetailQuery.java` | 상세 조회 (가격/재고 포함) | [   ] |
-| 8 | `customer/accommodation/application/service/CustomerGetAccommodationDetailService.java` | 상세 + 가격/재고 조합 | [   ] |
+| 1 | `customer/accommodation/adapter/in/web/SearchAccommodationRequest.java` | 검색 파라미터 record, `toCriteria()` 변환 | [ V ] |
+| 2 | `customer/accommodation/adapter/in/web/CustomerAccommodationController.java` | 검색 + 상세 엔드포인트, `@PageableDefault`, `@DateTimeFormat` | [ V ] |
+| 3 | `customer/accommodation/application/port/in/CustomerSearchAccommodationQuery.java` | Inbound Port, `Page<AccommodationSummary>` 반환 | [ V ] |
+| 4 | `customer/accommodation/application/service/CustomerSearchAccommodationService.java` | 4단계 검색(ID→카드→최저가→조립), `@Transactional(readOnly=true)`, locale 반영 | [ V ] |
+| 5 | `core/accommodation/application/port/out/SearchAccommodationPort.java` | `searchIds`, `loadLowestPrices`, `SearchCriteria`/`AccommodationSummary` record 정의 | [ V ] |
+| 6 | `core/accommodation/adapter/out/persistence/AccommodationSearchJpaAdapter.java` | QueryDSL, 2단계 배치(ID→이미지/최저가), EXISTS 서브쿼리 가격 필터, 지역 서브트리 재귀 | [ V ] |
+| 7 | `customer/accommodation/application/port/in/CustomerGetAccommodationDetailQuery.java` | 상세 조회 record 계층 (`AccommodationDetail` → `RoomWithOptions` → `OptionWithPrice`) | [ V ] |
+| 8 | `customer/accommodation/application/service/CustomerGetAccommodationDetailService.java` | 상세 + 가격/재고 조합, 번역 배치 로드, VAT 반영 | [ V ] |
+
+## FLOW 7. 피드백
+1. `SearchAccommodationRequest` 미사용하면 제거
+2. **`SearchCriteria.accommodationType`가 String**: `AccommodationSearchJpaAdapter.buildWhereClause()`에서 `AccommodationType.valueOf()`로 변환하는데, 잘못된 값 입력 시 500 에러. FLOW 6 `priceType`과 동일한 패턴 — Enum으로 받거나 검증 추가 필요.
+3. **`SearchAccommodationPort.search()` 메서드 미사용**: Service에서는 `searchIds()` + `loadLowestPrices()`만 사용. 기존 `search()` 메서드와 그 구현체(`AccommodationSearchJpaAdapter.search()`)가 dead code로 남아있음. 삭제 검토.
+4. **`CustomerGetAccommodationDetailService` 아키텍처 위반 — adapter 직접 참조**: Application 레이어(service)에서 `core` 패키지의 adapter 레이어 클래스를 직접 import하고 있음:
+   - `AccommodationTranslationJpaEntity` (adapter/out/persistence)
+   - `RoomTranslationJpaEntity`, `RoomOptionTranslationJpaEntity` (adapter/out/persistence)
+   - `RoomImageJpaRepository`, `RoomImageJpaEntity` (adapter/out/persistence)
+   - 헥사고날 원칙 위반 (application → adapter 의존). Port를 통해 접근하거나, Translation 포트 반환 타입을 도메인 모델/record로 변경 필요.
+5. **옵션별 N+1 가능성**: `buildOptionWithPrice()`에서 옵션마다 `loadRoomPricePort` + `loadInventoryPort`를 개별 호출. 옵션 수가 많으면 N+1. 배치 조회(`findByRoomOptionIdIn`)로 전환 검토.
 
 ---
 

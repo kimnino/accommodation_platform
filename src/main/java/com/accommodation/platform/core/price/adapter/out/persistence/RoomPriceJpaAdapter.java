@@ -61,6 +61,17 @@ public class RoomPriceJpaAdapter implements PersistRoomPricePort, LoadRoomPriceP
     }
 
     @Override
+    public List<RoomPrice> findByRoomOptionIdInAndPriceTypeAndDateRange(List<Long> roomOptionIds, PriceType priceType,
+                                                                        LocalDate startDate, LocalDate endDate) {
+
+        return jpaRepository.findByRoomOptionIdInAndPriceTypeAndDateBetweenOrderByRoomOptionIdAscDateAsc(
+                        roomOptionIds, priceType, startDate, endDate)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public void deleteByRoomOptionId(Long roomOptionId) {
 
         jpaRepository.deleteByRoomOptionId(roomOptionId);

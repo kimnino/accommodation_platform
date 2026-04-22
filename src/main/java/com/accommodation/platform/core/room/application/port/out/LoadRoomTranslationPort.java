@@ -3,11 +3,11 @@ package com.accommodation.platform.core.room.application.port.out;
 import java.util.List;
 import java.util.Optional;
 
-import com.accommodation.platform.core.room.adapter.out.persistence.RoomTranslationJpaEntity;
+import com.accommodation.platform.core.room.domain.model.RoomTranslation;
 
 public interface LoadRoomTranslationPort {
 
-    Optional<RoomTranslationJpaEntity> findByRoomIdAndLocale(Long roomId, String locale);
+    Optional<RoomTranslation> findByRoomIdAndLocale(Long roomId, String locale);
 
-    List<RoomTranslationJpaEntity> findByRoomIdInAndLocale(List<Long> roomIds, String locale);
+    List<RoomTranslation> findByRoomIdInAndLocale(List<Long> roomIds, String locale);
 }

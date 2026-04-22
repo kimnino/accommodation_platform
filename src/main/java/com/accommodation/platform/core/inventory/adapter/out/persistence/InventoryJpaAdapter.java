@@ -60,6 +60,17 @@ public class InventoryJpaAdapter implements PersistInventoryPort, LoadInventoryP
     }
 
     @Override
+    public List<Inventory> findByRoomOptionIdInAndDateRange(List<Long> roomOptionIds,
+                                                             LocalDate startDate, LocalDate endDate) {
+
+        return jpaRepository.findByRoomOptionIdInAndDateBetweenOrderByRoomOptionIdAscDateAsc(
+                        roomOptionIds, startDate, endDate)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public Optional<Inventory> findWithLock(Long roomOptionId, LocalDate date) {
 
         return jpaRepository.findWithLock(roomOptionId, date)

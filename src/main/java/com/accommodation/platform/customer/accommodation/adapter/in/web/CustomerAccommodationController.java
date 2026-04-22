@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.accommodation.platform.common.response.ApiResponse;
 import com.accommodation.platform.core.accommodation.application.port.out.SearchAccommodationPort.AccommodationSummary;
 import com.accommodation.platform.core.accommodation.application.port.out.SearchAccommodationPort.SearchCriteria;
+import com.accommodation.platform.core.accommodation.domain.enums.AccommodationType;
 import com.accommodation.platform.customer.accommodation.application.port.in.CustomerGetAccommodationDetailQuery;
 import com.accommodation.platform.customer.accommodation.application.port.in.CustomerGetAccommodationDetailQuery.AccommodationDetail;
 import com.accommodation.platform.customer.accommodation.application.port.in.CustomerSearchAccommodationQuery;
@@ -36,7 +37,7 @@ public class CustomerAccommodationController {
             @RequestParam(name = "check_in_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkInDate,
             @RequestParam(name = "check_out_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOutDate,
             @RequestParam(name = "guest_count", required = false) Integer guestCount,
-            @RequestParam(name = "accommodation_type", required = false) String accommodationType,
+            @RequestParam(name = "accommodation_type", required = false) AccommodationType accommodationType,
             @RequestParam(name = "min_price", required = false) Long minPrice,
             @RequestParam(name = "max_price", required = false) Long maxPrice,
             @RequestParam(name = "tag_ids", required = false) List<Long> tagIds,

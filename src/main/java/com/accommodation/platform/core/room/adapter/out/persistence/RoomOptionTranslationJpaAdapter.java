@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 import com.accommodation.platform.core.room.application.port.out.LoadRoomOptionTranslationPort;
 import com.accommodation.platform.core.room.application.port.out.PersistRoomOptionTranslationPort;
+import com.accommodation.platform.core.room.domain.model.RoomOptionTranslation;
 
 @Repository
 @RequiredArgsConstructor
@@ -29,14 +30,25 @@ public class RoomOptionTranslationJpaAdapter implements PersistRoomOptionTransla
     }
 
     @Override
-    public Optional<RoomOptionTranslationJpaEntity> findByRoomOptionIdAndLocale(Long roomOptionId, String locale) {
+    public Optional<RoomOptionTranslation> findByRoomOptionIdAndLocale(Long roomOptionId, String locale) {
 
-        return jpaRepository.findByRoomOptionIdAndLocale(roomOptionId, locale);
+        return jpaRepository.findByRoomOptionIdAndLocale(roomOptionId, locale)
+                .map(this::toRecord);
     }
 
     @Override
-    public List<RoomOptionTranslationJpaEntity> findByRoomOptionIdInAndLocale(List<Long> roomOptionIds, String locale) {
+    public List<RoomOptionTranslation> findByRoomOptionIdInAndLocale(List<Long> roomOptionIds, String locale) {
 
-        return jpaRepository.findByRoomOptionIdInAndLocale(roomOptionIds, locale);
+        return jpaRepository.findByRoomOptionIdInAndLocale(roomOptionIds, locale).stream()
+                .map(this::toRecord)
+                .toList();
+    }
+
+    private RoomOptionTranslation toRecord(RoomOptionTranslationJpaEntity entity) {
+
+        return new RoomOptionTranslation(
+                entity.getRoomOptionId(),
+                entity.getLocale(),
+                entity.getName());
     }
 }
