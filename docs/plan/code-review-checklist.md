@@ -302,15 +302,20 @@
 
 | 순서 | 파일 | 확인 포인트 | 완료 |
 |------|------|-------------|------|
-| 1 | `core/supplier/application/port/in/SyncSupplierInventoryUseCase.java` | 동기화 커맨드 | [   ] |
-| 2 | `core/supplier/application/service/SyncSupplierInventoryService.java` | 외부 데이터 → 내부 매핑 | [   ] |
-| 3 | `core/supplier/application/port/out/SupplierClient.java` | 외부 API 포트 | [   ] |
-| 4 | `core/supplier/adapter/out/external/MinhyukHouseSupplierAdapter.java` | 클라이언트 구현 (샘플 데이터 반환) | [   ] |
-| 5 | `core/supplier/domain/model/CanonicalAccommodation.java` | 정규화 모델 | [   ] |
-| 6 | `core/supplier/domain/model/CanonicalRoom.java` | 정규화 객실 | [   ] |
-| 7 | `core/supplier/domain/model/CanonicalPrice.java` | 정규화 가격 | [   ] |
-| 8 | `core/supplier/adapter/out/persistence/SupplierAccommodationMappingJpaEntity.java` | 외부 ID 매핑 테이블 | [   ] |
-| 9 | `core/supplier/adapter/out/persistence/SupplierRoomMappingJpaEntity.java` | 객실 매핑 | [   ] |
+| 1 | `core/supplier/application/port/in/SyncSupplierInventoryUseCase.java` | 동기화 인터페이스 | [ V ] |
+| 2 | `core/supplier/application/service/SyncSupplierInventoryService.java` | 외부 데이터 → 내부 매핑, 숙소/객실/가격 동기화 | [ V ] |
+| 3 | `core/supplier/application/port/out/SupplierClient.java` | 외부 API 포트 | [ V ] |
+| 4 | `core/supplier/adapter/out/external/MinhyukHouseSupplierAdapter.java` | Mock 클라이언트, BigDecimal 가격 | [ V ] |
+| 5 | `core/supplier/domain/model/CanonicalAccommodation.java` | 정규화 모델 | [ V ] |
+| 6 | `core/supplier/domain/model/CanonicalRoom.java` | 정규화 객실 | [ V ] |
+| 7 | `core/supplier/domain/model/CanonicalPrice.java` | 정규화 가격, BigDecimal | [ V ] |
+| 8 | `core/supplier/adapter/out/persistence/SupplierAccommodationMappingJpaEntity.java` | 외부 ID 매핑 | [ V ] |
+| 9 | `core/supplier/adapter/out/persistence/SupplierRoomMappingJpaEntity.java` | 객실 매핑 | [ V ] |
+
+## FLOW 12. 피드백
+1. **`SyncSupplierInventoryService` 아키텍처 위반**: Application 서비스에서 adapter/persistence 클래스 6개 직접 import (`SupplierJpaRepository`, `SupplierAccommodationMappingJpaRepository`, `SupplierRoomMappingJpaRepository`, `SupplierRoomOptionMappingJpaEntity` 등). Outbound Port를 통해 접근해야 함.
+2. **`SupplierSyncController` 위치**: `core/supplier/adapter/in/web/`에 위치하지만, SecurityConfig에서 ADMIN 역할 전용. 컨벤션상 Controller는 채널 패키지(`admin/supplier/`)에 있어야 함.
+3. **`CanonicalAccommodation.type`이 String**: 컨벤션상 상태/유형값은 Enum으로 관리.
 
 ---
 
@@ -318,21 +323,26 @@
 
 | 파일 | 확인 포인트 | 완료 |
 |------|-------------|------|
-| `common/adapter/out/persistence/BaseJpaEntity.java` | createdAt/updatedAt, restoreTimestamps | [   ] |
-| `common/domain/BaseEntity.java` | 도메인 기본 필드 | [   ] |
-| `common/domain/SoftDeletable.java` | is_deleted soft delete | [   ] |
-| `common/exception/ErrorCode.java` | HTTP 상태 + 비즈니스 코드 | [   ] |
-| `common/exception/BusinessException.java` | RuntimeException 계열 | [   ] |
-| `common/exception/GlobalExceptionHandler.java` | 전역 예외 처리, 404/400/500 | [   ] |
-| `common/response/ApiResponse.java` | SUCCESS/ERROR 포맷 | [   ] |
-| `common/config/SecurityConfig.java` | JWT 인증/인가, URL별 Role 접근 제어, accessDeniedHandler | [   ] |
-| `common/security/JwtTokenProvider.java` | JWT 생성/검증 (HMAC-SHA512) | [   ] |
-| `common/security/JwtAuthenticationFilter.java` | Bearer 토큰 → SecurityContext + X-Partner-Id/X-Member-Id 헤더 자동 주입 | [   ] |
-| `common/security/AuthController.java` | 토큰 발급 엔드포인트 (Demo용) | [   ] |
-| `common/config/JacksonConfig.java` | snake_case, Instant 직렬화 | [   ] |
-| `common/config/QuerydslConfig.java` | JPAQueryFactory 빈 | [   ] |
-| `common/filter/MdcLoggingFilter.java` | trace_id MDC 설정 | [   ] |
-| `common/interceptor/RequestLoggingInterceptor.java` | 요청/응답 로깅 | [   ] |
+| `common/adapter/out/persistence/BaseJpaEntity.java` | `createdAt`/`updatedAt`, `restoreTimestamps` | [ V ] |
+| `common/domain/BaseEntity.java` | 도메인 기본 필드, `initTimestamps`/`updateTimestamp` | [ V ] |
+| `common/domain/SoftDeletable.java` | `isDeleted`, `deletedAt` 인터페이스 | [ V ] |
+| `common/exception/ErrorCode.java` | HTTP 상태 + 비즈니스 에러 코드 | [ V ] |
+| `common/exception/BusinessException.java` | RuntimeException 계열, ErrorCode 보유 | [ V ] |
+| `common/exception/GlobalExceptionHandler.java` | 전역 예외 처리, 404/400/500 `ApiResponse` 포맷 | [ V ] |
+| `common/response/ApiResponse.java` | SUCCESS/ERROR 포맷 | [ V ] |
+| `common/config/SecurityConfig.java` | JWT 인증/인가, URL별 Role 접근 제어 | [ V ] |
+| `common/security/JwtTokenProvider.java` | JWT 생성/검증 (HMAC-SHA512) | [ V ] |
+| `common/security/JwtAuthenticationFilter.java` | Bearer 토큰 → SecurityContext | [ V ] |
+| `common/security/AuthController.java` | Demo용 토큰 발급 | [ V ] |
+| `common/config/JacksonConfig.java` | `SNAKE_CASE`, Instant 직렬화 | [ V ] |
+| `common/config/QuerydslConfig.java` | JPAQueryFactory 빈 | [ V ] |
+| `common/filter/MdcLoggingFilter.java` | trace_id MDC 설정 | [ V ] |
+| `common/interceptor/RequestLoggingInterceptor.java` | 요청/응답 로깅 | [ V ] |
+
+## 공통 인프라 피드백
+1. **`BaseEntity`의 `setCreatedAt`/`setUpdatedAt`이 public**: `@Setter` 금지 원칙의 취지상 `protected`로 변경하거나, `restoreTimestamps(createdAt, updatedAt)` 패턴으로 통일 필요 (`BaseJpaEntity`와 동일 방식).
+2. **`SecurityConfig`의 에러 응답이 하드코딩 JSON**: `accessDeniedHandler`/`authenticationEntryPoint`에서 JSON 문자열 직접 조합. `ApiResponse` + Jackson 직렬화로 통일하면 포맷 일관성 보장.
+3. **`AuthController`가 무인증 토큰 발급**: Demo용이지만 README/주석에 "운영 환경에서는 제거 필요" 명시 권장. `@Valid` 누락.
 
 ---
 

@@ -41,23 +41,24 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
-                .authenticationEntryPoint((request, response, authException) -> {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json;charset=UTF-8");
-                    response.getWriter().write(
-                        "{\"status\":\"ERROR\",\"data\":null,\"error\":{\"code\":\"UNAUTHORIZED\",\"message\":\"인증이 필요합니다.\",\"field_errors\":null},\"timestamp\":\"" + Instant.now() + "\"}"
-                    );
-                })
-                .accessDeniedHandler((request, response, accessDeniedException) -> {
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    response.setContentType("application/json;charset=UTF-8");
-                    response.getWriter().write(
-                        "{\"status\":\"ERROR\",\"data\":null,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"접근 권한이 없습니다.\",\"field_errors\":null},\"timestamp\":\"" + Instant.now() + "\"}"
-                    );
-                })
+                .authenticationEntryPoint((request, response, authException) ->
+                        writeErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "UNAUTHORIZED", "인증이 필요합니다."))
+                .accessDeniedHandler((request, response, accessDeniedException) ->
+                        writeErrorResponse(response, HttpServletResponse.SC_FORBIDDEN, "FORBIDDEN", "접근 권한이 없습니다."))
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    private void writeErrorResponse(HttpServletResponse response, int status, String code, String message)
+            throws java.io.IOException {
+
+        response.setStatus(status);
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write(
+                "{\"status\":\"ERROR\",\"data\":null,"
+                + "\"error\":{\"code\":\"" + code + "\",\"message\":\"" + message + "\",\"field_errors\":null},"
+                + "\"timestamp\":\"" + Instant.now() + "\"}");
     }
 }

@@ -30,8 +30,7 @@ interface ReservationMapper {
                 entity.getTotalPrice(),
                 entity.getStatus(),
                 entity.getHoldExpiredAt());
-        reservation.setCreatedAt(entity.getCreatedAt());
-        reservation.setUpdatedAt(entity.getUpdatedAt());
+        reservation.restoreTimestamps(entity.getCreatedAt(), entity.getUpdatedAt());
         return reservation;
     }
 
