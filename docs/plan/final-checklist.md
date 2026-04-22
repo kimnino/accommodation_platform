@@ -88,17 +88,7 @@
 
 ---
 
-## 5. Demo UI 확인
-
-- [ ] `demo-partner.html` — 숙소 등록 후 드롭다운 자동 갱신 동작 확인
-- [ ] `demo-partner.html` — 객실 옵션 등록 후 가격/재고 설정 드롭다운 자동 연동 확인
-- [ ] `demo-customer.html` — 숙박/대실 예약 드롭다운 동작 확인
-- [ ] `demo-customer.html` — 예약 ID 자동 채워지는지 확인
-- [ ] `admin.html` / `admin-tags.html` — 태그 그룹/태그 CRUD 정상 동작 확인
-
----
-
-## 6. 빌드 & 정합성
+## 5. 빌드 & 정합성
 
 - [x] `./gradlew test` — 전체 빌드 + 테스트 통과 (BUILD SUCCESSFUL in 1m 10s) ✅
 - [x] Spring REST Docs 스니펫 생성 확인 (`build/generated-snippets/`) ✅

@@ -63,7 +63,7 @@
 - **구독자 및 처리 내용**:
   - `SearchSnapshotService` -- 검색 스냅샷에서 sold out 해제, 재판매 가능 상태로 갱신
 
-### 2.6 AccommodationApprovedEvent (신규)
+### 2.6 AccommodationApprovedEvent
 
 - **발행 시점**: 관리자가 파트너의 숙소 등록/수정 요청을 승인한 직후
 - **발행자**: `AdminApproveService`
@@ -71,7 +71,7 @@
   - `SearchIndexService` -- 검색 인덱스에 숙소 추가 또는 정보 갱신
   - `NotificationService` -- 파트너에게 승인 완료 알림
 
-### 2.7 PriceChangedEvent (신규)
+### 2.7 PriceChangedEvent
 
 - **발행 시점**: 파트너가 요금을 설정하거나, 관리자가 요금을 조정한 직후
 - **발행자**: `ExtranetSetPriceService` / `AdminAdjustPriceService`
@@ -79,7 +79,7 @@
   - `SearchSnapshotService` -- 해당 숙소의 최저가 정보 재계산 및 갱신
   - `CacheService` -- 가격 관련 캐시 무효화 (Redis 캐시 eviction)
 
-### 2.8 SupplierSyncCompletedEvent (신규)
+### 2.8 SupplierSyncCompletedEvent
 
 - **발행 시점**: 외부 공급사 재고/가격 동기화 배치가 완료된 직후
 - **발행자**: `SyncSupplierInventoryService`
