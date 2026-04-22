@@ -3,11 +3,14 @@ package com.accommodation.platform.admin.accommodation.application.port.in;
 import java.util.List;
 
 import com.accommodation.platform.core.accommodation.adapter.out.persistence.AccommodationTranslationJpaEntity;
+import com.accommodation.platform.core.accommodation.domain.enums.AccommodationStatus;
 import com.accommodation.platform.core.accommodation.domain.model.Accommodation;
 
 public interface AdminListAccommodationQuery {
 
     List<Accommodation> listAll();
+
+    List<Accommodation> listByStatus(AccommodationStatus status);
 
     Accommodation getById(Long accommodationId);
 
