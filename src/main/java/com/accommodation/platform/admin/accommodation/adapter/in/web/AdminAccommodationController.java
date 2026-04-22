@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import com.accommodation.platform.admin.accommodation.application.port.in.AdminG
 import com.accommodation.platform.admin.accommodation.application.port.in.AdminListAccommodationQuery;
 import com.accommodation.platform.admin.accommodation.application.port.in.AdminListAccommodationQuery.AccommodationDetail;
 import com.accommodation.platform.common.response.ApiResponse;
+import com.accommodation.platform.core.accommodation.domain.enums.AccommodationStatus;
 import com.accommodation.platform.core.accommodation.domain.model.Accommodation;
 import com.accommodation.platform.extranet.accommodation.adapter.in.web.AccommodationDetailResponse;
 
@@ -32,9 +34,14 @@ public class AdminAccommodationController {
     private final AdminListAccommodationQuery listQuery;
 
     @GetMapping
-    public ApiResponse<List<AccommodationDetailResponse>> listAll() {
+    public ApiResponse<List<AccommodationDetailResponse>> listAll(
+            @RequestParam(required = false) AccommodationStatus status) {
 
-        List<AccommodationDetailResponse> responses = listQuery.listAll().stream()
+        List<Accommodation> accommodations = status != null
+                ? listQuery.listByStatus(status)
+                : listQuery.listAll();
+
+        List<AccommodationDetailResponse> responses = accommodations.stream()
                 .map(AccommodationDetailResponse::from)
                 .toList();
         return ApiResponse.success(responses);

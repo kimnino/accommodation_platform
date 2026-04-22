@@ -21,6 +21,7 @@ public class Accommodation extends BaseEntity {
     private final Long partnerId;
     private String name;
     private final AccommodationType type;
+    private Long regionId;
     private String fullAddress;
     private double latitude;
     private double longitude;
@@ -31,7 +32,7 @@ public class Accommodation extends BaseEntity {
 
     @Builder
     public Accommodation(Long id, Long partnerId, String name, AccommodationType type,
-                         String fullAddress, double latitude, double longitude,
+                         Long regionId, String fullAddress, double latitude, double longitude,
                          String locationDescription, LocalTime checkInTime, LocalTime checkOutTime) {
 
         validateRequired(partnerId, name, type, fullAddress);
@@ -39,6 +40,7 @@ public class Accommodation extends BaseEntity {
         this.partnerId = partnerId;
         this.name = name;
         this.type = type;
+        this.regionId = regionId;
         this.fullAddress = fullAddress;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -112,6 +114,12 @@ public class Accommodation extends BaseEntity {
     public void removeImage(String relativePath) {
 
         this.images.removeIf(image -> image.relativePath().equals(relativePath));
+        updateTimestamp();
+    }
+
+    public void assignRegion(Long regionId) {
+
+        this.regionId = regionId;
         updateTimestamp();
     }
 

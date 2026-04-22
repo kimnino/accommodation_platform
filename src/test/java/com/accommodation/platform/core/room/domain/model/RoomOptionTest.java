@@ -28,7 +28,7 @@ class RoomOptionTest {
 
         RoomOption option = createOption();
 
-        option.updateInfo("조식 포함", CancellationPolicy.NON_REFUNDABLE, new BigDecimal("20000"));
+        option.updateInfo("조식 포함", CancellationPolicy.NON_REFUNDABLE, new BigDecimal("20000"), null, null, null, null);
 
         assertThat(option.getName()).isEqualTo("조식 포함");
         assertThat(option.getCancellationPolicy()).isEqualTo(CancellationPolicy.NON_REFUNDABLE);

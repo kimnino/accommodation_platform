@@ -603,9 +603,3 @@ TagGroup (공용시설, accommodationType: ALL)
 | 테스트 | 내용 |
 |--------|------|
 | `HoldExpirationSchedulerTest` | 만료 예약 → CANCELLED + 재고 복구 확인, 미만료 예약 → 상태 유지 확인 |
-
-### 9-5. 미완료 항목
-
-| 항목 | 사유 |
-|------|------|
-| Demo UI QA (Section 5) | 서버 실행 후 직접 확인 필요 |

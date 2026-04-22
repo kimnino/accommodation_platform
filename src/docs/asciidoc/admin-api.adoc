@@ -1,105 +1,471 @@
 == Admin API (관리자)
 
-플랫폼 관리자가 숙소를 심사하고 태그를 관리하는 API입니다.
+플랫폼 관리자가 숙소를 심사하고 태그/지역을 관리하는 API.
+모든 요청에 `Authorization: Bearer {ADMIN_TOKEN}` 헤더 필요.
 
-=== 숙소 승인
+---
+
+=== 숙소 관리
+
+==== 숙소 목록 조회
+
+`GET /api/v1/admin/accommodations`
+
+===== 쿼리 파라미터
+
+[cols="1,1,1,3"]
+|===
+| 파라미터 | 타입 | 필수 | 설명
+
+| status | String | N | `PENDING` / `ACTIVE` / `SUSPENDED` / `CLOSED`. 없으면 전체 조회
+|===
+
+===== 응답 예시
+
+[source,json]
+----
+{
+  "status": "SUCCESS",
+  "data": [
+    {
+      "id": 26,
+      "name": "부산 비스타 호텔",
+      "type": "HOTEL",
+      "status": "PENDING",
+      "region_id": null,
+      "full_address": "부산시 해운대구 해운대로 1",
+      "latitude": 35.1587,
+      "longitude": 129.1603,
+      "location_description": "해운대 해수욕장 도보 5분",
+      "check_in_time": "15:00",
+      "check_out_time": "11:00",
+      "images": [],
+      "created_at": "2026-04-20T09:00:00Z",
+      "updated_at": "2026-04-20T09:00:00Z"
+    }
+  ],
+  "error": null,
+  "timestamp": "2026-04-22T07:00:00Z"
+}
+----
+
+---
+
+==== 숙소 상세 조회
+
+`GET /api/v1/admin/accommodations/{accommodationId}`
+
+다국어 번역 정보를 포함한 상세 정보를 반환한다.
+
+===== 응답 필드
+
+[cols="1,1,3"]
+|===
+| 필드 | 타입 | 설명
+
+| id | Long | 숙소 ID
+| name | String | 숙소명
+| type | String | 숙소 유형
+| status | String | 현재 상태
+| full_address | String | 주소
+| latitude | Double | 위도
+| longitude | Double | 경도
+| location_description | String | 위치 설명
+| check_in_time | String | 체크인 시간
+| check_out_time | String | 체크아웃 시간
+| images | List | 이미지 목록
+| images[].relative_path | String | 상대 경로
+| images[].category | String | 이미지 카테고리
+| images[].display_order | Integer | 노출 순서
+| images[].is_primary | Boolean | 대표 이미지 여부
+| translations | List | 다국어 번역 목록
+| translations[].locale | String | 언어 코드 (`ko`, `en`, `ja`)
+| translations[].name | String | 번역된 숙소명
+| translations[].introduction | String | 소개글
+| created_at | Instant | 생성 시각
+| updated_at | Instant | 수정 시각
+|===
+
+---
+
+==== 숙소 승인
 
 `PATCH /api/v1/admin/accommodations/{accommodationId}/approve`
 
-PENDING 상태의 숙소를 ACTIVE로 전환합니다.
+`PENDING` 또는 `SUSPENDED` 상태 → `ACTIVE`로 전환.
 
-=== 숙소 정지
+===== 응답
+
+[source,json]
+----
+{
+  "status": "SUCCESS",
+  "data": {
+    "id": 26,
+    "name": "부산 비스타 호텔",
+    "status": "ACTIVE",
+    ...
+  },
+  "error": null,
+  "timestamp": "2026-04-22T07:00:00Z"
+}
+----
+
+---
+
+==== 숙소 정지
 
 `PATCH /api/v1/admin/accommodations/{accommodationId}/suspend`
 
-ACTIVE 상태의 숙소를 SUSPENDED로 전환합니다.
+`ACTIVE` 상태 → `SUSPENDED`로 전환.
 
-=== 숙소 폐쇄
+---
+
+==== 숙소 폐쇄
 
 `PATCH /api/v1/admin/accommodations/{accommodationId}/close`
 
-숙소를 CLOSED 상태로 전환합니다.
+어떤 상태에서든 `CLOSED`로 전환.
 
-=== 수정 요청 승인
+---
+
+==== 수정 요청 목록 조회 (대기 중)
+
+`GET /api/v1/admin/accommodations/modifications/pending`
+
+파트너가 제출하고 아직 처리되지 않은 수정 요청 목록을 반환한다.
+
+===== 응답
+
+[source,json]
+----
+{
+  "status": "SUCCESS",
+  "data": [
+    {
+      "id": 5,
+      "accommodation_id": 1,
+      "accommodation_name": "강남 그랜드 호텔",
+      "requested_at": "2026-04-22T06:00:00Z"
+    }
+  ],
+  "error": null,
+  "timestamp": "2026-04-22T07:00:00Z"
+}
+----
+
+---
+
+==== 수정 요청 승인
 
 `PATCH /api/v1/admin/accommodations/modifications/{modificationRequestId}/approve`
 
-파트너의 숙소 수정 요청을 승인하고 실제 숙소 정보에 반영합니다.
+수정 내용을 실제 숙소 정보에 반영한다.
 
-=== 수정 요청 거절
+---
+
+==== 수정 요청 거절
 
 `PATCH /api/v1/admin/accommodations/modifications/{modificationRequestId}/reject`
 
-파트너의 숙소 수정 요청을 거절합니다. 거절 사유를 포함합니다.
+===== 요청
+
+[source,json]
+----
+{
+  "reason": "주소가 잘못 입력되었습니다. 정확한 주소를 확인 후 재요청해주세요."
+}
+----
 
 ---
 
-=== 태그 그룹 생성
+=== 지역 관리
 
-관리자가 새로운 태그 그룹을 생성합니다. 숙소유형별 또는 전체 대상으로 설정 가능합니다.
+==== 지역 목록 조회
 
-==== 요청
+`GET /api/v1/admin/accommodation-regions?accommodation_type={type}`
 
-include::{snippets}/admin/tag-group/create/http-request.adoc[]
+트리 구조로 반환한다. 최상위 지역이 `children` 배열로 하위 지역을 포함한다.
 
-==== 요청 필드
+===== 쿼리 파라미터
 
-include::{snippets}/admin/tag-group/create/request-fields.adoc[]
+[cols="1,1,1,3"]
+|===
+| 파라미터 | 타입 | 필수 | 설명
 
-==== 응답
+| accommodation_type | String | Y | 숙소 유형 (예: `HOTEL`)
+|===
 
-include::{snippets}/admin/tag-group/create/http-response.adoc[]
+===== 응답
 
-==== 응답 필드
-
-include::{snippets}/admin/tag-group/create/response-fields.adoc[]
-
----
-
-=== 태그 그룹 목록 조회
-
-전체 태그 그룹 목록을 조회합니다.
-
-==== 요청
-
-include::{snippets}/admin/tag-group/list/http-request.adoc[]
-
-==== 응답
-
-include::{snippets}/admin/tag-group/list/http-response.adoc[]
-
----
-
-=== 태그 생성
-
-태그 그룹에 새로운 태그를 추가합니다.
-
-==== 요청
-
-include::{snippets}/admin/tag/create/http-request.adoc[]
-
-==== 요청 필드
-
-include::{snippets}/admin/tag/create/request-fields.adoc[]
-
-==== 응답
-
-include::{snippets}/admin/tag/create/http-response.adoc[]
-
-==== 응답 필드
-
-include::{snippets}/admin/tag/create/response-fields.adoc[]
+[source,json]
+----
+{
+  "status": "SUCCESS",
+  "data": [
+    {
+      "id": 1,
+      "accommodation_type": "HOTEL",
+      "region_name": "서울",
+      "parent_id": null,
+      "sort_order": 1,
+      "children": [
+        {
+          "id": 2,
+          "accommodation_type": "HOTEL",
+          "region_name": "강남구",
+          "parent_id": 1,
+          "sort_order": 1,
+          "children": []
+        }
+      ]
+    }
+  ],
+  "error": null,
+  "timestamp": "2026-04-22T07:00:00Z"
+}
+----
 
 ---
 
-=== 태그 목록 조회
+==== 지역 생성
 
-태그 그룹 내 태그 목록을 조회합니다.
+`POST /api/v1/admin/accommodation-regions`
 
-==== 요청
+===== 요청
 
-include::{snippets}/admin/tag/list/http-request.adoc[]
+[source,json]
+----
+{
+  "accommodation_type": "HOTEL",
+  "region_name": "부산",
+  "parent_id": null,
+  "sort_order": 2
+}
+----
 
-==== 응답
+[cols="1,1,1,3"]
+|===
+| 필드 | 타입 | 필수 | 설명
 
-include::{snippets}/admin/tag/list/http-response.adoc[]
+| accommodation_type | String | Y | 숙소 유형
+| region_name | String | Y | 지역명
+| parent_id | Long | N | 상위 지역 ID (최상위면 null)
+| sort_order | Integer | Y | 노출 순서
+|===
+
+---
+
+==== 지역 수정
+
+`PUT /api/v1/admin/accommodation-regions/{regionId}`
+
+===== 요청
+
+[source,json]
+----
+{
+  "region_name": "부산광역시",
+  "parent_id": null,
+  "sort_order": 2
+}
+----
+
+---
+
+==== 지역 삭제
+
+`DELETE /api/v1/admin/accommodation-regions/{regionId}`
+
+응답 body 없음 (HTTP 204).
+
+---
+
+=== 요금 직접 조정
+
+==== 요금 조정
+
+`PATCH /api/v1/admin/room-options/{roomOptionId}/price`
+
+파트너 수정 요청 없이 관리자가 직접 요금을 조정한다.
+
+===== 요청
+
+[source,json]
+----
+{
+  "start_date": "2026-05-01",
+  "end_date": "2026-05-31",
+  "selling_price": 120000,
+  "tax_included": true
+}
+----
+
+[cols="1,1,1,3"]
+|===
+| 필드 | 타입 | 필수 | 설명
+
+| start_date | LocalDate | Y | 조정 시작일
+| end_date | LocalDate | Y | 조정 종료일
+| selling_price | BigDecimal | Y | 새 판매가
+| tax_included | Boolean | Y | 세금 포함 여부
+|===
+
+---
+
+=== 태그 관리
+
+==== 태그 그룹 생성
+
+`POST /api/v1/admin/tag-groups`
+
+===== 요청
+
+[source,json]
+----
+{
+  "name": "숙소 특징",
+  "display_order": 1,
+  "target_type": "ACCOMMODATION",
+  "accommodation_type": null,
+  "supplier_id": null
+}
+----
+
+[cols="1,1,1,3"]
+|===
+| 필드 | 타입 | 필수 | 설명
+
+| name | String | Y | 태그 그룹명
+| display_order | Integer | Y | 노출 순서
+| target_type | String | Y | `ACCOMMODATION` / `ROOM`
+| accommodation_type | String | N | 특정 숙소 유형 한정. null이면 전체 적용
+| supplier_id | Long | N | 특정 공급사 한정. null이면 전체 적용
+|===
+
+===== 응답
+
+[source,json]
+----
+{
+  "status": "SUCCESS",
+  "data": {
+    "id": 1,
+    "name": "숙소 특징",
+    "display_order": 1,
+    "target_type": "ACCOMMODATION",
+    "accommodation_type": null,
+    "supplier_id": null,
+    "is_active": true,
+    "created_at": "2026-04-22T07:00:00Z",
+    "updated_at": "2026-04-22T07:00:00Z"
+  },
+  "error": null,
+  "timestamp": "2026-04-22T07:00:00Z"
+}
+----
+
+---
+
+==== 태그 그룹 수정
+
+`PUT /api/v1/admin/tag-groups/{tagGroupId}`
+
+===== 요청
+
+[source,json]
+----
+{
+  "name": "숙소 특징 (수정)",
+  "display_order": 2,
+  "accommodation_type": null
+}
+----
+
+---
+
+==== 태그 그룹 활성화 / 비활성화
+
+`PATCH /api/v1/admin/tag-groups/{tagGroupId}/activate`
+
+`PATCH /api/v1/admin/tag-groups/{tagGroupId}/deactivate`
+
+요청 body 없음. 응답 data는 null.
+
+---
+
+==== 태그 그룹 목록 조회
+
+`GET /api/v1/admin/tag-groups`
+
+전체 태그 그룹 목록을 반환한다.
+
+---
+
+==== 태그 생성
+
+`POST /api/v1/admin/tag-groups/{tagGroupId}/tags`
+
+===== 요청
+
+[source,json]
+----
+{
+  "name": "수영장",
+  "display_order": 1
+}
+----
+
+===== 응답
+
+[source,json]
+----
+{
+  "status": "SUCCESS",
+  "data": {
+    "id": 10,
+    "tag_group_id": 1,
+    "name": "수영장",
+    "display_order": 1,
+    "is_active": true,
+    "created_at": "2026-04-22T07:00:00Z",
+    "updated_at": "2026-04-22T07:00:00Z"
+  },
+  "error": null,
+  "timestamp": "2026-04-22T07:00:00Z"
+}
+----
+
+---
+
+==== 태그 수정
+
+`PUT /api/v1/admin/tag-groups/{tagGroupId}/tags/{tagId}`
+
+===== 요청
+
+[source,json]
+----
+{
+  "name": "야외 수영장",
+  "display_order": 1
+}
+----
+
+---
+
+==== 태그 활성화 / 비활성화
+
+`PATCH /api/v1/admin/tag-groups/{tagGroupId}/tags/{tagId}/activate`
+
+`PATCH /api/v1/admin/tag-groups/{tagGroupId}/tags/{tagId}/deactivate`
+
+요청 body 없음. 응답 data는 null.
+
+---
+
+==== 태그 목록 조회
+
+`GET /api/v1/admin/tag-groups/{tagGroupId}/tags`
+
+특정 태그 그룹에 속한 태그 목록을 반환한다.

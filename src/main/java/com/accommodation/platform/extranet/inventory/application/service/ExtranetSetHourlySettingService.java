@@ -7,9 +7,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.accommodation.platform.common.exception.BusinessException;
 import com.accommodation.platform.common.exception.ErrorCode;
-import com.accommodation.platform.core.accommodation.adapter.out.persistence.AccommodationHourlySettingJpaEntity;
-import com.accommodation.platform.core.accommodation.adapter.out.persistence.AccommodationHourlySettingJpaRepository;
 import com.accommodation.platform.core.accommodation.application.port.out.LoadAccommodationPort;
+import com.accommodation.platform.core.accommodation.application.port.out.LoadHourlySettingPort;
+import com.accommodation.platform.core.accommodation.application.port.out.PersistHourlySettingPort;
+import com.accommodation.platform.core.accommodation.domain.model.AccommodationHourlySetting;
 import com.accommodation.platform.extranet.inventory.application.port.in.ExtranetSetHourlySettingUseCase;
 
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,8 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class ExtranetSetHourlySettingService implements ExtranetSetHourlySettingUseCase {
 
-    private final AccommodationHourlySettingJpaRepository settingRepository;
+    private final LoadHourlySettingPort loadHourlySettingPort;
+    private final PersistHourlySettingPort persistHourlySettingPort;
     private final LoadAccommodationPort loadAccommodationPort;
 
     @Override
@@ -29,24 +31,21 @@ public class ExtranetSetHourlySettingService implements ExtranetSetHourlySetting
                 .filter(acc -> acc.getPartnerId().equals(partnerId))
                 .orElseThrow(() -> new BusinessException(ErrorCode.ACCOMMODATION_NOT_FOUND, "해당 숙소에 대한 접근 권한이 없습니다."));
 
-        settingRepository.findByAccommodationId(accommodationId)
-                .ifPresentOrElse(
-                        settingRepository::delete,
-                        () -> {});
-
         int slotUnit = command.slotUnitMinutes();
         if (slotUnit != 30 && slotUnit != 60) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "슬롯 단위는 30분 또는 60분만 가능합니다.");
         }
 
-        AccommodationHourlySettingJpaEntity setting = new AccommodationHourlySettingJpaEntity(
-                accommodationId,
+        persistHourlySettingPort.deleteByAccommodationId(accommodationId);
+
+        AccommodationHourlySetting setting = new AccommodationHourlySetting(
+                null, accommodationId,
                 LocalTime.parse(command.operatingStartTime()),
                 LocalTime.parse(command.operatingEndTime()),
                 command.usageDurationMinutes(),
                 command.bufferMinutes(),
                 slotUnit);
 
-        settingRepository.save(setting);
+        persistHourlySettingPort.save(setting);
     }
 }

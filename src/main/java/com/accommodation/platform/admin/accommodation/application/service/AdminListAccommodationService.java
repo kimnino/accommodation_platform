@@ -13,6 +13,7 @@ import com.accommodation.platform.common.exception.ErrorCode;
 import com.accommodation.platform.core.accommodation.adapter.out.persistence.AccommodationTranslationJpaEntity;
 import com.accommodation.platform.core.accommodation.application.port.out.LoadAccommodationPort;
 import com.accommodation.platform.core.accommodation.application.port.out.LoadAccommodationTranslationPort;
+import com.accommodation.platform.core.accommodation.domain.enums.AccommodationStatus;
 import com.accommodation.platform.core.accommodation.domain.model.Accommodation;
 
 @Service
@@ -27,6 +28,12 @@ public class AdminListAccommodationService implements AdminListAccommodationQuer
     public List<Accommodation> listAll() {
 
         return loadAccommodationPort.findAll();
+    }
+
+    @Override
+    public List<Accommodation> listByStatus(AccommodationStatus status) {
+
+        return loadAccommodationPort.findByStatus(status);
     }
 
     @Override

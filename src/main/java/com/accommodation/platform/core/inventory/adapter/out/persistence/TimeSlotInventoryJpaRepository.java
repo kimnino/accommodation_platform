@@ -29,4 +29,10 @@ public interface TimeSlotInventoryJpaRepository extends JpaRepository<TimeSlotIn
 
     Optional<TimeSlotInventoryJpaEntity> findByRoomOptionIdAndDateAndSlotTime(
             Long roomOptionId, LocalDate date, LocalTime slotTime);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT ts FROM TimeSlotInventoryJpaEntity ts " +
+            "WHERE ts.roomOptionId = :roomOptionId AND ts.date = :date AND ts.status = 'AVAILABLE' " +
+            "ORDER BY ts.slotTime ASC")
+    List<TimeSlotInventoryJpaEntity> findAvailableWithLock(Long roomOptionId, LocalDate date);
 }

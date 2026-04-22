@@ -1,8 +1,10 @@
 package com.accommodation.platform.customer.accommodation.adapter.in.web;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 import com.accommodation.platform.customer.accommodation.application.port.in.CustomerGetAccommodationDetailQuery;
 import com.accommodation.platform.customer.accommodation.application.port.in.CustomerGetAccommodationDetailQuery.AccommodationDetail;
@@ -59,8 +61,10 @@ class CustomerAccommodationControllerTest {
 
         // given
         AccommodationSummary summary = new AccommodationSummary(
-                1L, "서울 호텔", "HOTEL", "서울시 강남구 테헤란로 123",
+                1L, "서울 호텔", "HOTEL", "ACTIVE",
+                "서울시 강남구 테헤란로 123",
                 37.5665, 126.9780,
+                "강남역 5번 출구 도보 3분", "15:00", "11:00",
                 "/accommodation/exterior/main.png", 120000L, true);
 
         given(searchQuery.search(any(), any()))
@@ -69,18 +73,18 @@ class CustomerAccommodationControllerTest {
         // when & then
         mockMvc.perform(get("/api/v1/accommodations")
                         .param("region", "강남")
-                        .param("checkInDate", "2026-04-25")
-                        .param("checkOutDate", "2026-04-27")
-                        .param("guestCount", "2"))
+                        .param("check_in_date", "2026-04-25")
+                        .param("check_out_date", "2026-04-27")
+                        .param("guest_count", "2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.content[0].name").value("서울 호텔"))
                 .andDo(document("customer/accommodation/search",
                         queryParameters(
                                 parameterWithName("region").description("지역 검색어").optional(),
-                                parameterWithName("checkInDate").description("체크인 날짜 (yyyy-MM-dd)").optional(),
-                                parameterWithName("checkOutDate").description("체크아웃 날짜 (yyyy-MM-dd)").optional(),
-                                parameterWithName("guestCount").description("투숙 인원").optional())));
+                                parameterWithName("check_in_date").description("체크인 날짜 (yyyy-MM-dd)").optional(),
+                                parameterWithName("check_out_date").description("체크아웃 날짜 (yyyy-MM-dd)").optional(),
+                                parameterWithName("guest_count").description("투숙 인원").optional())));
     }
 
     @Test
@@ -89,10 +93,11 @@ class CustomerAccommodationControllerTest {
         // given
         OptionWithPrice option = new OptionWithPrice(
                 1L, "조식 포함", "FREE_CANCELLATION",
-                new BigDecimal("240000"), BigDecimal.ZERO, 3);
+                new BigDecimal("240000"), BigDecimal.ZERO, 3, Set.of("STAY"),
+                "15:00", "11:00", null, null);
 
         RoomWithOptions room = new RoomWithOptions(
-                1L, "디럭스 더블", "디럭스", 2, 4,
+                1L, "디럭스 더블", "디럭스", 2, 4, "ACTIVE",
                 List.of(new RoomImageInfo("/room/deluxe/1.png", 1, true)),
                 List.of(option));
 
@@ -100,6 +105,9 @@ class CustomerAccommodationControllerTest {
                 1L, "서울 호텔", "HOTEL", "ACTIVE",
                 "서울시 강남구 테헤란로 123", 37.5665, 126.9780,
                 "강남역 5번 출구 도보 3분",
+                "15:00", "11:00",
+                1L, List.of(1L, 2L),
+                Instant.now(), Instant.now(),
                 List.of(new ImageInfo("/accommodation/exterior/main.png", "EXTERIOR", 1, true)),
                 List.of(room));
 
@@ -108,8 +116,8 @@ class CustomerAccommodationControllerTest {
 
         // when & then
         mockMvc.perform(get("/api/v1/accommodations/1")
-                        .param("checkInDate", "2026-04-25")
-                        .param("checkOutDate", "2026-04-27"))
+                        .param("check_in_date", "2026-04-25")
+                        .param("check_out_date", "2026-04-27"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.name").value("서울 호텔"))
                 .andExpect(jsonPath("$.data.rooms[0].room_name").value("디럭스 더블"))
@@ -117,7 +125,7 @@ class CustomerAccommodationControllerTest {
                 .andExpect(jsonPath("$.data.rooms[0].options[0].total_price").value(240000))
                 .andDo(document("customer/accommodation/detail",
                         queryParameters(
-                                parameterWithName("checkInDate").description("체크인 날짜 (yyyy-MM-dd)"),
-                                parameterWithName("checkOutDate").description("체크아웃 날짜 (yyyy-MM-dd)"))));
+                                parameterWithName("check_in_date").description("체크인 날짜 (yyyy-MM-dd)"),
+                                parameterWithName("check_out_date").description("체크아웃 날짜 (yyyy-MM-dd)"))));
     }
 }

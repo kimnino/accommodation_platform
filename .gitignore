@@ -78,3 +78,6 @@ build/generated-snippets/
 
 ### CLAUDE ###
 /.claude/settings.local.json
+
+### oh-my-claudecode ###
+.omc/
