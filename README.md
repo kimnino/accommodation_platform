@@ -31,7 +31,9 @@ docker run -d --name ota-mysql \
   -e MYSQL_DATABASE=accommodation \
   -p 3307:3306 mysql:8.0.36
 
-# 서버 실행 (ddl-auto: create — DB 스키마 자동 생성 + data.sql 샘플 데이터 로드)
+# 서버 실행
+# ddl-auto: create — 시작 시 DB 스키마를 매번 재생성하고 data.sql 샘플 데이터를 로드합니다.
+# 테스트/데모 편의를 위해 의도적으로 create 모드를 사용합니다 (운영 환경에서는 validate 사용).
 ./gradlew bootRun
 
 # 테스트 (Testcontainers — 별도 MySQL 불필요)

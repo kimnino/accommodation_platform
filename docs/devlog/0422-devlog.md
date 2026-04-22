@@ -29,13 +29,23 @@
    - 재고 4/22~5/10, 요금 평일/주말 구분
    - 태그 그룹 8개 (유형별 + 공용 + 객실), 태그 27개
 
-5. 코드 리뷰 피드백 반영 (FLOW 2~4, 6건)
+5. 코드 리뷰 피드백 반영 (FLOW 2~4, 6건 — 이전 세션)
    - **FLOW 2-1**: `UpdateAccommodationRequest`에 `translations` 필드 추가
    - **FLOW 2-2**: `ExtranetUpdateAccommodationService`에서 JpaRepository 직접 참조 제거 → `PersistModificationRequestPort` + `LoadModificationRequestPort` + `ModificationRequestJpaAdapter` 분리
    - **FLOW 2-3**: `AdminApproveModificationUseCase`에서 조회(`listPending`) 분리 → `AdminGetModificationQuery` + `AdminGetModificationService` 생성, `ModificationRequestSummary` record 반환 (JPA 엔티티 노출 제거)
    - **FLOW 2-4**: `RejectModificationRequest` inner record → 별도 파일로 추출
    - **FLOW 4-1**: `RoomMapper` default 메서드 → MapStruct `@Mapping` + `@AfterMapping` 패턴으로 전환
    - **FLOW 4-2**: 객실 옵션 등록 시 번역 지원 → `RegisterRoomOptionRequest`에 translations 추가, `PersistRoomOptionTranslationPort` + `RoomOptionTranslationJpaAdapter` 생성
+
+8. 코드 리뷰 피드백 반영 (FLOW 6~12 + 공통 인프라, 4개 커밋)
+   - **FLOW 6**: `ExtranetOwnershipVerifier` 공통 컴포넌트 추출 (소유권 검증 중복 제거), `SetPriceRequest.priceType` String→PriceType Enum, `final-checklist.md` DomainServiceConfig 기술 정정
+   - **FLOW 7**: `SearchAccommodationRequest` 미사용 삭제, `SearchCriteria.accommodationType` String→AccommodationType Enum, `SearchAccommodationPort.search()` dead code 제거, Translation 포트 반환 타입 JPA Entity→도메인 record 4종 생성(`AccommodationTranslation`, `RoomTranslation`, `RoomOptionTranslation`, `RoomImage`), `LoadRoomImagePort` 신설, 옵션별 N+1→배치 조회 전환 (`findByRoomOptionIdIn` 메서드 추가)
+   - **FLOW 8**: `Reservation.reconstruct()` private 생성자 분리 (불필요 UUID/검증 제거)
+   - **FLOW 9**: `ExtranetConfirmReservationService.confirm()`에 소유권 검증(X-Partner-Id) 추가, `ReservationResponse` customer→common 이동, `ExtranetCancelReservationService` ExtranetOwnershipVerifier 재사용, HOURLY 예약 취소 시 재고 복원 추가, `HoldExpirationScheduler` 버퍼 시간 하드코딩→`LoadHourlySettingPort` 동적 조회
+   - **FLOW 10**: `CreateTagGroupRequest.targetType`/`accommodationType` String→Enum, Query 인터페이스 분리(`AdminGetTagGroupQuery`, `AdminGetTagQuery`), `Tag`/`TagGroup` Builder에 `isActive` 파라미터 추가 (MapStruct @AfterMapping 해킹 제거)
+   - **FLOW 11**: `TagGroupResponse`/`TagResponse` admin→common 이동, `AccommodationTag` Port 생성(`LoadAccommodationTagPort`, `PersistAccommodationTagPort`) + Adapter 구현, ExtranetOwnershipVerifier 재사용, `AccommodationTagJpaEntity`/`RoomTagJpaEntity` BaseJpaEntity 상속 추가
+   - **FLOW 12**: `SyncSupplierInventoryService` 아키텍처 위반 수정(`LoadSupplierPort` 생성), `SupplierSyncController` core→admin 채널 이동, `CanonicalAccommodation.type` String→AccommodationType Enum
+   - **공통 인프라**: `BaseEntity` public setter 제거→`restoreTimestamps()` 패턴 통일, `SecurityConfig` 에러 응답 `writeErrorResponse()` 메서드 추출, `AuthController` Demo용 주석 + `@Valid`/`@NotBlank` 추가
 
 6. 테스트 인프라 수정
    - `TestSecurityConfig` 생성 — `@WebMvcTest`에서 Security 비활성화 + JWT Bean Mock
