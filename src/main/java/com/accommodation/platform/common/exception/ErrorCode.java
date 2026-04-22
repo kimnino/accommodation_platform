@@ -18,6 +18,8 @@ public enum ErrorCode {
 
     // Accommodation
     ACCOMMODATION_NOT_FOUND(HttpStatus.NOT_FOUND, "ACCOMMODATION_NOT_FOUND", "숙소를 찾을 수 없습니다."),
+    REGION_NOT_FOUND(HttpStatus.NOT_FOUND, "REGION_NOT_FOUND", "지역을 찾을 수 없습니다."),
+    REGION_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "REGION_TYPE_MISMATCH", "숙소 유형과 지역 유형이 일치하지 않습니다."),
 
     // Room
     ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "ROOM_NOT_FOUND", "객실을 찾을 수 없습니다."),
