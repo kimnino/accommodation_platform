@@ -4,9 +4,9 @@ import java.time.Instant;
 import java.time.LocalTime;
 import java.util.List;
 
-import com.accommodation.platform.core.accommodation.adapter.out.persistence.AccommodationTranslationJpaEntity;
 import com.accommodation.platform.core.accommodation.domain.model.Accommodation;
 import com.accommodation.platform.core.accommodation.domain.model.AccommodationImage;
+import com.accommodation.platform.core.accommodation.domain.model.AccommodationTranslation;
 
 public record AdminAccommodationDetailResponse(
         Long id,
@@ -27,7 +27,7 @@ public record AdminAccommodationDetailResponse(
 
     public static AdminAccommodationDetailResponse from(
             Accommodation accommodation,
-            List<AccommodationTranslationJpaEntity> translations) {
+            List<AccommodationTranslation> translations) {
 
         List<ImageResponse> imageResponses = accommodation.getImages().stream()
                 .map(ImageResponse::from)
@@ -77,17 +77,17 @@ public record AdminAccommodationDetailResponse(
             String cancellationAndRefundPolicy
     ) {
 
-        public static TranslationResponse from(AccommodationTranslationJpaEntity entity) {
+        public static TranslationResponse from(AccommodationTranslation translation) {
 
             return new TranslationResponse(
-                    entity.getLocale(),
-                    entity.getName(),
-                    entity.getFullAddress(),
-                    entity.getLocationDescription(),
-                    entity.getIntroduction(),
-                    entity.getServiceAndFacilities(),
-                    entity.getUsageInfo(),
-                    entity.getCancellationAndRefundPolicy());
+                    translation.locale(),
+                    translation.name(),
+                    translation.fullAddress(),
+                    translation.locationDescription(),
+                    translation.introduction(),
+                    translation.serviceAndFacilities(),
+                    translation.usageInfo(),
+                    translation.cancellationAndRefundPolicy());
         }
     }
 }

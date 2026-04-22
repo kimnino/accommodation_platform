@@ -1,4 +1,4 @@
-package com.accommodation.platform.admin.tag.adapter.in.web;
+package com.accommodation.platform.common.response;
 
 import java.time.Instant;
 

@@ -20,7 +20,8 @@ public class TagGroup extends BaseEntity {
 
     @Builder
     public TagGroup(Long id, String name, int displayOrder,
-                    TagTarget targetType, AccommodationType accommodationType, Long supplierId) {
+                    TagTarget targetType, AccommodationType accommodationType,
+                    Long supplierId, Boolean isActive) {
 
         validateRequired(name, targetType);
         this.id = id;
@@ -29,7 +30,7 @@ public class TagGroup extends BaseEntity {
         this.targetType = targetType;
         this.accommodationType = accommodationType;
         this.supplierId = supplierId;
-        this.isActive = true;
+        this.isActive = isActive != null ? isActive : true;
         initTimestamps();
     }
 

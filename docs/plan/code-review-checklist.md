@@ -139,15 +139,20 @@
 
 | 순서 | 파일 | 확인 포인트 | 완료 |
 |------|------|-------------|------|
-| 1 | `extranet/price/adapter/in/web/ExtranetPriceController.java` | 엔드포인트 | [   ] |
-| 2 | `extranet/price/adapter/in/web/SetPriceRequest.java` | BigDecimal 금액 필드 | [   ] |
-| 3 | `extranet/price/application/port/in/ExtranetSetPriceUseCase.java` | Command | [   ] |
-| 4 | `extranet/price/application/service/ExtranetSetPriceService.java` | 날짜별 가격 등록 | [   ] |
-| 5 | `core/price/domain/model/RoomPrice.java` | BigDecimal, PriceType | [   ] |
-| 6 | `core/price/domain/service/PriceDomainService.java` | 가격 계산 도메인 서비스 | [   ] |
-| 7 | `core/price/adapter/out/persistence/RoomPriceMapper.java` | 변환 + restoreTimestamps | [   ] |
-| 8 | `core/price/adapter/out/persistence/RoomPriceJpaEntity.java` | 가격 테이블 | [   ] |
-| 9 | `core/price/adapter/out/persistence/RoomPriceJpaAdapter.java` | 저장 구현 | [   ] |
+| 1 | `extranet/price/adapter/in/web/ExtranetPriceController.java` | `@Valid` 적용, Inbound Port만 의존, `ApiResponse` 래핑 | [ V ] |
+| 2 | `extranet/price/adapter/in/web/SetPriceRequest.java` | BigDecimal 금액 필드, `@NotNull`/`@NotBlank` 검증 | [ V ] |
+| 3 | `extranet/price/application/port/in/ExtranetSetPriceUseCase.java` | Command record, `getTargetDates()` 날짜범위/개별날짜 양쪽 지원 | [ V ] |
+| 4 | `extranet/price/application/service/ExtranetSetPriceService.java` | `@Transactional`, 소유권 3단계 검증(옵션→객실→숙소), 기존 가격 있으면 업데이트 | [ V ] |
+| 5 | `core/price/domain/model/RoomPrice.java` | BigDecimal, 불변식(null/음수 검증), `updatePrice` 상태 변경 메서드 | [ V ] |
+| 6 | `core/price/domain/service/PriceDomainService.java` | 순수 Java, `@Service` 없음, `DomainServiceConfig`에서 `@Bean` 등록, VAT 계산 | [ V ] |
+| 7 | `core/price/adapter/out/persistence/RoomPriceMapper.java` | MapStruct, `@AfterMapping` restoreTimestamps | [ V ] |
+| 8 | `core/price/adapter/out/persistence/RoomPriceJpaEntity.java` | 필드 주석 완비, `BaseJpaEntity` 상속, `precision=12, scale=2` | [ V ] |
+| 9 | `core/price/adapter/out/persistence/RoomPriceJpaAdapter.java` | `PersistRoomPricePort` + `LoadRoomPricePort` 구현, `saveAllAndFlush` | [ V ] |
+
+## FLOW 6. 피드백
+1. `ExtranetSetPriceService`와 `ExtranetGetPriceService`의 소유권 검증 로직(옵션→객실→숙소→partnerId)이 완전히 동일하게 중복됨. FLOW 5에서도 비슷한 패턴 지적. 공통 도메인 서비스나 헬퍼로 추출 검토 필요.
+2. `SetPriceRequest.priceType`이 `@NotBlank String`으로 되어있어서, 잘못된 값(예: "INVALID") 입력 시 Service에서 `PriceType.valueOf()`가 `IllegalArgumentException` 발생 → 500 에러. Request DTO에서 `PriceType` Enum으로 직접 받으면 Jackson이 변환하고 실패 시 자동 400 반환.
+3. `final-checklist.md`에 "DomainServiceConfig 삭제됨"이라 기술되어 있으나, 실제로는 `common/config/DomainServiceConfig.java`가 존재하며 `PriceDomainService`, `InventoryDomainService`를 `@Bean` 등록 중. 문서-코드 불일치 수정 필요.
 
 ---
 
@@ -157,14 +162,25 @@
 
 | 순서 | 파일 | 확인 포인트 | 완료 |
 |------|------|-------------|------|
-| 1 | `customer/accommodation/adapter/in/web/SearchAccommodationRequest.java` | 검색 파라미터 | [   ] |
-| 2 | `customer/accommodation/adapter/in/web/CustomerAccommodationController.java` | 검색 + 상세 엔드포인트 | [   ] |
-| 3 | `customer/accommodation/application/port/in/CustomerSearchAccommodationQuery.java` | Criteria record | [   ] |
-| 4 | `customer/accommodation/application/service/CustomerSearchAccommodationService.java` | 검색 오케스트레이션 | [   ] |
-| 5 | `core/accommodation/application/port/out/SearchAccommodationPort.java` | QueryDSL 검색 포트 | [   ] |
-| 6 | `core/accommodation/adapter/out/persistence/AccommodationSearchJpaAdapter.java` | QueryDSL 구현, 2단계 배치 조회 | [   ] |
-| 7 | `customer/accommodation/application/port/in/CustomerGetAccommodationDetailQuery.java` | 상세 조회 (가격/재고 포함) | [   ] |
-| 8 | `customer/accommodation/application/service/CustomerGetAccommodationDetailService.java` | 상세 + 가격/재고 조합 | [   ] |
+| 1 | `customer/accommodation/adapter/in/web/SearchAccommodationRequest.java` | 검색 파라미터 record, `toCriteria()` 변환 | [ V ] |
+| 2 | `customer/accommodation/adapter/in/web/CustomerAccommodationController.java` | 검색 + 상세 엔드포인트, `@PageableDefault`, `@DateTimeFormat` | [ V ] |
+| 3 | `customer/accommodation/application/port/in/CustomerSearchAccommodationQuery.java` | Inbound Port, `Page<AccommodationSummary>` 반환 | [ V ] |
+| 4 | `customer/accommodation/application/service/CustomerSearchAccommodationService.java` | 4단계 검색(ID→카드→최저가→조립), `@Transactional(readOnly=true)`, locale 반영 | [ V ] |
+| 5 | `core/accommodation/application/port/out/SearchAccommodationPort.java` | `searchIds`, `loadLowestPrices`, `SearchCriteria`/`AccommodationSummary` record 정의 | [ V ] |
+| 6 | `core/accommodation/adapter/out/persistence/AccommodationSearchJpaAdapter.java` | QueryDSL, 2단계 배치(ID→이미지/최저가), EXISTS 서브쿼리 가격 필터, 지역 서브트리 재귀 | [ V ] |
+| 7 | `customer/accommodation/application/port/in/CustomerGetAccommodationDetailQuery.java` | 상세 조회 record 계층 (`AccommodationDetail` → `RoomWithOptions` → `OptionWithPrice`) | [ V ] |
+| 8 | `customer/accommodation/application/service/CustomerGetAccommodationDetailService.java` | 상세 + 가격/재고 조합, 번역 배치 로드, VAT 반영 | [ V ] |
+
+## FLOW 7. 피드백
+1. `SearchAccommodationRequest` 미사용하면 제거
+2. **`SearchCriteria.accommodationType`가 String**: `AccommodationSearchJpaAdapter.buildWhereClause()`에서 `AccommodationType.valueOf()`로 변환하는데, 잘못된 값 입력 시 500 에러. FLOW 6 `priceType`과 동일한 패턴 — Enum으로 받거나 검증 추가 필요.
+3. **`SearchAccommodationPort.search()` 메서드 미사용**: Service에서는 `searchIds()` + `loadLowestPrices()`만 사용. 기존 `search()` 메서드와 그 구현체(`AccommodationSearchJpaAdapter.search()`)가 dead code로 남아있음. 삭제 검토.
+4. **`CustomerGetAccommodationDetailService` 아키텍처 위반 — adapter 직접 참조**: Application 레이어(service)에서 `core` 패키지의 adapter 레이어 클래스를 직접 import하고 있음:
+   - `AccommodationTranslationJpaEntity` (adapter/out/persistence)
+   - `RoomTranslationJpaEntity`, `RoomOptionTranslationJpaEntity` (adapter/out/persistence)
+   - `RoomImageJpaRepository`, `RoomImageJpaEntity` (adapter/out/persistence)
+   - 헥사고날 원칙 위반 (application → adapter 의존). Port를 통해 접근하거나, Translation 포트 반환 타입을 도메인 모델/record로 변경 필요.
+5. **옵션별 N+1 가능성**: `buildOptionWithPrice()`에서 옵션마다 `loadRoomPricePort` + `loadInventoryPort`를 개별 호출. 옵션 수가 많으면 N+1. 배치 조회(`findByRoomOptionIdIn`)로 전환 검토.
 
 ---
 
@@ -174,19 +190,27 @@
 
 | 순서 | 파일 | 확인 포인트 | 완료 |
 |------|------|-------------|------|
-| 1 | `customer/reservation/adapter/in/web/CreateStayReservationRequest.java` | 숙박 예약 요청 필드, 멱등성 키 | [   ] |
-| 2 | `customer/reservation/adapter/in/web/CreateHourlyReservationRequest.java` | 대실 예약 요청 필드 | [   ] |
-| 3 | `customer/reservation/adapter/in/web/CustomerReservationController.java` | 생성/취소/조회/결제확인 엔드포인트 | [   ] |
-| 4 | `customer/reservation/application/port/in/CustomerCreateReservationUseCase.java` | Command | [   ] |
-| 5 | `customer/reservation/application/service/CustomerCreateReservationService.java` | 재고 차감, 예약 생성, 동시성 처리, STAY→HOURLY 충돌 방지 | [   ] |
-| 6 | `core/reservation/domain/model/Reservation.java` | 상태 머신, 불변식 | [   ] |
-| 7 | `core/reservation/domain/model/GuestInfo.java` | 투숙객 VO | [   ] |
-| 8 | `core/reservation/domain/enums/ReservationStatus.java` | 상태 정의 | [   ] |
-| 9 | `core/reservation/domain/event/ReservationCreatedEvent.java` | 도메인 이벤트 | [   ] |
-| 10 | `core/reservation/adapter/out/persistence/ReservationMapper.java` | 변환 + restoreTimestamps, 상태 보존 | [   ] |
-| 11 | `core/reservation/adapter/out/persistence/ReservationJpaEntity.java` | 예약 테이블 | [   ] |
-| 12 | `core/reservation/adapter/out/persistence/ReservationJpaAdapter.java` | 저장 구현 | [   ] |
-| 13 | `customer/reservation/adapter/in/web/ReservationResponse.java` | 응답 DTO (memberId, guestPhone 포함) | [   ] |
+| 1 | `customer/reservation/adapter/in/web/CreateStayReservationRequest.java` | `@NotNull`/`@NotBlank` 검증, 멱등성 키(`reservationRequestId`), `toCommand(memberId)` | [ V ] |
+| 2 | `customer/reservation/adapter/in/web/CreateHourlyReservationRequest.java` | `LocalTime` startTime/endTime, `@NotNull` 검증 | [ V ] |
+| 3 | `customer/reservation/adapter/in/web/CustomerReservationController.java` | STAY/HOURLY 분리 엔드포인트, 결제확인/취소/조회, `X-Member-Id` 헤더, `ApiResponse` 래핑 | [ V ] |
+| 4 | `customer/reservation/application/port/in/CustomerCreateReservationUseCase.java` | STAY/HOURLY Command record 분리, `LocalTime`/`LocalDate` 사용 | [ V ] |
+| 5 | `customer/reservation/application/service/CustomerCreateReservationService.java` | 멱등성 검사, STAY↔HOURLY 충돌 사전 확인, 비관적 락 재고 차감, 가격 계산(VAT), Hold 만료 설정(10분), 버퍼 슬롯 차단 | [ V ] |
+| 6 | `core/reservation/domain/model/Reservation.java` | 상태 머신(PENDING→PAYMENT_WAITING→CONFIRMED→COMPLETED/CANCELLED/NO_SHOW), `holdForPayment`/`confirm`/`cancel` 불변식, `reconstruct`, `isHoldExpired` | [ V ] |
+| 7 | `core/reservation/domain/model/GuestInfo.java` | record VO, compact constructor null/blank 검증 | [ V ] |
+| 8 | `core/reservation/domain/enums/ReservationStatus.java` | 6개 상태 정의 | [ V ] |
+| 9 | `core/reservation/domain/event/ReservationCreatedEvent.java` | POJO record, `occurredAt` Instant | [ V ] |
+| 10 | `core/reservation/adapter/out/persistence/ReservationMapper.java` | `toDomain` reconstruct 사용, `toJpaEntity` GuestInfo→필드 매핑, `restoreTimestamps` | [ V ] |
+| 11 | `core/reservation/adapter/out/persistence/ReservationJpaEntity.java` | 필드 주석 완비, `BaseJpaEntity` 상속, `reservationRequestId` unique, `BigDecimal precision=12` | [ V ] |
+| 12 | `core/reservation/adapter/out/persistence/ReservationJpaAdapter.java` | `PersistReservationPort` + `LoadReservationPort` 구현, `saveAndFlush` | [ V ] |
+| 13 | `customer/reservation/adapter/in/web/ReservationResponse.java` | 전체 필드 포함 응답 DTO, `from(Reservation)` 변환 | [ V ] |
+
+## FLOW 8. 피드백
+1. **`ReservationCreatedEvent` 미발행**: `CustomerCreateReservationService`에서 예약 생성 후 `ReservationCreatedEvent`를 발행하지 않음. 이벤트 record는 정의되어 있으나 실제 `ApplicationEventPublisher.publishEvent()` 호출이 없음. 이벤트 기반 아키텍처 설계 의도상 발행 추가 또는 의도적 미발행이면 이벤트 record 삭제 검토.
+ -> 의도적으로 구현만 한거고 상세 로직은 설계정도에서 머물기에 냅둬도됨
+2. **멱등성 처리가 예외 발생 방식**: 동일 `reservationRequestId` 재요청 시 `ifPresent`로 `BusinessException`을 던짐. 멱등성 본래 의미는 "같은 요청에 같은 응답을 반환"이므로, 기존 예약을 그대로 반환하는 게 더 적절할 수 있음. 현재 방식이면 클라이언트가 네트워크 재시도 시 에러를 받게 됨.
+ -> 예약 요청이 두 번 들어가는건 문제가 있음. 확인 바람
+3. **`Reservation.reconstruct()`에서 `reservationNumber` 재생성 후 덮어쓰기**: Builder 생성자에서 `generateReservationNumber()`가 호출되고, `reconstruct`에서 바로 `r.reservationNumber = reservationNumber`로 덮어씀. 불필요한 UUID 생성이 매번 발생. `reconstruct` 전용 private 생성자 분리 검토.
+ -> 진행
 
 ---
 
@@ -196,14 +220,26 @@
 
 | 순서 | 파일 | 확인 포인트 | 완료 |
 |------|------|-------------|------|
-| 1 | `extranet/reservation/adapter/in/web/ExtranetReservationController.java` | 파트너 예약 관리 엔드포인트 | [   ] |
-| 2 | `extranet/reservation/application/port/in/ExtranetConfirmReservationUseCase.java` | 확정 커맨드 | [   ] |
-| 3 | `extranet/reservation/application/service/ExtranetConfirmReservationService.java` | 상태 전이 검증 | [   ] |
-| 4 | `extranet/reservation/application/port/in/ExtranetCancelReservationUseCase.java` | 취소 커맨드 | [   ] |
-| 5 | `extranet/reservation/application/service/ExtranetCancelReservationService.java` | 재고 복원, 상태 전이 | [   ] |
-| 6 | `core/reservation/domain/event/ReservationConfirmedEvent.java` | 확정 이벤트 | [   ] |
-| 7 | `core/reservation/domain/event/ReservationCancelledEvent.java` | 취소 이벤트 | [   ] |
-| 8 | `core/reservation/adapter/scheduler/HoldExpirationScheduler.java` | 홀드 만료 스케줄러 | [   ] |
+| 1 | `extranet/reservation/adapter/in/web/ExtranetReservationController.java` | confirm/cancel/조회 엔드포인트, `CancelReservationRequest` inner record, `X-Partner-Id` 헤더 | [ V ] |
+| 2 | `extranet/reservation/application/port/in/ExtranetConfirmReservationUseCase.java` | 단순 인터페이스, `Reservation` 반환 | [ V ] |
+| 3 | `extranet/reservation/application/service/ExtranetConfirmReservationService.java` | `@Transactional`, `reservation.confirm()` 도메인 상태 전이 | [ V ] |
+| 4 | `extranet/reservation/application/port/in/ExtranetCancelReservationUseCase.java` | `(reservationId, partnerId, reason)` 시그니처 | [ V ] |
+| 5 | `extranet/reservation/application/service/ExtranetCancelReservationService.java` | 소유권 검증, 상태 전이, STAY 재고 복원(비관적 락), 로깅 | [ V ] |
+| 6 | `core/reservation/domain/event/ReservationConfirmedEvent.java` | POJO record, `occurredAt` Instant | [ V ] |
+| 7 | `core/reservation/domain/event/ReservationCancelledEvent.java` | POJO record, `roomOptionId` 포함 (재고 복구용) | [ V ] |
+| 8 | `core/reservation/adapter/scheduler/HoldExpirationScheduler.java` | `@Scheduled(fixedDelay=60000)`, STAY/HOURLY 분기 재고 복구, 비관적 락, 버퍼 슬롯 해제 | [ V ] |
+
+## FLOW 9. 피드백
+1. **`ExtranetConfirmReservationService.confirm()`에 소유권 검증 없음**: 예약 ID만으로 확정 가능. `X-Partner-Id` 헤더가 Controller 시그니처에도 없음(`cancel`에는 있음). 다른 파트너의 예약도 확정할 수 있는 보안 이슈.
+-> 숙소 파트너만 승인가능하도록
+2. **`ExtranetReservationController`에서 `customer` 패키지의 `ReservationResponse` 직접 참조**: `import com.accommodation.platform.customer.reservation.adapter.in.web.ReservationResponse` — 채널 간 직접 참조 금지 규칙 위반. Extranet 전용 Response를 만들거나, 공통 Response를 `core`로 이동 필요.
+-> 이동
+3. **`ExtranetCancelReservationService`의 소유권 검증**: FLOW 6에서 만든 `ExtranetOwnershipVerifier`를 사용하지 않고 직접 `loadAccommodationPort` 호출. 통일 검토.
+-> 재사용 권장
+4. **HOURLY 예약 취소 시 재고 복원 누락**: `ExtranetCancelReservationService.cancel()`에서 STAY만 재고 복원하고 HOURLY는 처리하지 않음. `HoldExpirationScheduler`에는 HOURLY 복원(`restoreHourlyInventory`) 로직이 있으므로, 파트너 수동 취소에서도 동일 로직 필요.
+-> 진행
+5. **`HoldExpirationScheduler.restoreHourlyInventory()`에서 버퍼 시간 하드코딩**: `+ 30L`로 고정. 실제 숙소별 `slotUnitMinutes`가 30/60 등 다를 수 있으므로 `LoadHourlySettingPort`에서 조회하거나, 예약 시 버퍼 범위를 같이 저장하는 것이 정확.
+-> 진행
 
 ---
 
@@ -213,21 +249,27 @@
 
 | 순서 | 파일 | 확인 포인트 | 완료 |
 |------|------|-------------|------|
-| 1 | `admin/tag/adapter/in/web/AdminTagController.java` | 그룹/태그 CRUD + activate 엔드포인트 | [   ] |
-| 2 | `admin/tag/adapter/in/web/CreateTagGroupRequest.java` | 필드 검증 | [   ] |
-| 3 | `admin/tag/adapter/in/web/UpdateTagGroupRequest.java` | Integer displayOrder (nullable) | [   ] |
-| 4 | `admin/tag/application/port/in/AdminManageTagGroupUseCase.java` | Command + activate | [   ] |
-| 5 | `admin/tag/application/service/AdminManageTagGroupService.java` | 그룹 CRUD 로직 | [   ] |
-| 6 | `core/tag/domain/model/TagGroup.java` | updateInfo null-guard, activate/deactivate | [   ] |
-| 7 | `core/tag/domain/model/Tag.java` | updateInfo null-guard, activate/deactivate | [   ] |
-| 8 | `admin/tag/application/port/in/AdminManageTagUseCase.java` | Command + activate | [   ] |
-| 9 | `admin/tag/application/service/AdminManageTagService.java` | findAllByTagGroupId (비활성 포함) | [   ] |
-| 10 | `core/tag/application/port/out/LoadTagPort.java` | findByTagGroupId / findAllByTagGroupId | [   ] |
-| 11 | `core/tag/application/port/out/LoadTagGroupPort.java` | findById / findAll | [   ] |
-| 12 | `core/tag/adapter/out/persistence/TagJpaAdapter.java` | 두 조회 메서드 구현 | [   ] |
-| 13 | `core/tag/adapter/out/persistence/TagJpaRepository.java` | active 필터 유무 메서드 | [   ] |
-| 14 | `core/tag/adapter/out/persistence/TagGroupJpaEntity.java` | 태그 그룹 테이블 | [   ] |
-| 15 | `core/tag/adapter/out/persistence/TagJpaEntity.java` | 태그 테이블 | [   ] |
+| 1 | `admin/tag/adapter/in/web/AdminTagController.java` | 그룹/태그 CRUD + activate/deactivate, `@Valid`, `ApiResponse` | [ V ] |
+| 2 | `admin/tag/adapter/in/web/CreateTagGroupRequest.java` | `@NotBlank` 검증, `toCommand()` | [ V ] |
+| 3 | `admin/tag/adapter/in/web/UpdateTagGroupRequest.java` | nullable 필드(부분 수정), `toCommand()` | [ V ] |
+| 4 | `admin/tag/application/port/in/AdminManageTagGroupUseCase.java` | CRUD + activate/deactivate + listAll, Command record | [ V ] |
+| 5 | `admin/tag/application/service/AdminManageTagGroupService.java` | `@Transactional`, 그룹 CRUD, `readOnly` 조회 | [ V ] |
+| 6 | `core/tag/domain/model/TagGroup.java` | `updateInfo` null-guard, `activate`/`deactivate`, 불변식 | [ V ] |
+| 7 | `core/tag/domain/model/Tag.java` | `updateInfo` null-guard, `activate`/`deactivate`, 불변식 | [ V ] |
+| 8 | `admin/tag/application/port/in/AdminManageTagUseCase.java` | CRUD + activate + listByTagGroupId, Command record | [ V ] |
+| 9 | `admin/tag/application/service/AdminManageTagService.java` | 그룹 존재 확인 후 태그 생성, `findAllByTagGroupId` (비활성 포함) | [ V ] |
+| 10 | `core/tag/application/port/out/LoadTagPort.java` | `findByTagGroupId`(활성만) / `findAllByTagGroupId`(전체) / `findTagById` | [ V ] |
+| 11 | `core/tag/application/port/out/LoadTagGroupPort.java` | `findById`, `findAll`, `findByTargetTypeAndAccommodationType` | [ V ] |
+| 12 | `core/tag/adapter/out/persistence/TagJpaAdapter.java` | 4개 포트 구현(TagGroup+Tag persist+load), MapStruct 변환 | [ V ] |
+| 13 | `core/tag/adapter/out/persistence/TagJpaRepository.java` | active 필터/전체 조회 메서드 | [ V ] |
+| 14 | `core/tag/adapter/out/persistence/TagGroupJpaEntity.java` | 필드 주석 완비, Enum 매핑 | [ V ] |
+| 15 | `core/tag/adapter/out/persistence/TagJpaEntity.java` | 필드 주석, `tagGroupId` ID 참조 | [ V ] |
+
+## FLOW 10. 피드백
+1. **`CreateTagGroupRequest.targetType`이 String**: `TagTarget.valueOf()` 변환 시 잘못된 값이면 500. Enum으로 직접 받거나 검증 추가 필요. `accommodationType`도 동일.
+2. **`AdminManageTagGroupUseCase`에 `listAll()` 조회 메서드 혼재**: 네이밍 컨벤션상 조회는 `Query` 인터페이스로 분리해야 함 (`AdminGetTagGroupQuery`). `AdminManageTagUseCase.listByTagGroupId`도 동일.
+3. **`Tag`/`TagGroup` 생성자에서 `isActive`가 항상 true 고정**: DB에서 `isActive=false`로 조회 시 MapStruct `@AfterMapping`으로 `deactivate()` 호출하는 우회 방법 사용 중. Builder에 `isActive` 파라미터 추가하면 해결.
+4. **`AdminTagController`에서 `tagGroupId` 미검증**: `updateTag`, `deactivateTag`, `activateTag`에서 path의 `tagGroupId`를 받지만 실제 태그의 그룹 소속 여부를 확인하지 않음. 잘못된 URL로도 동작.
 
 ---
 
@@ -237,13 +279,20 @@
 
 | 순서 | 파일 | 확인 포인트 | 완료 |
 |------|------|-------------|------|
-| 1 | `extranet/tag/adapter/in/web/ExtranetTagController.java` | 조회 + 등록/삭제 엔드포인트 | [   ] |
-| 2 | `extranet/tag/application/port/in/ExtranetGetAvailableTagQuery.java` | 숙소 유형별 태그 조회 | [   ] |
-| 3 | `extranet/tag/application/service/ExtranetGetAvailableTagService.java` | 활성 태그만 필터 | [   ] |
-| 4 | `extranet/tag/application/port/in/ExtranetManageAccommodationTagUseCase.java` | 태그 연결/해제 | [   ] |
-| 5 | `extranet/tag/application/service/ExtranetManageAccommodationTagService.java` | 태그 연결 로직 | [   ] |
-| 6 | `core/tag/adapter/out/persistence/AccommodationTagJpaEntity.java` | 숙소-태그 연결 테이블 | [   ] |
-| 7 | `core/tag/adapter/out/persistence/AccommodationTagJpaRepository.java` | 연결 쿼리 | [   ] |
+| 1 | `extranet/tag/adapter/in/web/ExtranetTagController.java` | 태그 그룹 조회, 태그 조회, 태그 등록/삭제, `X-Partner-Id` | [ V ] |
+| 2 | `extranet/tag/application/port/in/ExtranetGetAvailableTagQuery.java` | 숙소 유형별 태그 그룹 + 그룹별 태그 조회 | [ V ] |
+| 3 | `extranet/tag/application/service/ExtranetGetAvailableTagService.java` | 소유권 검증 후 `accommodationType` 기반 필터 | [ V ] |
+| 4 | `extranet/tag/application/port/in/ExtranetManageAccommodationTagUseCase.java` | `addTags`/`removeTags`/`getTagIds` | [ V ] |
+| 5 | `extranet/tag/application/service/ExtranetManageAccommodationTagService.java` | 태그 연결/해제, 중복 방지 | [ V ] |
+| 6 | `core/tag/adapter/out/persistence/AccommodationTagJpaEntity.java` | 숙소-태그 매핑 테이블 | [ V ] |
+| 7 | `core/tag/adapter/out/persistence/AccommodationTagJpaRepository.java` | 조회/삭제 쿼리 | [ V ] |
+
+## FLOW 11. 피드백
+1. **채널 간 직접 참조 위반**: `ExtranetTagController`에서 `admin` 패키지의 `TagGroupResponse`, `TagResponse`를 import. FLOW 9의 `ReservationResponse`와 같은 패턴 — 공통 위치(`common`)로 이동하거나 Extranet 전용 DTO 생성 필요.
+2. **`ExtranetManageAccommodationTagService` 아키텍처 위반**: Application 서비스에서 `AccommodationTagJpaRepository`와 `AccommodationTagJpaEntity`(adapter 레이어)를 직접 참조. Port를 통해 접근해야 함 (`PersistAccommodationTagPort`/`LoadAccommodationTagPort` 생성 필요).
+3. **`ExtranetManageAccommodationTagService`의 소유권 검증**: `ExtranetOwnershipVerifier`를 사용하지 않고 직접 검증. 통일 필요.
+4. **`AccommodationTagJpaEntity`/`RoomTagJpaEntity`에 `BaseJpaEntity` 미상속**: `created_at`/`updated_at` 컬럼 누락. 전체 테이블에 공통 컬럼 필수 규칙 위반.
+5. **`ExtranetTagController.getTagsByGroup()`에서 소유권 미검증**: `accommodationId`와 `partnerId`를 받지만 사용하지 않음. 아무 파트너나 모든 태그 그룹의 태그를 조회 가능.
 
 ---
 
@@ -253,15 +302,20 @@
 
 | 순서 | 파일 | 확인 포인트 | 완료 |
 |------|------|-------------|------|
-| 1 | `core/supplier/application/port/in/SyncSupplierInventoryUseCase.java` | 동기화 커맨드 | [   ] |
-| 2 | `core/supplier/application/service/SyncSupplierInventoryService.java` | 외부 데이터 → 내부 매핑 | [   ] |
-| 3 | `core/supplier/application/port/out/SupplierClient.java` | 외부 API 포트 | [   ] |
-| 4 | `core/supplier/adapter/out/external/MinhyukHouseSupplierAdapter.java` | 클라이언트 구현 (샘플 데이터 반환) | [   ] |
-| 5 | `core/supplier/domain/model/CanonicalAccommodation.java` | 정규화 모델 | [   ] |
-| 6 | `core/supplier/domain/model/CanonicalRoom.java` | 정규화 객실 | [   ] |
-| 7 | `core/supplier/domain/model/CanonicalPrice.java` | 정규화 가격 | [   ] |
-| 8 | `core/supplier/adapter/out/persistence/SupplierAccommodationMappingJpaEntity.java` | 외부 ID 매핑 테이블 | [   ] |
-| 9 | `core/supplier/adapter/out/persistence/SupplierRoomMappingJpaEntity.java` | 객실 매핑 | [   ] |
+| 1 | `core/supplier/application/port/in/SyncSupplierInventoryUseCase.java` | 동기화 인터페이스 | [ V ] |
+| 2 | `core/supplier/application/service/SyncSupplierInventoryService.java` | 외부 데이터 → 내부 매핑, 숙소/객실/가격 동기화 | [ V ] |
+| 3 | `core/supplier/application/port/out/SupplierClient.java` | 외부 API 포트 | [ V ] |
+| 4 | `core/supplier/adapter/out/external/MinhyukHouseSupplierAdapter.java` | Mock 클라이언트, BigDecimal 가격 | [ V ] |
+| 5 | `core/supplier/domain/model/CanonicalAccommodation.java` | 정규화 모델 | [ V ] |
+| 6 | `core/supplier/domain/model/CanonicalRoom.java` | 정규화 객실 | [ V ] |
+| 7 | `core/supplier/domain/model/CanonicalPrice.java` | 정규화 가격, BigDecimal | [ V ] |
+| 8 | `core/supplier/adapter/out/persistence/SupplierAccommodationMappingJpaEntity.java` | 외부 ID 매핑 | [ V ] |
+| 9 | `core/supplier/adapter/out/persistence/SupplierRoomMappingJpaEntity.java` | 객실 매핑 | [ V ] |
+
+## FLOW 12. 피드백
+1. **`SyncSupplierInventoryService` 아키텍처 위반**: Application 서비스에서 adapter/persistence 클래스 6개 직접 import (`SupplierJpaRepository`, `SupplierAccommodationMappingJpaRepository`, `SupplierRoomMappingJpaRepository`, `SupplierRoomOptionMappingJpaEntity` 등). Outbound Port를 통해 접근해야 함.
+2. **`SupplierSyncController` 위치**: `core/supplier/adapter/in/web/`에 위치하지만, SecurityConfig에서 ADMIN 역할 전용. 컨벤션상 Controller는 채널 패키지(`admin/supplier/`)에 있어야 함.
+3. **`CanonicalAccommodation.type`이 String**: 컨벤션상 상태/유형값은 Enum으로 관리.
 
 ---
 
@@ -269,21 +323,26 @@
 
 | 파일 | 확인 포인트 | 완료 |
 |------|-------------|------|
-| `common/adapter/out/persistence/BaseJpaEntity.java` | createdAt/updatedAt, restoreTimestamps | [   ] |
-| `common/domain/BaseEntity.java` | 도메인 기본 필드 | [   ] |
-| `common/domain/SoftDeletable.java` | is_deleted soft delete | [   ] |
-| `common/exception/ErrorCode.java` | HTTP 상태 + 비즈니스 코드 | [   ] |
-| `common/exception/BusinessException.java` | RuntimeException 계열 | [   ] |
-| `common/exception/GlobalExceptionHandler.java` | 전역 예외 처리, 404/400/500 | [   ] |
-| `common/response/ApiResponse.java` | SUCCESS/ERROR 포맷 | [   ] |
-| `common/config/SecurityConfig.java` | JWT 인증/인가, URL별 Role 접근 제어, accessDeniedHandler | [   ] |
-| `common/security/JwtTokenProvider.java` | JWT 생성/검증 (HMAC-SHA512) | [   ] |
-| `common/security/JwtAuthenticationFilter.java` | Bearer 토큰 → SecurityContext + X-Partner-Id/X-Member-Id 헤더 자동 주입 | [   ] |
-| `common/security/AuthController.java` | 토큰 발급 엔드포인트 (Demo용) | [   ] |
-| `common/config/JacksonConfig.java` | snake_case, Instant 직렬화 | [   ] |
-| `common/config/QuerydslConfig.java` | JPAQueryFactory 빈 | [   ] |
-| `common/filter/MdcLoggingFilter.java` | trace_id MDC 설정 | [   ] |
-| `common/interceptor/RequestLoggingInterceptor.java` | 요청/응답 로깅 | [   ] |
+| `common/adapter/out/persistence/BaseJpaEntity.java` | `createdAt`/`updatedAt`, `restoreTimestamps` | [ V ] |
+| `common/domain/BaseEntity.java` | 도메인 기본 필드, `initTimestamps`/`updateTimestamp` | [ V ] |
+| `common/domain/SoftDeletable.java` | `isDeleted`, `deletedAt` 인터페이스 | [ V ] |
+| `common/exception/ErrorCode.java` | HTTP 상태 + 비즈니스 에러 코드 | [ V ] |
+| `common/exception/BusinessException.java` | RuntimeException 계열, ErrorCode 보유 | [ V ] |
+| `common/exception/GlobalExceptionHandler.java` | 전역 예외 처리, 404/400/500 `ApiResponse` 포맷 | [ V ] |
+| `common/response/ApiResponse.java` | SUCCESS/ERROR 포맷 | [ V ] |
+| `common/config/SecurityConfig.java` | JWT 인증/인가, URL별 Role 접근 제어 | [ V ] |
+| `common/security/JwtTokenProvider.java` | JWT 생성/검증 (HMAC-SHA512) | [ V ] |
+| `common/security/JwtAuthenticationFilter.java` | Bearer 토큰 → SecurityContext | [ V ] |
+| `common/security/AuthController.java` | Demo용 토큰 발급 | [ V ] |
+| `common/config/JacksonConfig.java` | `SNAKE_CASE`, Instant 직렬화 | [ V ] |
+| `common/config/QuerydslConfig.java` | JPAQueryFactory 빈 | [ V ] |
+| `common/filter/MdcLoggingFilter.java` | trace_id MDC 설정 | [ V ] |
+| `common/interceptor/RequestLoggingInterceptor.java` | 요청/응답 로깅 | [ V ] |
+
+## 공통 인프라 피드백
+1. **`BaseEntity`의 `setCreatedAt`/`setUpdatedAt`이 public**: `@Setter` 금지 원칙의 취지상 `protected`로 변경하거나, `restoreTimestamps(createdAt, updatedAt)` 패턴으로 통일 필요 (`BaseJpaEntity`와 동일 방식).
+2. **`SecurityConfig`의 에러 응답이 하드코딩 JSON**: `accessDeniedHandler`/`authenticationEntryPoint`에서 JSON 문자열 직접 조합. `ApiResponse` + Jackson 직렬화로 통일하면 포맷 일관성 보장.
+3. **`AuthController`가 무인증 토큰 발급**: Demo용이지만 README/주석에 "운영 환경에서는 제거 필요" 명시 권장. `@Valid` 누락.
 
 ---
 

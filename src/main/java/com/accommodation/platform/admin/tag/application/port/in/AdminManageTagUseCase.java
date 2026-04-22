@@ -1,7 +1,5 @@
 package com.accommodation.platform.admin.tag.application.port.in;
 
-import java.util.List;
-
 import com.accommodation.platform.core.tag.domain.model.Tag;
 
 public interface AdminManageTagUseCase {
@@ -13,8 +11,6 @@ public interface AdminManageTagUseCase {
     void deactivate(Long tagId);
 
     void activate(Long tagId);
-
-    List<Tag> listByTagGroupId(Long tagGroupId);
 
     record CreateTagCommand(
             String name,

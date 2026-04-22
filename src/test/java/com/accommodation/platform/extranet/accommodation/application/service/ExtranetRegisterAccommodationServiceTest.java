@@ -61,7 +61,7 @@ class ExtranetRegisterAccommodationServiceTest {
         given(persistAccommodationPort.save(any(Accommodation.class)))
                 .willAnswer(invocation -> {
                     Accommodation acc = invocation.getArgument(0);
-                    acc.setCreatedAt(acc.getCreatedAt());
+                    acc.restoreTimestamps(acc.getCreatedAt(), acc.getUpdatedAt());
                     return acc;
                 });
 

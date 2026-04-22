@@ -15,26 +15,26 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.accommodation.platform.common.exception.BusinessException;
 import com.accommodation.platform.common.exception.ErrorCode;
-import com.accommodation.platform.core.accommodation.adapter.out.persistence.AccommodationTranslationJpaEntity;
 import com.accommodation.platform.core.accommodation.application.port.out.LoadAccommodationPort;
 import com.accommodation.platform.core.accommodation.application.port.out.LoadAccommodationTranslationPort;
 import com.accommodation.platform.core.accommodation.domain.model.Accommodation;
+import com.accommodation.platform.core.accommodation.domain.model.AccommodationTranslation;
 import com.accommodation.platform.core.inventory.application.port.out.LoadInventoryPort;
 import com.accommodation.platform.core.inventory.domain.model.Inventory;
 import com.accommodation.platform.core.price.application.port.out.LoadRoomPricePort;
 import com.accommodation.platform.core.price.domain.enums.PriceType;
 import com.accommodation.platform.core.price.domain.model.RoomPrice;
 import com.accommodation.platform.core.price.domain.service.PriceDomainService;
-import com.accommodation.platform.core.room.adapter.out.persistence.RoomImageJpaEntity;
-import com.accommodation.platform.core.room.adapter.out.persistence.RoomImageJpaRepository;
-import com.accommodation.platform.core.room.adapter.out.persistence.RoomOptionTranslationJpaEntity;
-import com.accommodation.platform.core.room.adapter.out.persistence.RoomTranslationJpaEntity;
+import com.accommodation.platform.core.room.application.port.out.LoadRoomImagePort;
 import com.accommodation.platform.core.room.application.port.out.LoadRoomOptionPort;
 import com.accommodation.platform.core.room.application.port.out.LoadRoomOptionTranslationPort;
 import com.accommodation.platform.core.room.application.port.out.LoadRoomPort;
 import com.accommodation.platform.core.room.application.port.out.LoadRoomTranslationPort;
 import com.accommodation.platform.core.room.domain.model.Room;
+import com.accommodation.platform.core.room.domain.model.RoomImage;
 import com.accommodation.platform.core.room.domain.model.RoomOption;
+import com.accommodation.platform.core.room.domain.model.RoomOptionTranslation;
+import com.accommodation.platform.core.room.domain.model.RoomTranslation;
 import com.accommodation.platform.customer.accommodation.application.port.in.CustomerGetAccommodationDetailQuery;
 
 import lombok.RequiredArgsConstructor;
@@ -50,7 +50,7 @@ public class CustomerGetAccommodationDetailService implements CustomerGetAccommo
     private final LoadRoomTranslationPort loadRoomTranslationPort;
     private final LoadRoomOptionPort loadRoomOptionPort;
     private final LoadRoomOptionTranslationPort loadRoomOptionTranslationPort;
-    private final RoomImageJpaRepository roomImageJpaRepository;
+    private final LoadRoomImagePort loadRoomImagePort;
     private final LoadInventoryPort loadInventoryPort;
     private final LoadRoomPricePort loadRoomPricePort;
     private final PriceDomainService priceDomainService;
@@ -78,28 +78,54 @@ public class CustomerGetAccommodationDetailService implements CustomerGetAccommo
                 .toList();
 
         // 번역 데이터 배치 로드 (ko면 스킵)
-        Optional<AccommodationTranslationJpaEntity> accTranslation = isKorean(locale)
+        Optional<AccommodationTranslation> accTranslation = isKorean(locale)
                 ? Optional.empty()
                 : loadAccommodationTranslationPort.findByAccommodationIdAndLocale(accommodationId, locale);
 
-        Map<Long, RoomTranslationJpaEntity> roomTranslations = isKorean(locale) || roomIds.isEmpty()
+        Map<Long, RoomTranslation> roomTranslations = isKorean(locale) || roomIds.isEmpty()
                 ? Map.of()
                 : loadRoomTranslationPort.findByRoomIdInAndLocale(roomIds, locale).stream()
-                        .collect(Collectors.toMap(RoomTranslationJpaEntity::getRoomId, t -> t));
+                        .collect(Collectors.toMap(RoomTranslation::roomId, t -> t));
 
-        Map<Long, RoomOptionTranslationJpaEntity> optionTranslations = isKorean(locale) || allOptionIds.isEmpty()
+        Map<Long, RoomOptionTranslation> optionTranslations = isKorean(locale) || allOptionIds.isEmpty()
                 ? Map.of()
                 : loadRoomOptionTranslationPort.findByRoomOptionIdInAndLocale(allOptionIds, locale).stream()
-                        .collect(Collectors.toMap(RoomOptionTranslationJpaEntity::getRoomOptionId, t -> t));
+                        .collect(Collectors.toMap(RoomOptionTranslation::roomOptionId, t -> t));
+
+        // 객실 이미지 배치 로드
+        Map<Long, List<RoomImage>> roomImagesMap = roomIds.isEmpty()
+                ? Map.of()
+                : loadRoomImagePort.findByRoomIdIn(roomIds).stream()
+                        .collect(Collectors.groupingBy(RoomImage::roomId));
+
+        // 가격/재고 배치 로드
+        LocalDate priceEndDate = checkOutDate.minusDays(1);
+        Map<Long, List<RoomPrice>> stayPricesByOption = allOptionIds.isEmpty()
+                ? Map.of()
+                : loadRoomPricePort.findByRoomOptionIdInAndPriceTypeAndDateRange(
+                        allOptionIds, PriceType.STAY, checkInDate, priceEndDate).stream()
+                        .collect(Collectors.groupingBy(RoomPrice::getRoomOptionId));
+
+        Map<Long, List<RoomPrice>> hourlyPricesByOption = allOptionIds.isEmpty()
+                ? Map.of()
+                : loadRoomPricePort.findByRoomOptionIdInAndPriceTypeAndDateRange(
+                        allOptionIds, PriceType.HOURLY, checkInDate, checkInDate).stream()
+                        .collect(Collectors.groupingBy(RoomPrice::getRoomOptionId));
+
+        Map<Long, List<Inventory>> inventoriesByOption = allOptionIds.isEmpty()
+                ? Map.of()
+                : loadInventoryPort.findByRoomOptionIdInAndDateRange(
+                        allOptionIds, checkInDate, priceEndDate).stream()
+                        .collect(Collectors.groupingBy(Inventory::getRoomOptionId));
 
         // 숙소 번역 적용 (없으면 기본값 fallback)
-        String accName = accTranslation.map(AccommodationTranslationJpaEntity::getName)
+        String accName = accTranslation.map(AccommodationTranslation::name)
                 .filter(s -> s != null && !s.isBlank())
                 .orElse(accommodation.getName());
-        String fullAddress = accTranslation.map(AccommodationTranslationJpaEntity::getFullAddress)
+        String fullAddress = accTranslation.map(AccommodationTranslation::fullAddress)
                 .filter(s -> s != null && !s.isBlank())
                 .orElse(accommodation.getFullAddress());
-        String locationDescription = accTranslation.map(AccommodationTranslationJpaEntity::getLocationDescription)
+        String locationDescription = accTranslation.map(AccommodationTranslation::locationDescription)
                 .filter(s -> s != null && !s.isBlank())
                 .orElse(accommodation.getLocationDescription());
 
@@ -115,7 +141,10 @@ public class CustomerGetAccommodationDetailService implements CustomerGetAccommo
                         optionsByRoomId.getOrDefault(room.getId(), List.of()),
                         roomTranslations,
                         optionTranslations,
-                        checkInDate, checkOutDate,
+                        roomImagesMap,
+                        stayPricesByOption,
+                        hourlyPricesByOption,
+                        inventoriesByOption,
                         accommodation))
                 .toList();
 
@@ -145,24 +174,28 @@ public class CustomerGetAccommodationDetailService implements CustomerGetAccommo
 
     private RoomWithOptions buildRoomWithOptions(Room room,
                                                   List<RoomOption> options,
-                                                  Map<Long, RoomTranslationJpaEntity> roomTranslations,
-                                                  Map<Long, RoomOptionTranslationJpaEntity> optionTranslations,
-                                                  LocalDate checkInDate, LocalDate checkOutDate,
+                                                  Map<Long, RoomTranslation> roomTranslations,
+                                                  Map<Long, RoomOptionTranslation> optionTranslations,
+                                                  Map<Long, List<RoomImage>> roomImagesMap,
+                                                  Map<Long, List<RoomPrice>> stayPricesByOption,
+                                                  Map<Long, List<RoomPrice>> hourlyPricesByOption,
+                                                  Map<Long, List<Inventory>> inventoriesByOption,
                                                   Accommodation accommodation) {
 
-        RoomTranslationJpaEntity roomTr = roomTranslations.get(room.getId());
-        String roomName = (roomTr != null && roomTr.getName() != null && !roomTr.getName().isBlank())
-                ? roomTr.getName() : room.getName();
-        String roomTypeName = (roomTr != null && roomTr.getRoomTypeName() != null && !roomTr.getRoomTypeName().isBlank())
-                ? roomTr.getRoomTypeName() : room.getRoomTypeName();
+        RoomTranslation roomTr = roomTranslations.get(room.getId());
+        String roomName = (roomTr != null && roomTr.name() != null && !roomTr.name().isBlank())
+                ? roomTr.name() : room.getName();
+        String roomTypeName = (roomTr != null && roomTr.roomTypeName() != null && !roomTr.roomTypeName().isBlank())
+                ? roomTr.roomTypeName() : room.getRoomTypeName();
 
-        List<OptionWithPrice> optionWithPrices = options.stream()
-                .map(option -> buildOptionWithPrice(option, optionTranslations, checkInDate, checkOutDate, accommodation))
+        List<RoomImageInfo> roomImages = roomImagesMap.getOrDefault(room.getId(), List.of()).stream()
+                .map(img -> new RoomImageInfo(img.relativePath(), img.displayOrder(), img.isPrimary()))
                 .toList();
 
-        List<RoomImageInfo> roomImages = roomImageJpaRepository
-                .findByRoomIdOrderByDisplayOrderAsc(room.getId()).stream()
-                .map(img -> new RoomImageInfo(img.getRelativePath(), img.getDisplayOrder(), img.isPrimary()))
+        List<OptionWithPrice> optionWithPrices = options.stream()
+                .map(option -> buildOptionWithPrice(option, optionTranslations,
+                        stayPricesByOption, hourlyPricesByOption, inventoriesByOption,
+                        accommodation))
                 .toList();
 
         return new RoomWithOptions(
@@ -177,22 +210,20 @@ public class CustomerGetAccommodationDetailService implements CustomerGetAccommo
     }
 
     private OptionWithPrice buildOptionWithPrice(RoomOption option,
-                                                  Map<Long, RoomOptionTranslationJpaEntity> optionTranslations,
-                                                  LocalDate checkInDate, LocalDate checkOutDate,
+                                                  Map<Long, RoomOptionTranslation> optionTranslations,
+                                                  Map<Long, List<RoomPrice>> stayPricesByOption,
+                                                  Map<Long, List<RoomPrice>> hourlyPricesByOption,
+                                                  Map<Long, List<Inventory>> inventoriesByOption,
                                                   Accommodation accommodation) {
 
-        RoomOptionTranslationJpaEntity optTr = optionTranslations.get(option.getId());
-        String optionName = (optTr != null && optTr.getName() != null && !optTr.getName().isBlank())
-                ? optTr.getName() : option.getName();
+        RoomOptionTranslation optTr = optionTranslations.get(option.getId());
+        String optionName = (optTr != null && optTr.name() != null && !optTr.name().isBlank())
+                ? optTr.name() : option.getName();
 
-        List<RoomPrice> stayPrices = loadRoomPricePort.findByRoomOptionIdAndPriceTypeAndDateRange(
-                option.getId(), PriceType.STAY, checkInDate, checkOutDate.minusDays(1));
-
+        List<RoomPrice> stayPrices = stayPricesByOption.getOrDefault(option.getId(), List.of());
         BigDecimal totalPrice = priceDomainService.calculateTotalPriceWithVat(stayPrices);
 
-        List<Inventory> inventories = loadInventoryPort.findByRoomOptionIdAndDateRange(
-                option.getId(), checkInDate, checkOutDate.minusDays(1));
-
+        List<Inventory> inventories = inventoriesByOption.getOrDefault(option.getId(), List.of());
         int minRemaining = inventories.stream()
                 .mapToInt(Inventory::getRemainingQuantity)
                 .min()
@@ -200,8 +231,7 @@ public class CustomerGetAccommodationDetailService implements CustomerGetAccommo
 
         Set<String> availablePriceTypes = new LinkedHashSet<>();
         if (!stayPrices.isEmpty()) availablePriceTypes.add(PriceType.STAY.name());
-        List<RoomPrice> hourlyPrices = loadRoomPricePort.findByRoomOptionIdAndPriceTypeAndDateRange(
-                option.getId(), PriceType.HOURLY, checkInDate, checkInDate);
+        List<RoomPrice> hourlyPrices = hourlyPricesByOption.getOrDefault(option.getId(), List.of());
         if (!hourlyPrices.isEmpty()) availablePriceTypes.add(PriceType.HOURLY.name());
 
         // 옵션 레벨 시간 우선, 없으면 숙소 기본값 사용 (레이트 체크아웃 등 옵션별 재정의 지원)

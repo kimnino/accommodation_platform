@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 import com.accommodation.platform.core.accommodation.application.port.out.LoadAccommodationTranslationPort;
 import com.accommodation.platform.core.accommodation.application.port.out.PersistAccommodationTranslationPort;
+import com.accommodation.platform.core.accommodation.domain.model.AccommodationTranslation;
 
 @Repository
 @RequiredArgsConstructor
@@ -29,20 +30,39 @@ public class AccommodationTranslationJpaAdapter implements PersistAccommodationT
     }
 
     @Override
-    public List<AccommodationTranslationJpaEntity> findByAccommodationId(Long accommodationId) {
+    public List<AccommodationTranslation> findByAccommodationId(Long accommodationId) {
 
-        return jpaRepository.findByAccommodationId(accommodationId);
+        return jpaRepository.findByAccommodationId(accommodationId).stream()
+                .map(this::toRecord)
+                .toList();
     }
 
     @Override
-    public Optional<AccommodationTranslationJpaEntity> findByAccommodationIdAndLocale(Long accommodationId, String locale) {
+    public Optional<AccommodationTranslation> findByAccommodationIdAndLocale(Long accommodationId, String locale) {
 
-        return jpaRepository.findByAccommodationIdAndLocale(accommodationId, locale);
+        return jpaRepository.findByAccommodationIdAndLocale(accommodationId, locale)
+                .map(this::toRecord);
     }
 
     @Override
-    public List<AccommodationTranslationJpaEntity> findByAccommodationIdInAndLocale(List<Long> accommodationIds, String locale) {
+    public List<AccommodationTranslation> findByAccommodationIdInAndLocale(List<Long> accommodationIds, String locale) {
 
-        return jpaRepository.findByAccommodationIdInAndLocale(accommodationIds, locale);
+        return jpaRepository.findByAccommodationIdInAndLocale(accommodationIds, locale).stream()
+                .map(this::toRecord)
+                .toList();
+    }
+
+    private AccommodationTranslation toRecord(AccommodationTranslationJpaEntity entity) {
+
+        return new AccommodationTranslation(
+                entity.getAccommodationId(),
+                entity.getLocale(),
+                entity.getName(),
+                entity.getFullAddress(),
+                entity.getLocationDescription(),
+                entity.getIntroduction(),
+                entity.getServiceAndFacilities(),
+                entity.getUsageInfo(),
+                entity.getCancellationAndRefundPolicy());
     }
 }

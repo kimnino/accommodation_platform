@@ -10,11 +10,11 @@ import lombok.RequiredArgsConstructor;
 import com.accommodation.platform.admin.accommodation.application.port.in.AdminListAccommodationQuery;
 import com.accommodation.platform.common.exception.BusinessException;
 import com.accommodation.platform.common.exception.ErrorCode;
-import com.accommodation.platform.core.accommodation.adapter.out.persistence.AccommodationTranslationJpaEntity;
 import com.accommodation.platform.core.accommodation.application.port.out.LoadAccommodationPort;
 import com.accommodation.platform.core.accommodation.application.port.out.LoadAccommodationTranslationPort;
 import com.accommodation.platform.core.accommodation.domain.enums.AccommodationStatus;
 import com.accommodation.platform.core.accommodation.domain.model.Accommodation;
+import com.accommodation.platform.core.accommodation.domain.model.AccommodationTranslation;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +48,7 @@ public class AdminListAccommodationService implements AdminListAccommodationQuer
 
         Accommodation accommodation = loadAccommodationPort.findById(accommodationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ACCOMMODATION_NOT_FOUND));
-        List<AccommodationTranslationJpaEntity> translations = loadTranslationPort.findByAccommodationId(accommodationId);
+        List<AccommodationTranslation> translations = loadTranslationPort.findByAccommodationId(accommodationId);
         return new AccommodationDetail(accommodation, translations);
     }
 }

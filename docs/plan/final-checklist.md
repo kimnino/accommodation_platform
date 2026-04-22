@@ -41,7 +41,7 @@
 
 - [x] `GlobalExceptionHandler` — 404/400/500 케이스 모두 `ApiResponse` 포맷으로 응답 확인 ✅
 - [x] `BaseJpaEntity.restoreTimestamps` — `@PreUpdate`는 `updatedAt`만 덮어씀. `createdAt`은 보존됨. `updatedAt`을 항상 저장 시각으로 갱신하는 것은 의도된 동작으로 확인.
-- [x] `DomainServiceConfig` 삭제됨 → `PriceDomainService`, `InventoryDomainService` 에 `@Service` 있는지 확인 ✅
+- [x] `DomainServiceConfig` 유지 → `PriceDomainService`, `InventoryDomainService`는 순수 Java 클래스로 `DomainServiceConfig`에서 `@Bean` 등록 ✅
 
 ### 숙소 등록 / 수정 (파트너)
 
@@ -93,4 +93,4 @@
 - [x] `./gradlew test` — 전체 빌드 + 테스트 통과 (BUILD SUCCESSFUL in 1m 10s) ✅
 - [x] Spring REST Docs 스니펫 생성 확인 (`build/generated-snippets/`) ✅
 - [x] Testcontainers MySQL 통합 테스트 통과 ✅
-- [x] `DomainServiceConfig.java` 삭제되어 빈 충돌 없는지 확인 ✅
+- [x] `DomainServiceConfig.java` 유지 — `PriceDomainService`, `InventoryDomainService` `@Bean` 등록 정상 ✅

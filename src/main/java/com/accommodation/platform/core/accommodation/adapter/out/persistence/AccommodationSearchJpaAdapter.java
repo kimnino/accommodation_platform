@@ -20,7 +20,6 @@ import com.accommodation.platform.core.price.domain.enums.PriceType;
 import com.accommodation.platform.core.room.adapter.out.persistence.QRoomJpaEntity;
 import com.accommodation.platform.core.room.adapter.out.persistence.QRoomOptionJpaEntity;
 import com.accommodation.platform.core.tag.adapter.out.persistence.QAccommodationTagJpaEntity;
-import com.accommodation.platform.core.accommodation.application.port.out.SearchAccommodationPort.AccommodationSummary;
 import com.accommodation.platform.core.accommodation.application.port.out.SearchAccommodationPort.SearchCriteria;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
@@ -70,63 +69,6 @@ public class AccommodationSearchJpaAdapter implements SearchAccommodationPort {
         return fetchLowestPrices(accommodationIds, criteria);
     }
 
-    @Override
-    public Page<AccommodationSummary> search(SearchCriteria criteria, Pageable pageable) {
-
-        QAccommodationJpaEntity a = QAccommodationJpaEntity.accommodationJpaEntity;
-
-        BooleanBuilder where = buildWhereClause(a, criteria);
-
-        // 1단계: 숙소 기본 정보 조회 (서브쿼리 없이)
-        List<AccommodationJpaEntity> accommodations = queryFactory
-                .selectFrom(a)
-                .where(where)
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .orderBy(a.id.desc())
-                .fetch();
-
-        if (accommodations.isEmpty()) {
-            return new PageImpl<>(Collections.emptyList(), pageable, 0);
-        }
-
-        List<Long> accommodationIds = accommodations.stream()
-                .map(AccommodationJpaEntity::getId)
-                .toList();
-
-        // 2단계: 배치 조회 — 대표 이미지
-        Map<Long, String> primaryImages = fetchPrimaryImages(accommodationIds);
-
-        // 3단계: 배치 조회 — 최저가
-        Map<Long, Long> lowestPrices = fetchLowestPrices(accommodationIds, criteria);
-
-        // 4단계: 조립
-        List<AccommodationSummary> results = accommodations.stream()
-                .map(acc -> new AccommodationSummary(
-                        acc.getId(),
-                        acc.getName(),
-                        acc.getType().name(),
-                        acc.getStatus().name(),
-                        acc.getFullAddress(),
-                        acc.getLatitude(),
-                        acc.getLongitude(),
-                        acc.getLocationDescription(),
-                        acc.getCheckInTime() != null ? acc.getCheckInTime().toString() : null,
-                        acc.getCheckOutTime() != null ? acc.getCheckOutTime().toString() : null,
-                        primaryImages.get(acc.getId()),
-                        lowestPrices.get(acc.getId()),
-                        lowestPrices.containsKey(acc.getId())))
-                .toList();
-
-        Long total = queryFactory
-                .select(a.count())
-                .from(a)
-                .where(where)
-                .fetchOne();
-
-        return new PageImpl<>(results, pageable, total != null ? total : 0);
-    }
-
     private BooleanBuilder buildWhereClause(QAccommodationJpaEntity a, SearchCriteria criteria) {
 
         QRoomJpaEntity r = QRoomJpaEntity.roomJpaEntity;
@@ -141,8 +83,8 @@ public class AccommodationSearchJpaAdapter implements SearchAccommodationPort {
             List<Long> subtreeIds = resolveRegionSubtreeIds(criteria.regionId());
             where.and(a.regionId.in(subtreeIds));
         }
-        if (criteria.accommodationType() != null && !criteria.accommodationType().isBlank()) {
-            where.and(a.type.eq(AccommodationType.valueOf(criteria.accommodationType())));
+        if (criteria.accommodationType() != null) {
+            where.and(a.type.eq(criteria.accommodationType()));
         }
         if (criteria.guestCount() > 0) {
             where.and(JPAExpressions.selectOne()
@@ -202,27 +144,6 @@ public class AccommodationSearchJpaAdapter implements SearchAccommodationPort {
         all.stream()
                 .filter(r -> parentId.equals(r.getParentId()))
                 .forEach(r -> collectSubtreeIds(r.getId(), all, result));
-    }
-
-    /**
-     * 대표 이미지 배치 조회.
-     * IN 절로 한 번에 조회 → Map으로 변환.
-     */
-    private Map<Long, String> fetchPrimaryImages(List<Long> accommodationIds) {
-
-        QAccommodationImageJpaEntity img = QAccommodationImageJpaEntity.accommodationImageJpaEntity;
-
-        List<Tuple> images = queryFactory
-                .select(img.accommodationId, img.relativePath)
-                .from(img)
-                .where(img.accommodationId.in(accommodationIds), img.isPrimary.eq(true))
-                .fetch();
-
-        return images.stream()
-                .collect(Collectors.toMap(
-                        t -> t.get(img.accommodationId),
-                        t -> t.get(img.relativePath),
-                        (a, b) -> a));
     }
 
     /**

@@ -15,5 +15,8 @@ public interface RoomPriceJpaRepository extends JpaRepository<RoomPriceJpaEntity
     List<RoomPriceJpaEntity> findByRoomOptionIdAndPriceTypeAndDateBetweenOrderByDateAsc(
             Long roomOptionId, PriceType priceType, LocalDate startDate, LocalDate endDate);
 
+    List<RoomPriceJpaEntity> findByRoomOptionIdInAndPriceTypeAndDateBetweenOrderByRoomOptionIdAscDateAsc(
+            List<Long> roomOptionIds, PriceType priceType, LocalDate startDate, LocalDate endDate);
+
     void deleteByRoomOptionId(Long roomOptionId);
 }

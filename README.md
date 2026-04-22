@@ -16,7 +16,8 @@ OTA(Online Travel Agency) 숙박 예약 플랫폼 백엔드. 실서비스 수준
 6. [핵심 기술 결정](#핵심-기술-결정)
 7. [테스트 전략](#테스트-전략)
 8. [Tech Stack](#tech-stack)
-9. [설계 문서](#설계-문서)
+9. [API 문서](#api-문서)
+10. [설계 문서](#설계-문서)
 
 ---
 
@@ -31,7 +32,9 @@ docker run -d --name ota-mysql \
   -e MYSQL_DATABASE=accommodation \
   -p 3307:3306 mysql:8.0.36
 
-# 서버 실행 (ddl-auto: create — DB 스키마 자동 생성 + data.sql 샘플 데이터 로드)
+# 서버 실행
+# ddl-auto: create — 시작 시 DB 스키마를 매번 재생성하고 data.sql 샘플 데이터를 로드합니다.
+# 테스트/데모 편의를 위해 의도적으로 create 모드를 사용합니다 (운영 환경에서는 validate 사용).
 ./gradlew bootRun
 
 # 테스트 (Testcontainers — 별도 MySQL 불필요)
@@ -458,13 +461,31 @@ build/generated-snippets/
 
 ---
 
+## API 문서
+
+`src/docs/asciidoc/`에 Spring REST Docs 기반 API 문서가 있습니다.
+
+| 파일 | 내용 |
+|------|------|
+| [`index.adoc`](src/docs/asciidoc/index.adoc) | 전체 API 개요, 인증 방식, 공통 응답/에러 코드, 타입 규칙 |
+| [`extranet-api.adoc`](src/docs/asciidoc/extranet-api.adoc) | 파트너 채널 API (숙소/객실/재고/가격/태그 등록) |
+| [`admin-api.adoc`](src/docs/asciidoc/admin-api.adoc) | 관리자 채널 API (숙소 승인, 태그 관리, 가격 조정) |
+| [`customer-api.adoc`](src/docs/asciidoc/customer-api.adoc) | 고객 채널 API (검색, 상세 조회, 예약/취소/결제) |
+
+REST Docs 스니펫은 테스트 실행 시 `build/generated-snippets/`에 자동 생성됩니다.
+
+---
+
 ## 설계 문서
 
 | 문서 | 내용 |
 |------|------|
+| [JWT/RBAC 인증 설계](docs/design/security.md) | JWT 토큰 구조, 채널별 Role 접근 제어, 인증 필터 흐름 |
 | [이벤트 기반 아키텍처](docs/design/event-architecture.md) | 8개 이벤트 발행/구독 설계, Spring ApplicationEvent → Kafka 전환 전략 |
 | [Redis 캐시 설계](docs/design/redis-cache-design.md) | 숙소 카드 캐시, 배치 조회, 무효화 전략 |
 | [검색 성능 설계](docs/design/search-performance-design.md) | 2단계 배치 조회, 스냅샷 테이블 도입 계획 |
 | [다국어 설계](docs/design/multilingual.md) | Translation 테이블 구조, 언어 코드 규칙, 폴백 정책 |
 | [공급사 연동 설계](docs/design/supplier-sync-design.md) | CanonicalModel, 카테고리 매핑, 동기화 전략 |
+| [DB 설계](docs/design/database.md) | 테이블 레퍼런스 |
+| [ERD](docs/design/erd.png) | ER 다이어그램 |
 | [코드 컨벤션](docs/conventions/code-conventions.md) | 네이밍, 레이어 규칙, 동시성, 테스트 가이드 |

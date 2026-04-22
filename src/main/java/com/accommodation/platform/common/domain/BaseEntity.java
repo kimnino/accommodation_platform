@@ -20,13 +20,9 @@ public abstract class BaseEntity {
         this.updatedAt = Instant.now();
     }
 
-    public void setCreatedAt(Instant createdAt) {
+    public void restoreTimestamps(Instant createdAt, Instant updatedAt) {
 
         this.createdAt = createdAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-
         this.updatedAt = updatedAt;
     }
 }

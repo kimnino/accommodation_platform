@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import com.accommodation.platform.core.accommodation.domain.enums.AccommodationType;
 import com.accommodation.platform.core.supplier.application.port.out.SupplierClient;
 import com.accommodation.platform.core.supplier.domain.model.CanonicalAccommodation;
 import com.accommodation.platform.core.supplier.domain.model.CanonicalPrice;
@@ -39,7 +40,7 @@ public class MinhyukHouseSupplierAdapter implements SupplierClient {
                 new CanonicalAccommodation(
                         "MH-ACC-001",
                         "민혁하우스 강남점",
-                        "HOTEL",
+                        AccommodationType.HOTEL,
                         "서울시 강남구 역삼동 123-45",
                         37.4979,
                         127.0276,
@@ -50,7 +51,7 @@ public class MinhyukHouseSupplierAdapter implements SupplierClient {
                 new CanonicalAccommodation(
                         "MH-ACC-002",
                         "민혁하우스 홍대점",
-                        "GUEST_HOUSE",
+                        AccommodationType.GUEST_HOUSE,
                         "서울시 마포구 서교동 456-78",
                         37.5563,
                         126.9236,

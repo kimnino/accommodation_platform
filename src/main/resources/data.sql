@@ -334,14 +334,14 @@ VALUES
 (27, 8, '미니바', 3, true, NOW(), NOW());
 
 -- 숙소-태그 매핑
-INSERT INTO accommodation_tag (accommodation_id, tag_id)
+INSERT INTO accommodation_tag (accommodation_id, tag_id, created_at, updated_at)
 VALUES
-(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8),
-(2, 1), (2, 3), (2, 4), (2, 9), (2, 10), (2, 11),
-(3, 4), (3, 22), (3, 23), (3, 24),
-(4, 4), (4, 12), (4, 13), (4, 14),
-(5, 4), (5, 15), (5, 16), (5, 17), (5, 18),
-(6, 1), (6, 4), (6, 19), (6, 20), (6, 21);
+(1, 1, NOW(), NOW()), (1, 2, NOW(), NOW()), (1, 3, NOW(), NOW()), (1, 4, NOW(), NOW()), (1, 5, NOW(), NOW()), (1, 6, NOW(), NOW()), (1, 7, NOW(), NOW()), (1, 8, NOW(), NOW()),
+(2, 1, NOW(), NOW()), (2, 3, NOW(), NOW()), (2, 4, NOW(), NOW()), (2, 9, NOW(), NOW()), (2, 10, NOW(), NOW()), (2, 11, NOW(), NOW()),
+(3, 4, NOW(), NOW()), (3, 22, NOW(), NOW()), (3, 23, NOW(), NOW()), (3, 24, NOW(), NOW()),
+(4, 4, NOW(), NOW()), (4, 12, NOW(), NOW()), (4, 13, NOW(), NOW()), (4, 14, NOW(), NOW()),
+(5, 4, NOW(), NOW()), (5, 15, NOW(), NOW()), (5, 16, NOW(), NOW()), (5, 17, NOW(), NOW()), (5, 18, NOW(), NOW()),
+(6, 1, NOW(), NOW()), (6, 4, NOW(), NOW()), (6, 19, NOW(), NOW()), (6, 20, NOW(), NOW()), (6, 21, NOW(), NOW());
 
 -- ============================================
 -- 숙소 유형별 지역 마스터
@@ -728,32 +728,32 @@ UPDATE accommodation SET region_id = 46 WHERE id = 24;  -- 명동
 UPDATE accommodation SET region_id = 49 WHERE id = 25;  -- 해운대(GUEST_HOUSE)
 
 -- 추가 숙소 태그 매핑
-INSERT INTO accommodation_tag (accommodation_id, tag_id) VALUES
+INSERT INTO accommodation_tag (accommodation_id, tag_id, created_at, updated_at) VALUES
 -- HOTEL (7-10): 수영장,피트니스,주차장,룸서비스,컨시어지
-(7, 1),(7, 3),(7, 4),(7, 5),(7, 7),
-(8, 1),(8, 2),(8, 3),(8, 4),(8, 5),(8, 6),(8, 7),
-(9, 3),(9, 4),(9, 5),(9, 7),
-(10, 4),(10, 5),(10, 7),(10, 8),
+(7, 1, NOW(), NOW()),(7, 3, NOW(), NOW()),(7, 4, NOW(), NOW()),(7, 5, NOW(), NOW()),(7, 7, NOW(), NOW()),
+(8, 1, NOW(), NOW()),(8, 2, NOW(), NOW()),(8, 3, NOW(), NOW()),(8, 4, NOW(), NOW()),(8, 5, NOW(), NOW()),(8, 6, NOW(), NOW()),(8, 7, NOW(), NOW()),
+(9, 3, NOW(), NOW()),(9, 4, NOW(), NOW()),(9, 5, NOW(), NOW()),(9, 7, NOW(), NOW()),
+(10, 4, NOW(), NOW()),(10, 5, NOW(), NOW()),(10, 7, NOW(), NOW()),(10, 8, NOW(), NOW()),
 -- MOTEL (11-14): 주차무료,OTT,무인체크인
-(11, 4),(11, 12),(11, 13),(11, 14),
-(12, 4),(12, 12),(12, 13),(12, 14),
-(13, 4),(13, 12),(13, 13),(13, 14),
-(14, 4),(14, 12),(14, 13),(14, 14),
+(11, 4, NOW(), NOW()),(11, 12, NOW(), NOW()),(11, 13, NOW(), NOW()),(11, 14, NOW(), NOW()),
+(12, 4, NOW(), NOW()),(12, 12, NOW(), NOW()),(12, 13, NOW(), NOW()),(12, 14, NOW(), NOW()),
+(13, 4, NOW(), NOW()),(13, 12, NOW(), NOW()),(13, 13, NOW(), NOW()),(13, 14, NOW(), NOW()),
+(14, 4, NOW(), NOW()),(14, 12, NOW(), NOW()),(14, 13, NOW(), NOW()),(14, 14, NOW(), NOW()),
 -- RESORT (15-17): 수영장,피트니스,주차장,워터파크
-(15, 1),(15, 3),(15, 4),(15, 9),(15, 10),
-(16, 1),(16, 3),(16, 4),(16, 9),
-(17, 1),(17, 3),(17, 4),(17, 11),
+(15, 1, NOW(), NOW()),(15, 3, NOW(), NOW()),(15, 4, NOW(), NOW()),(15, 9, NOW(), NOW()),(15, 10, NOW(), NOW()),
+(16, 1, NOW(), NOW()),(16, 3, NOW(), NOW()),(16, 4, NOW(), NOW()),(16, 9, NOW(), NOW()),
+(17, 1, NOW(), NOW()),(17, 3, NOW(), NOW()),(17, 4, NOW(), NOW()),(17, 11, NOW(), NOW()),
 -- PENSION (18-20): 주차장,BBQ,반려동물
-(18, 4),(18, 15),(18, 16),(18, 17),
-(19, 4),(19, 15),(19, 16),(19, 17),(19, 18),
-(20, 4),(20, 15),(20, 18),
+(18, 4, NOW(), NOW()),(18, 15, NOW(), NOW()),(18, 16, NOW(), NOW()),(18, 17, NOW(), NOW()),
+(19, 4, NOW(), NOW()),(19, 15, NOW(), NOW()),(19, 16, NOW(), NOW()),(19, 17, NOW(), NOW()),(19, 18, NOW(), NOW()),
+(20, 4, NOW(), NOW()),(20, 15, NOW(), NOW()),(20, 18, NOW(), NOW()),
 -- POOL_VILLA (21-22): 수영장,주차장,개별수영장,자쿠지
-(21, 1),(21, 4),(21, 19),(21, 20),(21, 21),
-(22, 1),(22, 4),(22, 19),(22, 21),
+(21, 1, NOW(), NOW()),(21, 4, NOW(), NOW()),(21, 19, NOW(), NOW()),(21, 20, NOW(), NOW()),(21, 21, NOW(), NOW()),
+(22, 1, NOW(), NOW()),(22, 4, NOW(), NOW()),(22, 19, NOW(), NOW()),(22, 21, NOW(), NOW()),
 -- GUEST_HOUSE (23-25): 주차장,공용주방,라운지,투어프로그램
-(23, 4),(23, 22),(23, 23),(23, 24),
-(24, 4),(24, 22),(24, 23),(24, 24),
-(25, 4),(25, 22),(25, 23),(25, 24);
+(23, 4, NOW(), NOW()),(23, 22, NOW(), NOW()),(23, 23, NOW(), NOW()),(23, 24, NOW(), NOW()),
+(24, 4, NOW(), NOW()),(24, 22, NOW(), NOW()),(24, 23, NOW(), NOW()),(24, 24, NOW(), NOW()),
+(25, 4, NOW(), NOW()),(25, 22, NOW(), NOW()),(25, 23, NOW(), NOW()),(25, 24, NOW(), NOW());
 
 -- 추가 숙소 번역 (accommodation_translation)
 INSERT INTO accommodation_translation (accommodation_id, locale, name, full_address, location_description, created_at, updated_at) VALUES

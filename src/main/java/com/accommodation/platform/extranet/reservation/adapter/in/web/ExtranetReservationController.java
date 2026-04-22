@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.accommodation.platform.common.response.ApiResponse;
 import com.accommodation.platform.core.reservation.domain.model.Reservation;
-import com.accommodation.platform.customer.reservation.adapter.in.web.ReservationResponse;
+import com.accommodation.platform.common.response.ReservationResponse;
 import com.accommodation.platform.extranet.reservation.application.port.in.ExtranetCancelReservationUseCase;
 import com.accommodation.platform.extranet.reservation.application.port.in.ExtranetConfirmReservationUseCase;
 import com.accommodation.platform.extranet.reservation.application.port.in.ExtranetGetReservationQuery;
@@ -29,9 +29,11 @@ public class ExtranetReservationController {
     private final ExtranetGetReservationQuery getQuery;
 
     @PatchMapping("/{reservationId}/confirm")
-    public ApiResponse<ReservationResponse> confirm(@PathVariable Long reservationId) {
+    public ApiResponse<ReservationResponse> confirm(
+            @PathVariable Long reservationId,
+            @RequestHeader("X-Partner-Id") Long partnerId) {
 
-        Reservation reservation = confirmUseCase.confirm(reservationId);
+        Reservation reservation = confirmUseCase.confirm(reservationId, partnerId);
         return ApiResponse.success(ReservationResponse.from(reservation));
     }
 

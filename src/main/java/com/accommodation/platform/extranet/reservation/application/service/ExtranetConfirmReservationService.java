@@ -8,6 +8,7 @@ import com.accommodation.platform.common.exception.ErrorCode;
 import com.accommodation.platform.core.reservation.application.port.out.LoadReservationPort;
 import com.accommodation.platform.core.reservation.application.port.out.PersistReservationPort;
 import com.accommodation.platform.core.reservation.domain.model.Reservation;
+import com.accommodation.platform.extranet.common.ExtranetOwnershipVerifier;
 import com.accommodation.platform.extranet.reservation.application.port.in.ExtranetConfirmReservationUseCase;
 
 import lombok.RequiredArgsConstructor;
@@ -19,12 +20,15 @@ public class ExtranetConfirmReservationService implements ExtranetConfirmReserva
 
     private final LoadReservationPort loadReservationPort;
     private final PersistReservationPort persistReservationPort;
+    private final ExtranetOwnershipVerifier ownershipVerifier;
 
     @Override
-    public Reservation confirm(Long reservationId) {
+    public Reservation confirm(Long reservationId, Long partnerId) {
 
         Reservation reservation = loadReservationPort.findById(reservationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESERVATION_NOT_FOUND));
+
+        ownershipVerifier.verifyAccommodationOwnership(reservation.getAccommodationId(), partnerId);
 
         reservation.confirm();
         return persistReservationPort.save(reservation);

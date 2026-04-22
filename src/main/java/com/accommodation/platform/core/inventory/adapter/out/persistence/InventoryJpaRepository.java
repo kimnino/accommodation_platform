@@ -20,5 +20,8 @@ public interface InventoryJpaRepository extends JpaRepository<InventoryJpaEntity
     @Query("SELECT i FROM InventoryJpaEntity i WHERE i.roomOptionId = :roomOptionId AND i.date = :date")
     Optional<InventoryJpaEntity> findWithLock(Long roomOptionId, LocalDate date);
 
+    List<InventoryJpaEntity> findByRoomOptionIdInAndDateBetweenOrderByRoomOptionIdAscDateAsc(
+            List<Long> roomOptionIds, LocalDate startDate, LocalDate endDate);
+
     void deleteByRoomOptionId(Long roomOptionId);
 }

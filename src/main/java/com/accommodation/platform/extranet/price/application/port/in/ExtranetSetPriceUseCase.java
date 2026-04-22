@@ -2,8 +2,10 @@ package com.accommodation.platform.extranet.price.application.port.in;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
+import com.accommodation.platform.core.price.domain.enums.PriceType;
 import com.accommodation.platform.core.price.domain.model.RoomPrice;
 
 public interface ExtranetSetPriceUseCase {
@@ -14,7 +16,7 @@ public interface ExtranetSetPriceUseCase {
             LocalDate startDate,
             LocalDate endDate,
             List<LocalDate> dates,
-            String priceType,
+            PriceType priceType,
             BigDecimal basePrice,
             BigDecimal sellingPrice,
             boolean taxIncluded
@@ -26,7 +28,7 @@ public interface ExtranetSetPriceUseCase {
                 return dates;
             }
 
-            List<LocalDate> range = new java.util.ArrayList<>();
+            List<LocalDate> range = new ArrayList<>();
             for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
                 range.add(d);
             }

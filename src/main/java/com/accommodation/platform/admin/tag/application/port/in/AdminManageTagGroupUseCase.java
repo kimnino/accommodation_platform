@@ -1,7 +1,7 @@
 package com.accommodation.platform.admin.tag.application.port.in;
 
-import java.util.List;
-
+import com.accommodation.platform.core.accommodation.domain.enums.AccommodationType;
+import com.accommodation.platform.core.tag.domain.enums.TagTarget;
 import com.accommodation.platform.core.tag.domain.model.TagGroup;
 
 public interface AdminManageTagGroupUseCase {
@@ -14,13 +14,11 @@ public interface AdminManageTagGroupUseCase {
 
     void activate(Long tagGroupId);
 
-    List<TagGroup> listAll();
-
     record CreateTagGroupCommand(
             String name,
             int displayOrder,
-            String targetType,
-            String accommodationType,
+            TagTarget targetType,
+            AccommodationType accommodationType,
             Long supplierId
     ) {
     }
@@ -28,7 +26,7 @@ public interface AdminManageTagGroupUseCase {
     record UpdateTagGroupCommand(
             String name,
             Integer displayOrder,
-            String accommodationType
+            AccommodationType accommodationType
     ) {
     }
 }

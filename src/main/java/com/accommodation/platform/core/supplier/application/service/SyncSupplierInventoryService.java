@@ -2,10 +2,6 @@ package com.accommodation.platform.core.supplier.application.service;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,16 +13,10 @@ import com.accommodation.platform.core.price.application.port.out.LoadRoomPriceP
 import com.accommodation.platform.core.price.application.port.out.PersistRoomPricePort;
 import com.accommodation.platform.core.price.domain.enums.PriceType;
 import com.accommodation.platform.core.price.domain.model.RoomPrice;
-import com.accommodation.platform.core.supplier.adapter.out.persistence.SupplierAccommodationMappingJpaEntity;
-import com.accommodation.platform.core.supplier.adapter.out.persistence.SupplierAccommodationMappingJpaRepository;
-import com.accommodation.platform.core.supplier.adapter.out.persistence.SupplierJpaEntity;
-import com.accommodation.platform.core.supplier.adapter.out.persistence.SupplierJpaRepository;
-import com.accommodation.platform.core.supplier.adapter.out.persistence.SupplierRoomMappingJpaEntity;
-import com.accommodation.platform.core.supplier.adapter.out.persistence.SupplierRoomMappingJpaRepository;
-import com.accommodation.platform.core.supplier.adapter.out.persistence.SupplierRoomOptionMappingJpaEntity;
-import com.accommodation.platform.core.supplier.adapter.out.persistence.SupplierRoomOptionMappingJpaRepository;
-import com.accommodation.platform.core.room.application.port.out.LoadRoomOptionPort;
 import com.accommodation.platform.core.supplier.application.port.in.SyncSupplierInventoryUseCase;
+import com.accommodation.platform.core.supplier.application.port.out.LoadSupplierPort;
+import com.accommodation.platform.core.supplier.application.port.out.LoadSupplierPort.AccommodationMapping;
+import com.accommodation.platform.core.supplier.application.port.out.LoadSupplierPort.SupplierInfo;
 import com.accommodation.platform.core.supplier.application.port.out.SupplierClient;
 import com.accommodation.platform.core.supplier.domain.model.CanonicalPrice;
 
@@ -40,11 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SyncSupplierInventoryService implements SyncSupplierInventoryUseCase {
 
     private final List<SupplierClient> supplierClients;
-    private final SupplierJpaRepository supplierJpaRepository;
-    private final SupplierAccommodationMappingJpaRepository accommodationMappingRepository;
-    private final SupplierRoomMappingJpaRepository roomMappingRepository;
-    private final SupplierRoomOptionMappingJpaRepository roomOptionMappingRepository;
-    private final LoadRoomOptionPort loadRoomOptionPort;
+    private final LoadSupplierPort loadSupplierPort;
     private final PersistRoomPricePort persistRoomPricePort;
     private final LoadRoomPricePort loadRoomPricePort;
     private final PersistInventoryPort persistInventoryPort;
@@ -55,23 +41,23 @@ public class SyncSupplierInventoryService implements SyncSupplierInventoryUseCas
 
         SupplierClient client = findClient(supplierCode);
 
-        SupplierJpaEntity supplier = supplierJpaRepository.findByCode(supplierCode)
+        SupplierInfo supplier = loadSupplierPort.findByCode(supplierCode)
                 .orElseThrow(() -> new IllegalArgumentException("공급사를 찾을 수 없습니다: " + supplierCode));
 
-        List<SupplierAccommodationMappingJpaEntity> accMappings =
-                accommodationMappingRepository.findBySupplierId(supplier.getId());
+        List<AccommodationMapping> accMappings = loadSupplierPort.findAccommodationMappingsBySupplierId(supplier.id());
 
-        AtomicInteger priceCount = new AtomicInteger(0);
-        AtomicInteger inventoryCount = new AtomicInteger(0);
+        int priceCount = 0;
+        int inventoryCount = 0;
 
-        for (SupplierAccommodationMappingJpaEntity accMapping : accMappings) {
+        for (AccommodationMapping accMapping : accMappings) {
 
             List<CanonicalPrice> canonicalPrices = client.fetchPrices(
-                    accMapping.getExternalAccommodationId(), startDate, endDate);
+                    accMapping.externalAccommodationId(), startDate, endDate);
 
             for (CanonicalPrice cp : canonicalPrices) {
 
-                Long roomOptionId = resolveRoomOptionId(supplier.getId(), cp.externalRoomId());
+                Long roomOptionId = loadSupplierPort.resolveRoomOptionId(supplier.id(), cp.externalRoomId())
+                        .orElse(null);
 
                 if (roomOptionId == null) {
                     log.warn("[{}] 매핑되지 않은 객실: {}", supplierCode, cp.externalRoomId());
@@ -79,17 +65,17 @@ public class SyncSupplierInventoryService implements SyncSupplierInventoryUseCas
                 }
 
                 syncPrice(roomOptionId, cp);
-                priceCount.incrementAndGet();
+                priceCount++;
 
                 syncInventory(roomOptionId, cp);
-                inventoryCount.incrementAndGet();
+                inventoryCount++;
             }
         }
 
         log.info("[{}] 동기화 완료: 숙소 {}개, 가격 {}건, 재고 {}건",
-                supplierCode, accMappings.size(), priceCount.get(), inventoryCount.get());
+                supplierCode, accMappings.size(), priceCount, inventoryCount);
 
-        return new SyncResult(accMappings.size(), priceCount.get(), inventoryCount.get());
+        return new SyncResult(accMappings.size(), priceCount, inventoryCount);
     }
 
     private void syncPrice(Long roomOptionId, CanonicalPrice cp) {
@@ -132,33 +118,6 @@ public class SyncSupplierInventoryService implements SyncSupplierInventoryUseCas
                     .build();
             persistInventoryPort.save(inventory);
         }
-    }
-
-    /**
-     * 외부 객실 ID → 내부 roomOptionId 해결.
-     * 1) 3단 매핑(supplier_room_option_mapping) 먼저 확인
-     * 2) 없으면 2단 매핑(supplier_room_mapping)으로 roomId 찾고, 해당 객실의 첫 번째 옵션으로 자동 연결
-     */
-    private Long resolveRoomOptionId(Long supplierId, String externalRoomId) {
-
-        return roomOptionMappingRepository
-                .findBySupplierIdAndExternalRoomOptionId(supplierId, externalRoomId)
-                .map(SupplierRoomOptionMappingJpaEntity::getRoomOptionId)
-                .orElseGet(() -> {
-                    SupplierRoomMappingJpaEntity roomMapping = roomMappingRepository
-                            .findBySupplierIdAndExternalRoomId(supplierId, externalRoomId)
-                            .orElse(null);
-
-                    if (roomMapping == null) {
-                        return null;
-                    }
-
-                    return loadRoomOptionPort.findByRoomId(roomMapping.getRoomId())
-                            .stream()
-                            .findFirst()
-                            .map(opt -> opt.getId())
-                            .orElse(null);
-                });
     }
 
     private SupplierClient findClient(String supplierCode) {

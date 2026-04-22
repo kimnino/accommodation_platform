@@ -1,4 +1,4 @@
-package com.accommodation.platform.core.supplier.adapter.in.web;
+package com.accommodation.platform.admin.supplier.adapter.in.web;
 
 import java.time.LocalDate;
 
@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1/supplier")
 @RequiredArgsConstructor
-public class SupplierSyncController {
+public class AdminSupplierSyncController {
 
     private final SyncSupplierInventoryUseCase syncSupplierInventoryUseCase;
 

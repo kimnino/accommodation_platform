@@ -8,6 +8,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.accommodation.platform.core.accommodation.application.port.out.LoadHourlySettingPort;
+import com.accommodation.platform.core.accommodation.domain.model.AccommodationHourlySetting;
 import com.accommodation.platform.core.inventory.application.port.out.LoadInventoryPort;
 import com.accommodation.platform.core.inventory.application.port.out.PersistInventoryPort;
 import com.accommodation.platform.core.inventory.domain.model.TimeSlotInventory;
@@ -29,6 +31,7 @@ public class HoldExpirationScheduler {
     private final PersistReservationPort persistReservationPort;
     private final LoadInventoryPort loadInventoryPort;
     private final PersistInventoryPort persistInventoryPort;
+    private final LoadHourlySettingPort loadHourlySettingPort;
 
     @Scheduled(fixedDelay = 60000)
     @Transactional
@@ -68,9 +71,12 @@ public class HoldExpirationScheduler {
 
     private void restoreHourlyInventory(Reservation reservation) {
 
+        int slotUnitMinutes = loadHourlySettingPort.findByAccommodationId(reservation.getAccommodationId())
+                .map(AccommodationHourlySetting::getSlotUnitMinutes)
+                .orElse(30);
+
         LocalTime startTime = reservation.getHourlyStartTime();
-        // 점유 슬롯 범위 + 버퍼 슬롯 1개(endTime)까지 포함하여 조회
-        LocalTime bufferEnd = startTime.plusMinutes(reservation.getHourlyUsageMinutes() + 30L);
+        LocalTime bufferEnd = startTime.plusMinutes(reservation.getHourlyUsageMinutes() + (long) slotUnitMinutes);
 
         List<TimeSlotInventory> slots = loadInventoryPort.findTimeSlotsWithLock(
                 reservation.getRoomOptionId(), reservation.getCheckInDate(), startTime, bufferEnd);
