@@ -1,4 +1,4 @@
-package com.accommodation.platform.customer.reservation.adapter.in.web;
+package com.accommodation.platform.common.response;
 
 import java.math.BigDecimal;
 import java.time.Instant;

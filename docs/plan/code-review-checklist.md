@@ -190,19 +190,27 @@
 
 | 순서 | 파일 | 확인 포인트 | 완료 |
 |------|------|-------------|------|
-| 1 | `customer/reservation/adapter/in/web/CreateStayReservationRequest.java` | 숙박 예약 요청 필드, 멱등성 키 | [   ] |
-| 2 | `customer/reservation/adapter/in/web/CreateHourlyReservationRequest.java` | 대실 예약 요청 필드 | [   ] |
-| 3 | `customer/reservation/adapter/in/web/CustomerReservationController.java` | 생성/취소/조회/결제확인 엔드포인트 | [   ] |
-| 4 | `customer/reservation/application/port/in/CustomerCreateReservationUseCase.java` | Command | [   ] |
-| 5 | `customer/reservation/application/service/CustomerCreateReservationService.java` | 재고 차감, 예약 생성, 동시성 처리, STAY→HOURLY 충돌 방지 | [   ] |
-| 6 | `core/reservation/domain/model/Reservation.java` | 상태 머신, 불변식 | [   ] |
-| 7 | `core/reservation/domain/model/GuestInfo.java` | 투숙객 VO | [   ] |
-| 8 | `core/reservation/domain/enums/ReservationStatus.java` | 상태 정의 | [   ] |
-| 9 | `core/reservation/domain/event/ReservationCreatedEvent.java` | 도메인 이벤트 | [   ] |
-| 10 | `core/reservation/adapter/out/persistence/ReservationMapper.java` | 변환 + restoreTimestamps, 상태 보존 | [   ] |
-| 11 | `core/reservation/adapter/out/persistence/ReservationJpaEntity.java` | 예약 테이블 | [   ] |
-| 12 | `core/reservation/adapter/out/persistence/ReservationJpaAdapter.java` | 저장 구현 | [   ] |
-| 13 | `customer/reservation/adapter/in/web/ReservationResponse.java` | 응답 DTO (memberId, guestPhone 포함) | [   ] |
+| 1 | `customer/reservation/adapter/in/web/CreateStayReservationRequest.java` | `@NotNull`/`@NotBlank` 검증, 멱등성 키(`reservationRequestId`), `toCommand(memberId)` | [ V ] |
+| 2 | `customer/reservation/adapter/in/web/CreateHourlyReservationRequest.java` | `LocalTime` startTime/endTime, `@NotNull` 검증 | [ V ] |
+| 3 | `customer/reservation/adapter/in/web/CustomerReservationController.java` | STAY/HOURLY 분리 엔드포인트, 결제확인/취소/조회, `X-Member-Id` 헤더, `ApiResponse` 래핑 | [ V ] |
+| 4 | `customer/reservation/application/port/in/CustomerCreateReservationUseCase.java` | STAY/HOURLY Command record 분리, `LocalTime`/`LocalDate` 사용 | [ V ] |
+| 5 | `customer/reservation/application/service/CustomerCreateReservationService.java` | 멱등성 검사, STAY↔HOURLY 충돌 사전 확인, 비관적 락 재고 차감, 가격 계산(VAT), Hold 만료 설정(10분), 버퍼 슬롯 차단 | [ V ] |
+| 6 | `core/reservation/domain/model/Reservation.java` | 상태 머신(PENDING→PAYMENT_WAITING→CONFIRMED→COMPLETED/CANCELLED/NO_SHOW), `holdForPayment`/`confirm`/`cancel` 불변식, `reconstruct`, `isHoldExpired` | [ V ] |
+| 7 | `core/reservation/domain/model/GuestInfo.java` | record VO, compact constructor null/blank 검증 | [ V ] |
+| 8 | `core/reservation/domain/enums/ReservationStatus.java` | 6개 상태 정의 | [ V ] |
+| 9 | `core/reservation/domain/event/ReservationCreatedEvent.java` | POJO record, `occurredAt` Instant | [ V ] |
+| 10 | `core/reservation/adapter/out/persistence/ReservationMapper.java` | `toDomain` reconstruct 사용, `toJpaEntity` GuestInfo→필드 매핑, `restoreTimestamps` | [ V ] |
+| 11 | `core/reservation/adapter/out/persistence/ReservationJpaEntity.java` | 필드 주석 완비, `BaseJpaEntity` 상속, `reservationRequestId` unique, `BigDecimal precision=12` | [ V ] |
+| 12 | `core/reservation/adapter/out/persistence/ReservationJpaAdapter.java` | `PersistReservationPort` + `LoadReservationPort` 구현, `saveAndFlush` | [ V ] |
+| 13 | `customer/reservation/adapter/in/web/ReservationResponse.java` | 전체 필드 포함 응답 DTO, `from(Reservation)` 변환 | [ V ] |
+
+## FLOW 8. 피드백
+1. **`ReservationCreatedEvent` 미발행**: `CustomerCreateReservationService`에서 예약 생성 후 `ReservationCreatedEvent`를 발행하지 않음. 이벤트 record는 정의되어 있으나 실제 `ApplicationEventPublisher.publishEvent()` 호출이 없음. 이벤트 기반 아키텍처 설계 의도상 발행 추가 또는 의도적 미발행이면 이벤트 record 삭제 검토.
+ -> 의도적으로 구현만 한거고 상세 로직은 설계정도에서 머물기에 냅둬도됨
+2. **멱등성 처리가 예외 발생 방식**: 동일 `reservationRequestId` 재요청 시 `ifPresent`로 `BusinessException`을 던짐. 멱등성 본래 의미는 "같은 요청에 같은 응답을 반환"이므로, 기존 예약을 그대로 반환하는 게 더 적절할 수 있음. 현재 방식이면 클라이언트가 네트워크 재시도 시 에러를 받게 됨.
+ -> 예약 요청이 두 번 들어가는건 문제가 있음. 확인 바람
+3. **`Reservation.reconstruct()`에서 `reservationNumber` 재생성 후 덮어쓰기**: Builder 생성자에서 `generateReservationNumber()`가 호출되고, `reconstruct`에서 바로 `r.reservationNumber = reservationNumber`로 덮어씀. 불필요한 UUID 생성이 매번 발생. `reconstruct` 전용 private 생성자 분리 검토.
+ -> 진행
 
 ---
 
@@ -212,14 +220,26 @@
 
 | 순서 | 파일 | 확인 포인트 | 완료 |
 |------|------|-------------|------|
-| 1 | `extranet/reservation/adapter/in/web/ExtranetReservationController.java` | 파트너 예약 관리 엔드포인트 | [   ] |
-| 2 | `extranet/reservation/application/port/in/ExtranetConfirmReservationUseCase.java` | 확정 커맨드 | [   ] |
-| 3 | `extranet/reservation/application/service/ExtranetConfirmReservationService.java` | 상태 전이 검증 | [   ] |
-| 4 | `extranet/reservation/application/port/in/ExtranetCancelReservationUseCase.java` | 취소 커맨드 | [   ] |
-| 5 | `extranet/reservation/application/service/ExtranetCancelReservationService.java` | 재고 복원, 상태 전이 | [   ] |
-| 6 | `core/reservation/domain/event/ReservationConfirmedEvent.java` | 확정 이벤트 | [   ] |
-| 7 | `core/reservation/domain/event/ReservationCancelledEvent.java` | 취소 이벤트 | [   ] |
-| 8 | `core/reservation/adapter/scheduler/HoldExpirationScheduler.java` | 홀드 만료 스케줄러 | [   ] |
+| 1 | `extranet/reservation/adapter/in/web/ExtranetReservationController.java` | confirm/cancel/조회 엔드포인트, `CancelReservationRequest` inner record, `X-Partner-Id` 헤더 | [ V ] |
+| 2 | `extranet/reservation/application/port/in/ExtranetConfirmReservationUseCase.java` | 단순 인터페이스, `Reservation` 반환 | [ V ] |
+| 3 | `extranet/reservation/application/service/ExtranetConfirmReservationService.java` | `@Transactional`, `reservation.confirm()` 도메인 상태 전이 | [ V ] |
+| 4 | `extranet/reservation/application/port/in/ExtranetCancelReservationUseCase.java` | `(reservationId, partnerId, reason)` 시그니처 | [ V ] |
+| 5 | `extranet/reservation/application/service/ExtranetCancelReservationService.java` | 소유권 검증, 상태 전이, STAY 재고 복원(비관적 락), 로깅 | [ V ] |
+| 6 | `core/reservation/domain/event/ReservationConfirmedEvent.java` | POJO record, `occurredAt` Instant | [ V ] |
+| 7 | `core/reservation/domain/event/ReservationCancelledEvent.java` | POJO record, `roomOptionId` 포함 (재고 복구용) | [ V ] |
+| 8 | `core/reservation/adapter/scheduler/HoldExpirationScheduler.java` | `@Scheduled(fixedDelay=60000)`, STAY/HOURLY 분기 재고 복구, 비관적 락, 버퍼 슬롯 해제 | [ V ] |
+
+## FLOW 9. 피드백
+1. **`ExtranetConfirmReservationService.confirm()`에 소유권 검증 없음**: 예약 ID만으로 확정 가능. `X-Partner-Id` 헤더가 Controller 시그니처에도 없음(`cancel`에는 있음). 다른 파트너의 예약도 확정할 수 있는 보안 이슈.
+-> 숙소 파트너만 승인가능하도록
+2. **`ExtranetReservationController`에서 `customer` 패키지의 `ReservationResponse` 직접 참조**: `import com.accommodation.platform.customer.reservation.adapter.in.web.ReservationResponse` — 채널 간 직접 참조 금지 규칙 위반. Extranet 전용 Response를 만들거나, 공통 Response를 `core`로 이동 필요.
+-> 이동
+3. **`ExtranetCancelReservationService`의 소유권 검증**: FLOW 6에서 만든 `ExtranetOwnershipVerifier`를 사용하지 않고 직접 `loadAccommodationPort` 호출. 통일 검토.
+-> 재사용 권장
+4. **HOURLY 예약 취소 시 재고 복원 누락**: `ExtranetCancelReservationService.cancel()`에서 STAY만 재고 복원하고 HOURLY는 처리하지 않음. `HoldExpirationScheduler`에는 HOURLY 복원(`restoreHourlyInventory`) 로직이 있으므로, 파트너 수동 취소에서도 동일 로직 필요.
+-> 진행
+5. **`HoldExpirationScheduler.restoreHourlyInventory()`에서 버퍼 시간 하드코딩**: `+ 30L`로 고정. 실제 숙소별 `slotUnitMinutes`가 30/60 등 다를 수 있으므로 `LoadHourlySettingPort`에서 조회하거나, 예약 시 버퍼 범위를 같이 저장하는 것이 정확.
+-> 진행
 
 ---
 

@@ -4,5 +4,5 @@ import com.accommodation.platform.core.reservation.domain.model.Reservation;
 
 public interface ExtranetConfirmReservationUseCase {
 
-    Reservation confirm(Long reservationId);
+    Reservation confirm(Long reservationId, Long partnerId);
 }

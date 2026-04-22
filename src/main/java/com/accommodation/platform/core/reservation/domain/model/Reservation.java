@@ -111,6 +111,10 @@ public class Reservation extends BaseEntity {
                 && Instant.now().isAfter(this.holdExpiredAt);
     }
 
+    /**
+     * DB에서 조회한 데이터로 도메인 객체를 복원하는 팩토리 메서드.
+     * Builder 생성자와 달리 reservationNumber 재생성/상태 초기화를 하지 않음.
+     */
     public static Reservation reconstruct(Long id, String reservationNumber, String reservationRequestId,
                                           Long memberId, Long accommodationId, Long roomOptionId,
                                           ReservationType reservationType,
@@ -119,12 +123,27 @@ public class Reservation extends BaseEntity {
                                           GuestInfo guestInfo, BigDecimal totalPrice,
                                           ReservationStatus status, Instant holdExpiredAt) {
 
-        Reservation r = new Reservation(id, reservationRequestId, memberId, accommodationId, roomOptionId,
-                reservationType, checkInDate, checkOutDate, hourlyStartTime, hourlyUsageMinutes, guestInfo, totalPrice);
+        Reservation r = new Reservation();
+        r.id = id;
         r.reservationNumber = reservationNumber;
+        r.reservationRequestId = reservationRequestId;
+        r.memberId = memberId;
+        r.accommodationId = accommodationId;
+        r.roomOptionId = roomOptionId;
+        r.reservationType = reservationType;
+        r.checkInDate = checkInDate;
+        r.checkOutDate = checkOutDate;
+        r.hourlyStartTime = hourlyStartTime;
+        r.hourlyUsageMinutes = hourlyUsageMinutes;
+        r.guestInfo = guestInfo;
+        r.totalPrice = totalPrice;
         r.status = status;
         r.holdExpiredAt = holdExpiredAt;
         return r;
+    }
+
+    /** reconstruct 전용 — 불필요한 reservationNumber 생성/검증을 건너뛴다 */
+    private Reservation() {
     }
 
     private String generateReservationNumber() {

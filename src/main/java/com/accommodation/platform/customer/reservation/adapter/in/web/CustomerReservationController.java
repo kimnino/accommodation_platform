@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.accommodation.platform.common.response.ApiResponse;
+import com.accommodation.platform.common.response.ReservationResponse;
 import com.accommodation.platform.core.reservation.domain.model.Reservation;
 import com.accommodation.platform.customer.reservation.application.port.in.CustomerCancelReservationUseCase;
 import com.accommodation.platform.customer.reservation.application.port.in.CustomerConfirmPaymentUseCase;
