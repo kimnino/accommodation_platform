@@ -31,4 +31,16 @@ public interface LoadInventoryPort {
      * 버퍼 슬롯 조회 (청소 시간 차단용) — 단일 슬롯.
      */
     Optional<TimeSlotInventory> findTimeSlot(Long roomOptionId, LocalDate date, LocalTime slotTime);
+
+    /**
+     * 특정 날짜의 AVAILABLE 슬롯 전체 조회 — 비관적 락.
+     * 숙박 재고 소진 시 대실 슬롯 일괄 차단에 사용.
+     */
+    List<TimeSlotInventory> findAvailableTimeSlotsWithLock(Long roomOptionId, LocalDate date);
+
+    /**
+     * 특정 날짜의 모든 시간 슬롯 조회 (락 없음).
+     * STAY↔HOURLY 충돌 사전 확인용.
+     */
+    List<TimeSlotInventory> findTimeSlotsByDate(Long roomOptionId, LocalDate date);
 }

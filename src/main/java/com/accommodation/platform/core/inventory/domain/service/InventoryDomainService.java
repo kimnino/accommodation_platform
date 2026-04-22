@@ -4,15 +4,10 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
-import org.springframework.stereotype.Service;
-
 import com.accommodation.platform.core.inventory.domain.model.Inventory;
 import com.accommodation.platform.core.inventory.domain.model.TimeSlotInventory;
 
-@Service
 public class InventoryDomainService {
-
-    private static final int SLOT_UNIT_MINUTES = 30;
 
     /**
      * 연박 가용성 판단.
@@ -69,7 +64,8 @@ public class InventoryDomainService {
      * @return 이용 가능 시간(분). 0이면 예약 불가.
      */
     public int calculateAvailableMinutes(List<TimeSlotInventory> daySlots,
-                                          LocalTime startTime, LocalTime operatingEndTime) {
+                                          LocalTime startTime, LocalTime operatingEndTime,
+                                          int slotUnitMinutes) {
 
         int availableMinutes = 0;
         LocalTime current = startTime;
@@ -83,8 +79,8 @@ public class InventoryDomainService {
             if (!slotAvailable) {
                 break;
             }
-            availableMinutes += SLOT_UNIT_MINUTES;
-            current = current.plusMinutes(SLOT_UNIT_MINUTES);
+            availableMinutes += slotUnitMinutes;
+            current = current.plusMinutes(slotUnitMinutes);
         }
 
         return availableMinutes;
@@ -100,9 +96,9 @@ public class InventoryDomainService {
      */
     public int getBookableMinutes(List<TimeSlotInventory> daySlots,
                                    LocalTime startTime, int usageDurationMinutes,
-                                   LocalTime operatingEndTime) {
+                                   LocalTime operatingEndTime, int slotUnitMinutes) {
 
-        int availableMinutes = calculateAvailableMinutes(daySlots, startTime, operatingEndTime);
+        int availableMinutes = calculateAvailableMinutes(daySlots, startTime, operatingEndTime, slotUnitMinutes);
 
         if (availableMinutes >= usageDurationMinutes) {
             return usageDurationMinutes;

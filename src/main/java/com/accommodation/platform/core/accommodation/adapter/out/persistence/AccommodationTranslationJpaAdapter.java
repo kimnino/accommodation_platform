@@ -1,6 +1,7 @@
 package com.accommodation.platform.core.accommodation.adapter.out.persistence;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
@@ -31,5 +32,17 @@ public class AccommodationTranslationJpaAdapter implements PersistAccommodationT
     public List<AccommodationTranslationJpaEntity> findByAccommodationId(Long accommodationId) {
 
         return jpaRepository.findByAccommodationId(accommodationId);
+    }
+
+    @Override
+    public Optional<AccommodationTranslationJpaEntity> findByAccommodationIdAndLocale(Long accommodationId, String locale) {
+
+        return jpaRepository.findByAccommodationIdAndLocale(accommodationId, locale);
+    }
+
+    @Override
+    public List<AccommodationTranslationJpaEntity> findByAccommodationIdInAndLocale(List<Long> accommodationIds, String locale) {
+
+        return jpaRepository.findByAccommodationIdInAndLocale(accommodationIds, locale);
     }
 }

@@ -10,7 +10,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 /**
- * 30분 단위 타임 블록.
+ * 30분, 60분 단위 타임 블록.
  * slotTime = 11:30이면 11:30~12:00 구간을 의미.
  * 대실 예약 시 연속 블록을 점유(OCCUPIED) + 버퍼 블록을 차단(BLOCKED).
  */

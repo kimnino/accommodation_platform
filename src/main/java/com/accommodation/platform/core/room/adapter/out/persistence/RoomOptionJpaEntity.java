@@ -1,6 +1,7 @@
 package com.accommodation.platform.core.room.adapter.out.persistence;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -60,13 +61,43 @@ public class RoomOptionJpaEntity extends BaseJpaEntity {
     @Column(precision = 12, scale = 2)
     private BigDecimal additionalPrice;
 
+    /**
+     * 대실 시작 시간 (nullable)
+     */
+    @Column(name = "hourly_start_time")
+    private LocalTime hourlyStartTime;
+
+    /**
+     * 대실 종료 시간 (nullable)
+     */
+    @Column(name = "hourly_end_time")
+    private LocalTime hourlyEndTime;
+
+    /**
+     * 옵션별 체크인 시간 — null이면 숙소 기본값 사용 (레이트 체크인 등)
+     */
+    @Column(name = "check_in_time")
+    private LocalTime checkInTime;
+
+    /**
+     * 옵션별 체크아웃 시간 — null이면 숙소 기본값 사용 (레이트 체크아웃 등)
+     */
+    @Column(name = "check_out_time")
+    private LocalTime checkOutTime;
+
     public RoomOptionJpaEntity(Long id, Long roomId, String name,
-                               CancellationPolicy cancellationPolicy, BigDecimal additionalPrice) {
+                               CancellationPolicy cancellationPolicy, BigDecimal additionalPrice,
+                               LocalTime hourlyStartTime, LocalTime hourlyEndTime,
+                               LocalTime checkInTime, LocalTime checkOutTime) {
 
         this.id = id;
         this.roomId = roomId;
         this.name = name;
         this.cancellationPolicy = cancellationPolicy;
         this.additionalPrice = additionalPrice;
+        this.hourlyStartTime = hourlyStartTime;
+        this.hourlyEndTime = hourlyEndTime;
+        this.checkInTime = checkInTime;
+        this.checkOutTime = checkOutTime;
     }
 }

@@ -90,6 +90,24 @@ public class InventoryJpaAdapter implements PersistInventoryPort, LoadInventoryP
     }
 
     @Override
+    public List<TimeSlotInventory> findAvailableTimeSlotsWithLock(Long roomOptionId, LocalDate date) {
+
+        return timeSlotJpaRepository.findAvailableWithLock(roomOptionId, date)
+                .stream()
+                .map(mapper::toTimeSlotDomain)
+                .toList();
+    }
+
+    @Override
+    public List<TimeSlotInventory> findTimeSlotsByDate(Long roomOptionId, LocalDate date) {
+
+        return timeSlotJpaRepository.findByRoomOptionIdAndDateOrderBySlotTimeAsc(roomOptionId, date)
+                .stream()
+                .map(mapper::toTimeSlotDomain)
+                .toList();
+    }
+
+    @Override
     public List<TimeSlotInventory> saveAllTimeSlots(List<TimeSlotInventory> timeSlots) {
 
         List<TimeSlotInventoryJpaEntity> entities = timeSlots.stream()

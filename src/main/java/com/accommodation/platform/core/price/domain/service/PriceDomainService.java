@@ -4,11 +4,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
-import org.springframework.stereotype.Service;
-
 import com.accommodation.platform.core.price.domain.model.RoomPrice;
 
-@Service
 public class PriceDomainService {
 
     private static final BigDecimal KOREA_VAT_RATE = new BigDecimal("0.10");

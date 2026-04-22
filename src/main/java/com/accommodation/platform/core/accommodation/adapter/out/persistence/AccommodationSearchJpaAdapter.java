@@ -1,6 +1,7 @@
 package com.accommodation.platform.core.accommodation.adapter.out.persistence;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,41 @@ import lombok.RequiredArgsConstructor;
 public class AccommodationSearchJpaAdapter implements SearchAccommodationPort {
 
     private final JPAQueryFactory queryFactory;
+    private final AccommodationRegionJpaRepository regionRepository;
+
+    @Override
+    public Page<Long> searchIds(SearchCriteria criteria, Pageable pageable) {
+
+        QAccommodationJpaEntity a = QAccommodationJpaEntity.accommodationJpaEntity;
+        BooleanBuilder where = buildWhereClause(a, criteria);
+
+        List<Long> ids = queryFactory
+                .select(a.id)
+                .from(a)
+                .where(where)
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .orderBy(a.id.desc())
+                .fetch();
+
+        if (ids.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+        }
+
+        Long total = queryFactory
+                .select(a.count())
+                .from(a)
+                .where(where)
+                .fetchOne();
+
+        return new PageImpl<>(ids, pageable, total != null ? total : 0);
+    }
+
+    @Override
+    public Map<Long, Long> loadLowestPrices(List<Long> accommodationIds, SearchCriteria criteria) {
+
+        return fetchLowestPrices(accommodationIds, criteria);
+    }
 
     @Override
     public Page<AccommodationSummary> search(SearchCriteria criteria, Pageable pageable) {
@@ -70,9 +106,13 @@ public class AccommodationSearchJpaAdapter implements SearchAccommodationPort {
                         acc.getId(),
                         acc.getName(),
                         acc.getType().name(),
+                        acc.getStatus().name(),
                         acc.getFullAddress(),
                         acc.getLatitude(),
                         acc.getLongitude(),
+                        acc.getLocationDescription(),
+                        acc.getCheckInTime() != null ? acc.getCheckInTime().toString() : null,
+                        acc.getCheckOutTime() != null ? acc.getCheckOutTime().toString() : null,
                         primaryImages.get(acc.getId()),
                         lowestPrices.get(acc.getId()),
                         lowestPrices.containsKey(acc.getId())))
@@ -97,8 +137,9 @@ public class AccommodationSearchJpaAdapter implements SearchAccommodationPort {
         BooleanBuilder where = new BooleanBuilder();
         where.and(a.status.eq(AccommodationStatus.ACTIVE));
 
-        if (criteria.region() != null && !criteria.region().isBlank()) {
-            where.and(a.fullAddress.contains(criteria.region()));
+        if (criteria.regionId() != null) {
+            List<Long> subtreeIds = resolveRegionSubtreeIds(criteria.regionId());
+            where.and(a.regionId.in(subtreeIds));
         }
         if (criteria.accommodationType() != null && !criteria.accommodationType().isBlank()) {
             where.and(a.type.eq(AccommodationType.valueOf(criteria.accommodationType())));
@@ -143,6 +184,24 @@ public class AccommodationSearchJpaAdapter implements SearchAccommodationPort {
         }
 
         return where;
+    }
+
+    /**
+     * 선택한 지역 + 모든 하위 지역 ID를 재귀적으로 수집.
+     * 지역 데이터는 소량이므로 전체 로드 후 in-memory 탐색.
+     */
+    private List<Long> resolveRegionSubtreeIds(Long rootRegionId) {
+        List<AccommodationRegionJpaEntity> all = regionRepository.findAll();
+        List<Long> result = new ArrayList<>();
+        collectSubtreeIds(rootRegionId, all, result);
+        return result;
+    }
+
+    private void collectSubtreeIds(Long parentId, List<AccommodationRegionJpaEntity> all, List<Long> result) {
+        result.add(parentId);
+        all.stream()
+                .filter(r -> parentId.equals(r.getParentId()))
+                .forEach(r -> collectSubtreeIds(r.getId(), all, result));
     }
 
     /**

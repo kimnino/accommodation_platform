@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 import com.accommodation.platform.core.accommodation.application.port.out.LoadAccommodationPort;
 import com.accommodation.platform.core.accommodation.application.port.out.PersistAccommodationPort;
+import com.accommodation.platform.core.accommodation.domain.enums.AccommodationStatus;
 import com.accommodation.platform.core.accommodation.domain.model.Accommodation;
 
 @Repository
@@ -51,6 +52,14 @@ public class AccommodationJpaAdapter implements PersistAccommodationPort, LoadAc
     public List<Accommodation> findAll() {
 
         return jpaRepository.findAll().stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Accommodation> findByStatus(AccommodationStatus status) {
+
+        return jpaRepository.findByStatus(status).stream()
                 .map(mapper::toDomain)
                 .toList();
     }

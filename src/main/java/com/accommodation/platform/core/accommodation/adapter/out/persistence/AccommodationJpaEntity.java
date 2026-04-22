@@ -58,6 +58,11 @@ public class AccommodationJpaEntity extends BaseJpaEntity {
     private AccommodationType type;
 
     /**
+     * 검색/필터용 지역 ID (accommodation_region.id 참조). 유형별로 다른 지역 분류를 사용
+     */
+    private Long regionId;
+
+    /**
      * 풀주소 (도로명/지번 등) — 다국어 대상
      */
     @Column(nullable = false)
@@ -102,7 +107,7 @@ public class AccommodationJpaEntity extends BaseJpaEntity {
     private final List<AccommodationImageJpaEntity> images = new ArrayList<>();
 
     public AccommodationJpaEntity(Long id, Long partnerId, String name, AccommodationType type,
-                                  String fullAddress, double latitude, double longitude,
+                                  Long regionId, String fullAddress, double latitude, double longitude,
                                   String locationDescription, AccommodationStatus status,
                                   LocalTime checkInTime, LocalTime checkOutTime) {
 
@@ -110,6 +115,7 @@ public class AccommodationJpaEntity extends BaseJpaEntity {
         this.partnerId = partnerId;
         this.name = name;
         this.type = type;
+        this.regionId = regionId;
         this.fullAddress = fullAddress;
         this.latitude = latitude;
         this.longitude = longitude;
