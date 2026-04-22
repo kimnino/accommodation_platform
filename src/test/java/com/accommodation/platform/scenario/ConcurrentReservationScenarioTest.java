@@ -1,4 +1,4 @@
-package com.accommodation.platform.customer.reservation.application.service;
+package com.accommodation.platform.scenario;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -35,7 +35,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ConcurrencyReservationTest extends IntegrationTestBase {
+/**
+ * 시나리오 테스트: 동시 예약 시 하나만 성공 (Pessimistic Lock 검증)
+ * remaining_quantity=1 재고에 10개 스레드가 동시 예약 → 정확히 1개만 성공
+ */
+class ConcurrentReservationScenarioTest extends IntegrationTestBase {
 
     @Autowired
     private CustomerCreateReservationUseCase createUseCase;
@@ -58,14 +62,15 @@ class ConcurrencyReservationTest extends IntegrationTestBase {
     @Autowired
     private ReservationJpaRepository reservationJpaRepository;
 
+    private static final LocalDate CHECK_IN_DATE = LocalDate.of(2026, 6, 1);
+    private static final LocalDate CHECK_OUT_DATE = LocalDate.of(2026, 6, 2);
+
     private Long accommodationId;
     private Long roomOptionId;
 
-    private static final LocalDate CHECK_IN_DATE = LocalDate.of(2026, 5, 1);
-    private static final LocalDate CHECK_OUT_DATE = LocalDate.of(2026, 5, 2);
-
     @BeforeEach
     void setUp() {
+        // 데이터 초기화
         reservationJpaRepository.deleteAll();
         inventoryJpaRepository.deleteAll();
         roomPriceJpaRepository.deleteAll();
@@ -73,21 +78,24 @@ class ConcurrencyReservationTest extends IntegrationTestBase {
         roomJpaRepository.deleteAll();
         accommodationJpaRepository.deleteAll();
 
+        // given: 숙소 저장
         AccommodationJpaEntity accommodation = accommodationJpaRepository.save(
                 new AccommodationJpaEntity(
                         null, 1L, "동시성 테스트 호텔", AccommodationType.HOTEL,
-                        null, "서울시 강남구 테헤란로 100",
-                        37.5, 127.0, "강남역 1번 출구",
+                        null, "서울시 서초구 서초대로 100",
+                        37.4923, 127.0292, "서초역 1번 출구",
                         AccommodationStatus.ACTIVE,
                         LocalTime.of(15, 0), LocalTime.of(11, 0)
                 )
         );
         accommodationId = accommodation.getId();
 
+        // given: 객실 저장
         RoomJpaEntity room = roomJpaRepository.save(
-                new RoomJpaEntity(null, accommodationId, "스탠다드", "스탠다드", 2, 4, RoomStatus.ACTIVE)
+                new RoomJpaEntity(null, accommodationId, "트윈 룸", "트윈", 2, 4, RoomStatus.ACTIVE)
         );
 
+        // given: 객실 옵션 저장
         RoomOptionJpaEntity roomOption = roomOptionJpaRepository.save(
                 new RoomOptionJpaEntity(
                         null, room.getId(), "기본",
@@ -98,10 +106,12 @@ class ConcurrencyReservationTest extends IntegrationTestBase {
         );
         roomOptionId = roomOption.getId();
 
-        int totalInventory = 3;
-        inventoryJpaRepository.save(new InventoryJpaEntity(
-                null, roomOptionId, CHECK_IN_DATE, totalInventory, totalInventory, InventoryStatus.AVAILABLE));
+        // given: 재고 remaining_quantity=1 (임계 자원)
+        inventoryJpaRepository.save(
+                new InventoryJpaEntity(null, roomOptionId, CHECK_IN_DATE, 1, 1, InventoryStatus.AVAILABLE)
+        );
 
+        // given: STAY 가격 저장
         roomPriceJpaRepository.save(
                 new RoomPriceJpaEntity(
                         null, roomOptionId, CHECK_IN_DATE,
@@ -112,40 +122,42 @@ class ConcurrencyReservationTest extends IntegrationTestBase {
     }
 
     @Test
-    void 동시_예약_요청_시_재고_수만큼만_성공해야_한다() throws InterruptedException {
+    void 동시_예약_요청_시_하나만_성공해야_한다() throws InterruptedException {
 
         // given
-        int totalInventory = 3;
-        int concurrentRequests = 10;
+        int concurrentThreads = 10;
+        CountDownLatch readyLatch = new CountDownLatch(concurrentThreads);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch doneLatch = new CountDownLatch(concurrentThreads);
+
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failCount = new AtomicInteger(0);
+
+        ExecutorService executor = Executors.newFixedThreadPool(concurrentThreads);
 
         final Long capturedAccommodationId = accommodationId;
         final Long capturedRoomOptionId = roomOptionId;
 
-        ExecutorService executor = Executors.newFixedThreadPool(concurrentRequests);
-        CountDownLatch readyLatch = new CountDownLatch(concurrentRequests);
-        CountDownLatch startLatch = new CountDownLatch(1);
-        CountDownLatch doneLatch = new CountDownLatch(concurrentRequests);
-        AtomicInteger successCount = new AtomicInteger(0);
-        AtomicInteger failCount = new AtomicInteger(0);
-
-        // when
-        for (int i = 0; i < concurrentRequests; i++) {
+        // when: 10개 스레드가 동시에 예약 요청
+        for (int i = 0; i < concurrentThreads; i++) {
             int index = i;
             executor.submit(() -> {
                 try {
+                    // 모든 스레드가 준비될 때까지 대기 후 동시에 출발
                     readyLatch.countDown();
                     startLatch.await();
 
                     CreateStayReservationCommand command = new CreateStayReservationCommand(
-                            "req-" + index,
-                            (long) index + 1,
+                            "concurrent-req-" + index,
+                            (long) (index + 100),
                             capturedAccommodationId,
                             capturedRoomOptionId,
                             CHECK_IN_DATE,
                             CHECK_OUT_DATE,
-                            "투숙객" + index,
-                            "010-0000-000" + index,
-                            "guest" + index + "@test.com");
+                            "동시투숙객" + index,
+                            "010-0000-" + String.format("%04d", index),
+                            "concurrent" + index + "@example.com"
+                    );
 
                     createUseCase.createStayReservation(command);
                     successCount.incrementAndGet();
@@ -157,17 +169,19 @@ class ConcurrencyReservationTest extends IntegrationTestBase {
             });
         }
 
+        // 모든 스레드 준비 완료 후 동시 시작
         readyLatch.await();
         startLatch.countDown();
         doneLatch.await();
         executor.shutdown();
 
-        // then
-        assertThat(successCount.get()).isEqualTo(totalInventory);
-        assertThat(failCount.get()).isEqualTo(concurrentRequests - totalInventory);
+        // then: 재고가 1개이므로 성공은 정확히 1개
+        assertThat(successCount.get()).isEqualTo(1);
+        assertThat(failCount.get()).isEqualTo(concurrentThreads - 1);
 
+        // then: DB remaining_quantity=0 확인
         InventoryJpaEntity inventory = inventoryJpaRepository
-                .findByRoomOptionIdAndDateBetweenOrderByDateAsc(capturedRoomOptionId, CHECK_IN_DATE, CHECK_IN_DATE)
+                .findByRoomOptionIdAndDateBetweenOrderByDateAsc(roomOptionId, CHECK_IN_DATE, CHECK_IN_DATE)
                 .getFirst();
         assertThat(inventory.getRemainingQuantity()).isZero();
     }

@@ -137,6 +137,7 @@ class ExtranetAccommodationControllerTest {
                                 fieldWithPath("data.name").description("숙소명"),
                                 fieldWithPath("data.type").description("숙소 유형"),
                                 fieldWithPath("data.status").description("숙소 상태"),
+                                fieldWithPath("data.region_id").description("지역 ID").optional(),
                                 fieldWithPath("data.full_address").description("풀주소"),
                                 fieldWithPath("data.latitude").description("위도"),
                                 fieldWithPath("data.longitude").description("경도"),
