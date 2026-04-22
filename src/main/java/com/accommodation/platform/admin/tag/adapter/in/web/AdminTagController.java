@@ -17,9 +17,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 
+import com.accommodation.platform.admin.tag.application.port.in.AdminGetTagGroupQuery;
+import com.accommodation.platform.admin.tag.application.port.in.AdminGetTagQuery;
 import com.accommodation.platform.admin.tag.application.port.in.AdminManageTagGroupUseCase;
 import com.accommodation.platform.admin.tag.application.port.in.AdminManageTagUseCase;
 import com.accommodation.platform.common.response.ApiResponse;
+import com.accommodation.platform.common.response.TagGroupResponse;
+import com.accommodation.platform.common.response.TagResponse;
 import com.accommodation.platform.core.tag.domain.model.Tag;
 import com.accommodation.platform.core.tag.domain.model.TagGroup;
 
@@ -29,7 +33,9 @@ import com.accommodation.platform.core.tag.domain.model.TagGroup;
 public class AdminTagController {
 
     private final AdminManageTagGroupUseCase tagGroupUseCase;
+    private final AdminGetTagGroupQuery tagGroupQuery;
     private final AdminManageTagUseCase tagUseCase;
+    private final AdminGetTagQuery tagQuery;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -66,7 +72,7 @@ public class AdminTagController {
     @GetMapping
     public ApiResponse<List<TagGroupResponse>> listTagGroups() {
 
-        List<TagGroupResponse> responses = tagGroupUseCase.listAll().stream()
+        List<TagGroupResponse> responses = tagGroupQuery.listAll().stream()
                 .map(TagGroupResponse::from)
                 .toList();
         return ApiResponse.success(responses);
@@ -113,7 +119,7 @@ public class AdminTagController {
     @GetMapping("/{tagGroupId}/tags")
     public ApiResponse<List<TagResponse>> listTags(@PathVariable Long tagGroupId) {
 
-        List<TagResponse> responses = tagUseCase.listByTagGroupId(tagGroupId).stream()
+        List<TagResponse> responses = tagQuery.listByTagGroupId(tagGroupId).stream()
                 .map(TagResponse::from)
                 .toList();
         return ApiResponse.success(responses);

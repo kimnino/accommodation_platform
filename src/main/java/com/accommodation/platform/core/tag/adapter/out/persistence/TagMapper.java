@@ -13,29 +13,17 @@ import com.accommodation.platform.core.tag.domain.model.TagGroup;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.ERROR)
 interface TagMapper {
 
+    @Mapping(source = "active", target = "isActive")
     TagGroup toTagGroupDomain(TagGroupJpaEntity entity);
 
     @Mapping(source = "active", target = "isActive")
     TagGroupJpaEntity toJpaEntity(TagGroup domain);
 
+    @Mapping(source = "active", target = "isActive")
     Tag toTagDomain(TagJpaEntity entity);
 
     @Mapping(source = "active", target = "isActive")
     TagJpaEntity toJpaEntity(Tag domain);
-
-    @AfterMapping
-    default void restoreTagGroupActive(@MappingTarget TagGroup tagGroup, TagGroupJpaEntity entity) {
-        if (!entity.isActive()) {
-            tagGroup.deactivate();
-        }
-    }
-
-    @AfterMapping
-    default void restoreTagActive(@MappingTarget Tag tag, TagJpaEntity entity) {
-        if (!entity.isActive()) {
-            tag.deactivate();
-        }
-    }
 
     @AfterMapping
     default void restoreTagGroupJpaTimestamps(@MappingTarget TagGroupJpaEntity entity, TagGroup domain) {

@@ -249,21 +249,27 @@
 
 | 순서 | 파일 | 확인 포인트 | 완료 |
 |------|------|-------------|------|
-| 1 | `admin/tag/adapter/in/web/AdminTagController.java` | 그룹/태그 CRUD + activate 엔드포인트 | [   ] |
-| 2 | `admin/tag/adapter/in/web/CreateTagGroupRequest.java` | 필드 검증 | [   ] |
-| 3 | `admin/tag/adapter/in/web/UpdateTagGroupRequest.java` | Integer displayOrder (nullable) | [   ] |
-| 4 | `admin/tag/application/port/in/AdminManageTagGroupUseCase.java` | Command + activate | [   ] |
-| 5 | `admin/tag/application/service/AdminManageTagGroupService.java` | 그룹 CRUD 로직 | [   ] |
-| 6 | `core/tag/domain/model/TagGroup.java` | updateInfo null-guard, activate/deactivate | [   ] |
-| 7 | `core/tag/domain/model/Tag.java` | updateInfo null-guard, activate/deactivate | [   ] |
-| 8 | `admin/tag/application/port/in/AdminManageTagUseCase.java` | Command + activate | [   ] |
-| 9 | `admin/tag/application/service/AdminManageTagService.java` | findAllByTagGroupId (비활성 포함) | [   ] |
-| 10 | `core/tag/application/port/out/LoadTagPort.java` | findByTagGroupId / findAllByTagGroupId | [   ] |
-| 11 | `core/tag/application/port/out/LoadTagGroupPort.java` | findById / findAll | [   ] |
-| 12 | `core/tag/adapter/out/persistence/TagJpaAdapter.java` | 두 조회 메서드 구현 | [   ] |
-| 13 | `core/tag/adapter/out/persistence/TagJpaRepository.java` | active 필터 유무 메서드 | [   ] |
-| 14 | `core/tag/adapter/out/persistence/TagGroupJpaEntity.java` | 태그 그룹 테이블 | [   ] |
-| 15 | `core/tag/adapter/out/persistence/TagJpaEntity.java` | 태그 테이블 | [   ] |
+| 1 | `admin/tag/adapter/in/web/AdminTagController.java` | 그룹/태그 CRUD + activate/deactivate, `@Valid`, `ApiResponse` | [ V ] |
+| 2 | `admin/tag/adapter/in/web/CreateTagGroupRequest.java` | `@NotBlank` 검증, `toCommand()` | [ V ] |
+| 3 | `admin/tag/adapter/in/web/UpdateTagGroupRequest.java` | nullable 필드(부분 수정), `toCommand()` | [ V ] |
+| 4 | `admin/tag/application/port/in/AdminManageTagGroupUseCase.java` | CRUD + activate/deactivate + listAll, Command record | [ V ] |
+| 5 | `admin/tag/application/service/AdminManageTagGroupService.java` | `@Transactional`, 그룹 CRUD, `readOnly` 조회 | [ V ] |
+| 6 | `core/tag/domain/model/TagGroup.java` | `updateInfo` null-guard, `activate`/`deactivate`, 불변식 | [ V ] |
+| 7 | `core/tag/domain/model/Tag.java` | `updateInfo` null-guard, `activate`/`deactivate`, 불변식 | [ V ] |
+| 8 | `admin/tag/application/port/in/AdminManageTagUseCase.java` | CRUD + activate + listByTagGroupId, Command record | [ V ] |
+| 9 | `admin/tag/application/service/AdminManageTagService.java` | 그룹 존재 확인 후 태그 생성, `findAllByTagGroupId` (비활성 포함) | [ V ] |
+| 10 | `core/tag/application/port/out/LoadTagPort.java` | `findByTagGroupId`(활성만) / `findAllByTagGroupId`(전체) / `findTagById` | [ V ] |
+| 11 | `core/tag/application/port/out/LoadTagGroupPort.java` | `findById`, `findAll`, `findByTargetTypeAndAccommodationType` | [ V ] |
+| 12 | `core/tag/adapter/out/persistence/TagJpaAdapter.java` | 4개 포트 구현(TagGroup+Tag persist+load), MapStruct 변환 | [ V ] |
+| 13 | `core/tag/adapter/out/persistence/TagJpaRepository.java` | active 필터/전체 조회 메서드 | [ V ] |
+| 14 | `core/tag/adapter/out/persistence/TagGroupJpaEntity.java` | 필드 주석 완비, Enum 매핑 | [ V ] |
+| 15 | `core/tag/adapter/out/persistence/TagJpaEntity.java` | 필드 주석, `tagGroupId` ID 참조 | [ V ] |
+
+## FLOW 10. 피드백
+1. **`CreateTagGroupRequest.targetType`이 String**: `TagTarget.valueOf()` 변환 시 잘못된 값이면 500. Enum으로 직접 받거나 검증 추가 필요. `accommodationType`도 동일.
+2. **`AdminManageTagGroupUseCase`에 `listAll()` 조회 메서드 혼재**: 네이밍 컨벤션상 조회는 `Query` 인터페이스로 분리해야 함 (`AdminGetTagGroupQuery`). `AdminManageTagUseCase.listByTagGroupId`도 동일.
+3. **`Tag`/`TagGroup` 생성자에서 `isActive`가 항상 true 고정**: DB에서 `isActive=false`로 조회 시 MapStruct `@AfterMapping`으로 `deactivate()` 호출하는 우회 방법 사용 중. Builder에 `isActive` 파라미터 추가하면 해결.
+4. **`AdminTagController`에서 `tagGroupId` 미검증**: `updateTag`, `deactivateTag`, `activateTag`에서 path의 `tagGroupId`를 받지만 실제 태그의 그룹 소속 여부를 확인하지 않음. 잘못된 URL로도 동작.
 
 ---
 
@@ -273,13 +279,20 @@
 
 | 순서 | 파일 | 확인 포인트 | 완료 |
 |------|------|-------------|------|
-| 1 | `extranet/tag/adapter/in/web/ExtranetTagController.java` | 조회 + 등록/삭제 엔드포인트 | [   ] |
-| 2 | `extranet/tag/application/port/in/ExtranetGetAvailableTagQuery.java` | 숙소 유형별 태그 조회 | [   ] |
-| 3 | `extranet/tag/application/service/ExtranetGetAvailableTagService.java` | 활성 태그만 필터 | [   ] |
-| 4 | `extranet/tag/application/port/in/ExtranetManageAccommodationTagUseCase.java` | 태그 연결/해제 | [   ] |
-| 5 | `extranet/tag/application/service/ExtranetManageAccommodationTagService.java` | 태그 연결 로직 | [   ] |
-| 6 | `core/tag/adapter/out/persistence/AccommodationTagJpaEntity.java` | 숙소-태그 연결 테이블 | [   ] |
-| 7 | `core/tag/adapter/out/persistence/AccommodationTagJpaRepository.java` | 연결 쿼리 | [   ] |
+| 1 | `extranet/tag/adapter/in/web/ExtranetTagController.java` | 태그 그룹 조회, 태그 조회, 태그 등록/삭제, `X-Partner-Id` | [ V ] |
+| 2 | `extranet/tag/application/port/in/ExtranetGetAvailableTagQuery.java` | 숙소 유형별 태그 그룹 + 그룹별 태그 조회 | [ V ] |
+| 3 | `extranet/tag/application/service/ExtranetGetAvailableTagService.java` | 소유권 검증 후 `accommodationType` 기반 필터 | [ V ] |
+| 4 | `extranet/tag/application/port/in/ExtranetManageAccommodationTagUseCase.java` | `addTags`/`removeTags`/`getTagIds` | [ V ] |
+| 5 | `extranet/tag/application/service/ExtranetManageAccommodationTagService.java` | 태그 연결/해제, 중복 방지 | [ V ] |
+| 6 | `core/tag/adapter/out/persistence/AccommodationTagJpaEntity.java` | 숙소-태그 매핑 테이블 | [ V ] |
+| 7 | `core/tag/adapter/out/persistence/AccommodationTagJpaRepository.java` | 조회/삭제 쿼리 | [ V ] |
+
+## FLOW 11. 피드백
+1. **채널 간 직접 참조 위반**: `ExtranetTagController`에서 `admin` 패키지의 `TagGroupResponse`, `TagResponse`를 import. FLOW 9의 `ReservationResponse`와 같은 패턴 — 공통 위치(`common`)로 이동하거나 Extranet 전용 DTO 생성 필요.
+2. **`ExtranetManageAccommodationTagService` 아키텍처 위반**: Application 서비스에서 `AccommodationTagJpaRepository`와 `AccommodationTagJpaEntity`(adapter 레이어)를 직접 참조. Port를 통해 접근해야 함 (`PersistAccommodationTagPort`/`LoadAccommodationTagPort` 생성 필요).
+3. **`ExtranetManageAccommodationTagService`의 소유권 검증**: `ExtranetOwnershipVerifier`를 사용하지 않고 직접 검증. 통일 필요.
+4. **`AccommodationTagJpaEntity`/`RoomTagJpaEntity`에 `BaseJpaEntity` 미상속**: `created_at`/`updated_at` 컬럼 누락. 전체 테이블에 공통 컬럼 필수 규칙 위반.
+5. **`ExtranetTagController.getTagsByGroup()`에서 소유권 미검증**: `accommodationId`와 `partnerId`를 받지만 사용하지 않음. 아무 파트너나 모든 태그 그룹의 태그를 조회 가능.
 
 ---
 

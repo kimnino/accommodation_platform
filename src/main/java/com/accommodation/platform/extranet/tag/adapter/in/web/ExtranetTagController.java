@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 
-import com.accommodation.platform.admin.tag.adapter.in.web.TagGroupResponse;
-import com.accommodation.platform.admin.tag.adapter.in.web.TagResponse;
+import com.accommodation.platform.common.response.TagGroupResponse;
+import com.accommodation.platform.common.response.TagResponse;
 import com.accommodation.platform.common.response.ApiResponse;
 import com.accommodation.platform.extranet.tag.application.port.in.ExtranetGetAvailableTagQuery;
 import com.accommodation.platform.extranet.tag.application.port.in.ExtranetManageAccommodationTagUseCase;

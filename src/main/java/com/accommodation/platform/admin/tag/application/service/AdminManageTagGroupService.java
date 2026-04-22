@@ -7,19 +7,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
+import com.accommodation.platform.admin.tag.application.port.in.AdminGetTagGroupQuery;
 import com.accommodation.platform.admin.tag.application.port.in.AdminManageTagGroupUseCase;
 import com.accommodation.platform.common.exception.BusinessException;
 import com.accommodation.platform.common.exception.ErrorCode;
-import com.accommodation.platform.core.accommodation.domain.enums.AccommodationType;
 import com.accommodation.platform.core.tag.application.port.out.LoadTagGroupPort;
 import com.accommodation.platform.core.tag.application.port.out.PersistTagGroupPort;
-import com.accommodation.platform.core.tag.domain.enums.TagTarget;
 import com.accommodation.platform.core.tag.domain.model.TagGroup;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class AdminManageTagGroupService implements AdminManageTagGroupUseCase {
+public class AdminManageTagGroupService implements AdminManageTagGroupUseCase, AdminGetTagGroupQuery {
 
     private final PersistTagGroupPort persistTagGroupPort;
     private final LoadTagGroupPort loadTagGroupPort;
@@ -27,15 +26,11 @@ public class AdminManageTagGroupService implements AdminManageTagGroupUseCase {
     @Override
     public TagGroup create(CreateTagGroupCommand command) {
 
-        AccommodationType accommodationType = command.accommodationType() != null
-                ? AccommodationType.valueOf(command.accommodationType())
-                : null;
-
         TagGroup tagGroup = TagGroup.builder()
                 .name(command.name())
                 .displayOrder(command.displayOrder())
-                .targetType(TagTarget.valueOf(command.targetType()))
-                .accommodationType(accommodationType)
+                .targetType(command.targetType())
+                .accommodationType(command.accommodationType())
                 .supplierId(command.supplierId())
                 .build();
 
@@ -45,23 +40,15 @@ public class AdminManageTagGroupService implements AdminManageTagGroupUseCase {
     @Override
     public TagGroup update(Long tagGroupId, UpdateTagGroupCommand command) {
 
-        TagGroup tagGroup = loadTagGroupPort.findById(tagGroupId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "태그 그룹을 찾을 수 없습니다."));
-
-        AccommodationType accommodationType = command.accommodationType() != null
-                ? AccommodationType.valueOf(command.accommodationType())
-                : null;
-
-        tagGroup.updateInfo(command.name(), command.displayOrder(), accommodationType);
+        TagGroup tagGroup = findTagGroupOrThrow(tagGroupId);
+        tagGroup.updateInfo(command.name(), command.displayOrder(), command.accommodationType());
         return persistTagGroupPort.save(tagGroup);
     }
 
     @Override
     public void deactivate(Long tagGroupId) {
 
-        TagGroup tagGroup = loadTagGroupPort.findById(tagGroupId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "태그 그룹을 찾을 수 없습니다."));
-
+        TagGroup tagGroup = findTagGroupOrThrow(tagGroupId);
         tagGroup.deactivate();
         persistTagGroupPort.save(tagGroup);
     }
@@ -69,9 +56,7 @@ public class AdminManageTagGroupService implements AdminManageTagGroupUseCase {
     @Override
     public void activate(Long tagGroupId) {
 
-        TagGroup tagGroup = loadTagGroupPort.findById(tagGroupId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "태그 그룹을 찾을 수 없습니다."));
-
+        TagGroup tagGroup = findTagGroupOrThrow(tagGroupId);
         tagGroup.activate();
         persistTagGroupPort.save(tagGroup);
     }
@@ -81,5 +66,11 @@ public class AdminManageTagGroupService implements AdminManageTagGroupUseCase {
     public List<TagGroup> listAll() {
 
         return loadTagGroupPort.findAll();
+    }
+
+    private TagGroup findTagGroupOrThrow(Long tagGroupId) {
+
+        return loadTagGroupPort.findById(tagGroupId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "태그 그룹을 찾을 수 없습니다."));
     }
 }

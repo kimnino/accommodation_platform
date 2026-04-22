@@ -2,6 +2,8 @@ package com.accommodation.platform.admin.tag.adapter.in.web;
 
 import java.util.List;
 
+import com.accommodation.platform.admin.tag.application.port.in.AdminGetTagGroupQuery;
+import com.accommodation.platform.admin.tag.application.port.in.AdminGetTagQuery;
 import com.accommodation.platform.admin.tag.application.port.in.AdminManageTagGroupUseCase;
 import com.accommodation.platform.admin.tag.application.port.in.AdminManageTagUseCase;
 import com.accommodation.platform.core.accommodation.domain.enums.AccommodationType;
@@ -47,7 +49,13 @@ class AdminTagControllerTest {
     private AdminManageTagGroupUseCase tagGroupUseCase;
 
     @MockitoBean
+    private AdminGetTagGroupQuery tagGroupQuery;
+
+    @MockitoBean
     private AdminManageTagUseCase tagUseCase;
+
+    @MockitoBean
+    private AdminGetTagQuery tagQuery;
 
     @Test
     void 태그_그룹_생성_API() throws Exception {
@@ -106,7 +114,7 @@ class AdminTagControllerTest {
                 .targetType(TagTarget.ACCOMMODATION)
                 .build();
 
-        given(tagGroupUseCase.listAll()).willReturn(List.of(tagGroup));
+        given(tagGroupQuery.listAll()).willReturn(List.of(tagGroup));
 
         // when & then
         mockMvc.perform(get("/api/v1/admin/tag-groups"))
@@ -165,7 +173,7 @@ class AdminTagControllerTest {
                 .displayOrder(1)
                 .build();
 
-        given(tagUseCase.listByTagGroupId(1L)).willReturn(List.of(tag));
+        given(tagQuery.listByTagGroupId(1L)).willReturn(List.of(tag));
 
         // when & then
         mockMvc.perform(get("/api/v1/admin/tag-groups/1/tags"))

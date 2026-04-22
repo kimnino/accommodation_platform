@@ -15,14 +15,14 @@ public class Tag extends BaseEntity {
     private boolean isActive;
 
     @Builder
-    public Tag(Long id, Long tagGroupId, String name, int displayOrder) {
+    public Tag(Long id, Long tagGroupId, String name, int displayOrder, Boolean isActive) {
 
         validateRequired(tagGroupId, name);
         this.id = id;
         this.tagGroupId = tagGroupId;
         this.name = name;
         this.displayOrder = displayOrder;
-        this.isActive = true;
+        this.isActive = isActive != null ? isActive : true;
         initTimestamps();
     }
 

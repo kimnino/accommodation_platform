@@ -5,11 +5,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.accommodation.platform.common.exception.BusinessException;
-import com.accommodation.platform.common.exception.ErrorCode;
-import com.accommodation.platform.core.accommodation.application.port.out.LoadAccommodationPort;
-import com.accommodation.platform.core.tag.adapter.out.persistence.AccommodationTagJpaEntity;
-import com.accommodation.platform.core.tag.adapter.out.persistence.AccommodationTagJpaRepository;
+import com.accommodation.platform.core.tag.application.port.out.LoadAccommodationTagPort;
+import com.accommodation.platform.core.tag.application.port.out.PersistAccommodationTagPort;
+import com.accommodation.platform.extranet.common.ExtranetOwnershipVerifier;
 import com.accommodation.platform.extranet.tag.application.port.in.ExtranetManageAccommodationTagUseCase;
 
 import lombok.RequiredArgsConstructor;
@@ -19,47 +17,33 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class ExtranetManageAccommodationTagService implements ExtranetManageAccommodationTagUseCase {
 
-    private final AccommodationTagJpaRepository accommodationTagJpaRepository;
-    private final LoadAccommodationPort loadAccommodationPort;
+    private final LoadAccommodationTagPort loadAccommodationTagPort;
+    private final PersistAccommodationTagPort persistAccommodationTagPort;
+    private final ExtranetOwnershipVerifier ownershipVerifier;
 
     @Override
     public void addTags(Long accommodationId, Long partnerId, List<Long> tagIds) {
 
-        verifyOwnership(accommodationId, partnerId);
+        ownershipVerifier.verifyAccommodationOwnership(accommodationId, partnerId);
 
-        List<Long> existingTagIds = accommodationTagJpaRepository.findByAccommodationId(accommodationId)
-                .stream()
-                .map(AccommodationTagJpaEntity::getTagId)
-                .toList();
-
+        List<Long> existingTagIds = loadAccommodationTagPort.findTagIdsByAccommodationId(accommodationId);
         tagIds.stream()
                 .filter(tagId -> !existingTagIds.contains(tagId))
-                .map(tagId -> new AccommodationTagJpaEntity(accommodationId, tagId))
-                .forEach(accommodationTagJpaRepository::save);
+                .forEach(tagId -> persistAccommodationTagPort.addTag(accommodationId, tagId));
     }
 
     @Override
     public void removeTags(Long accommodationId, Long partnerId, List<Long> tagIds) {
 
-        verifyOwnership(accommodationId, partnerId);
-        accommodationTagJpaRepository.deleteByAccommodationIdAndTagIdIn(accommodationId, tagIds);
+        ownershipVerifier.verifyAccommodationOwnership(accommodationId, partnerId);
+        persistAccommodationTagPort.removeTags(accommodationId, tagIds);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Long> getTagIds(Long accommodationId, Long partnerId) {
 
-        verifyOwnership(accommodationId, partnerId);
-        return accommodationTagJpaRepository.findByAccommodationId(accommodationId)
-                .stream()
-                .map(AccommodationTagJpaEntity::getTagId)
-                .toList();
-    }
-
-    private void verifyOwnership(Long accommodationId, Long partnerId) {
-
-        loadAccommodationPort.findById(accommodationId)
-                .filter(acc -> acc.getPartnerId().equals(partnerId))
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOMMODATION_NOT_FOUND, "해당 숙소에 대한 접근 권한이 없습니다."));
+        ownershipVerifier.verifyAccommodationOwnership(accommodationId, partnerId);
+        return loadAccommodationTagPort.findTagIdsByAccommodationId(accommodationId);
     }
 }
