@@ -42,7 +42,11 @@ public class ExtranetUpdateRoomOptionService implements ExtranetUpdateRoomOption
         option.updateInfo(
                 command.name(),
                 command.cancellationPolicy() != null ? CancellationPolicy.valueOf(command.cancellationPolicy()) : null,
-                command.additionalPrice());
+                command.additionalPrice(),
+                command.hourlyStartTime(),
+                command.hourlyEndTime(),
+                command.checkInTime(),
+                command.checkOutTime());
 
         return persistRoomOptionPort.save(option);
     }

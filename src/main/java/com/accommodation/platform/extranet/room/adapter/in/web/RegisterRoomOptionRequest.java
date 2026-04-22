@@ -1,6 +1,7 @@
 package com.accommodation.platform.extranet.room.adapter.in.web;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.util.List;
 
 import jakarta.validation.constraints.NotBlank;
@@ -12,7 +13,11 @@ public record RegisterRoomOptionRequest(
         @NotBlank(message = "옵션명은 필수입니다.") String name,
         @NotBlank(message = "취소 정책은 필수입니다.") String cancellationPolicy,
         BigDecimal additionalPrice,
-        List<TranslationRequest> translations
+        List<TranslationRequest> translations,
+        LocalTime hourlyStartTime,
+        LocalTime hourlyEndTime,
+        LocalTime checkInTime,
+        LocalTime checkOutTime
 ) {
 
     public RegisterRoomOptionCommand toCommand() {
@@ -23,7 +28,8 @@ public record RegisterRoomOptionRequest(
                         .toList()
                 : List.of();
 
-        return new RegisterRoomOptionCommand(name, cancellationPolicy, additionalPrice, translationCommands);
+        return new RegisterRoomOptionCommand(name, cancellationPolicy, additionalPrice, translationCommands,
+                hourlyStartTime, hourlyEndTime, checkInTime, checkOutTime);
     }
 
     public record TranslationRequest(

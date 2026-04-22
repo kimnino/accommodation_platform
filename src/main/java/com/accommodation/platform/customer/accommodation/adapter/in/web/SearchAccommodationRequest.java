@@ -6,7 +6,7 @@ import java.util.List;
 import com.accommodation.platform.core.accommodation.application.port.out.SearchAccommodationPort.SearchCriteria;
 
 public record SearchAccommodationRequest(
-        String region,
+        Long regionId,
         LocalDate checkInDate,
         LocalDate checkOutDate,
         Integer guestCount,
@@ -20,7 +20,7 @@ public record SearchAccommodationRequest(
     public SearchCriteria toCriteria() {
 
         return new SearchCriteria(
-                region, checkInDate, checkOutDate, guestCount != null ? guestCount : 0,
+                regionId, checkInDate, checkOutDate, guestCount != null ? guestCount : 0,
                 accommodationType, minPrice, maxPrice, tagIds, sort);
     }
 }

@@ -44,6 +44,10 @@ public class ExtranetRegisterRoomOptionService implements ExtranetRegisterRoomOp
                 .name(command.name())
                 .cancellationPolicy(CancellationPolicy.valueOf(command.cancellationPolicy()))
                 .additionalPrice(command.additionalPrice())
+                .hourlyStartTime(command.hourlyStartTime())
+                .hourlyEndTime(command.hourlyEndTime())
+                .checkInTime(command.checkInTime())
+                .checkOutTime(command.checkOutTime())
                 .build();
 
         RoomOption saved = persistRoomOptionPort.save(roomOption);

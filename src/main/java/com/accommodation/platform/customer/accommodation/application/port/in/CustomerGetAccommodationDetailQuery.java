@@ -1,8 +1,10 @@
 package com.accommodation.platform.customer.accommodation.application.port.in;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 public interface CustomerGetAccommodationDetailQuery {
 
@@ -17,6 +19,12 @@ public interface CustomerGetAccommodationDetailQuery {
             double latitude,
             double longitude,
             String locationDescription,
+            String checkInTime,
+            String checkOutTime,
+            Long regionId,
+            List<Long> tagIds,
+            Instant createdAt,
+            Instant updatedAt,
             List<ImageInfo> images,
             List<RoomWithOptions> rooms
     ) {
@@ -31,6 +39,7 @@ public interface CustomerGetAccommodationDetailQuery {
             String roomTypeName,
             int standardCapacity,
             int maxCapacity,
+            String status,
             List<RoomImageInfo> images,
             List<OptionWithPrice> options
     ) {
@@ -45,7 +54,12 @@ public interface CustomerGetAccommodationDetailQuery {
             String cancellationPolicy,
             BigDecimal totalPrice,
             BigDecimal additionalPrice,
-            int remainingQuantity
+            int remainingQuantity,
+            Set<String> availablePriceTypes,
+            String checkInTime,
+            String checkOutTime,
+            String hourlyStartTime,
+            String hourlyEndTime
     ) {
     }
 }

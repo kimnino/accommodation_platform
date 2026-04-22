@@ -13,14 +13,19 @@ public record ReservationResponse(
         String reservationType,
         Long accommodationId,
         Long roomOptionId,
+        Long memberId,
         LocalDate checkInDate,
         LocalDate checkOutDate,
         LocalTime hourlyStartTime,
+        int hourlyUsageMinutes,
         String guestName,
+        String guestPhone,
+        String guestEmail,
         BigDecimal totalPrice,
         String status,
         Instant holdExpiredAt,
-        Instant createdAt
+        Instant createdAt,
+        Instant updatedAt
 ) {
 
     public static ReservationResponse from(Reservation reservation) {
@@ -31,13 +36,18 @@ public record ReservationResponse(
                 reservation.getReservationType().name(),
                 reservation.getAccommodationId(),
                 reservation.getRoomOptionId(),
+                reservation.getMemberId(),
                 reservation.getCheckInDate(),
                 reservation.getCheckOutDate(),
                 reservation.getHourlyStartTime(),
+                reservation.getHourlyUsageMinutes(),
                 reservation.getGuestInfo().name(),
+                reservation.getGuestInfo().phone(),
+                reservation.getGuestInfo().email(),
                 reservation.getTotalPrice(),
                 reservation.getStatus().name(),
                 reservation.getHoldExpiredAt(),
-                reservation.getCreatedAt());
+                reservation.getCreatedAt(),
+                reservation.getUpdatedAt());
     }
 }

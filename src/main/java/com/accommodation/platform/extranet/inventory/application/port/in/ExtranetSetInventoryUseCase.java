@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.accommodation.platform.core.inventory.domain.model.Inventory;
+import org.springframework.util.CollectionUtils;
 
 public interface ExtranetSetInventoryUseCase {
 
@@ -22,7 +23,7 @@ public interface ExtranetSetInventoryUseCase {
          */
         public List<LocalDate> getTargetDates() {
 
-            if (dates != null && !dates.isEmpty()) {
+            if (!CollectionUtils.isEmpty(dates)) {
                 return dates;
             }
 

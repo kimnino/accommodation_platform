@@ -1,6 +1,7 @@
 package com.accommodation.platform.extranet.room.application.port.in;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.util.List;
 
 import com.accommodation.platform.core.room.domain.model.RoomOption;
@@ -13,7 +14,11 @@ public interface ExtranetRegisterRoomOptionUseCase {
             String name,
             String cancellationPolicy,
             BigDecimal additionalPrice,
-            List<TranslationCommand> translations
+            List<TranslationCommand> translations,
+            LocalTime hourlyStartTime,
+            LocalTime hourlyEndTime,
+            LocalTime checkInTime,
+            LocalTime checkOutTime
     ) {
     }
 
