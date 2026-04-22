@@ -73,6 +73,7 @@ body { font-family: 'Segoe UI', -apple-system, sans-serif; display:flex; min-hei
 .api-row-header .url { font-family:'Fira Code','Cascadia Code',monospace; font-size:13px; color:#555; }
 .api-row-header .desc { margin-left:auto; font-size:12px; color:#999; flex-shrink:0; }
 .api-row-header .arrow { transition:transform 0.2s; color:#aaa; flex-shrink:0; }
+.i18n-badge { font-size:10px; font-weight:700; padding:2px 7px; border-radius:3px; background:rgba(108,140,255,0.12); color:var(--accent); border:1px solid rgba(108,140,255,0.35); flex-shrink:0; letter-spacing:0.3px; }
 .api-row.open .api-row-header .arrow { transform:rotate(90deg); }
 
 /* Expanded */
@@ -87,10 +88,14 @@ body { font-family: 'Segoe UI', -apple-system, sans-serif; display:flex; min-hei
 /* Query params */
 .params-table { width:100%; border-collapse:collapse; margin-bottom:8px; }
 .params-table td { padding:3px 4px; }
-.params-table input { width:100%; padding:4px 6px; border:1px solid var(--border-light); border-radius:3px; font-size:12px; }
+.params-table input, .params-table select { width:100%; padding:4px 6px; border:1px solid var(--border-light); border-radius:3px; font-size:12px; background:var(--bg-input); color:var(--text-light); }
+.params-table select option[value=""] { color:var(--text-muted); }
 .params-table .remove-btn { background:none; border:none; color:var(--red); cursor:pointer; font-size:16px; width:auto; padding:2px 6px; }
 .add-param-btn { background:none; border:1px dashed var(--border-light); color:#888; padding:4px 10px; border-radius:3px; cursor:pointer; font-size:12px; width:auto; }
 .add-param-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+/* API note */
+.api-note { background:#f0f4ff; border-left:3px solid var(--accent); padding:8px 12px; border-radius:0 4px 4px 0; font-size:12px; color:#444; margin-bottom:10px; line-height:1.5; }
 
 /* Body editor */
 .body-editor { width:100%; min-height:120px; padding:10px; border:1px solid var(--border-light); border-radius:4px; font-family:'Fira Code','Cascadia Code',monospace; font-size:12px; resize:vertical; background:#fff; }
@@ -128,6 +133,43 @@ body { font-family: 'Segoe UI', -apple-system, sans-serif; display:flex; min-hei
 .loading { display:inline-block; width:14px; height:14px; border:2px solid #ccc; border-top-color:var(--accent); border-radius:50%; animation:spin 0.6s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
 
+/* Tabs */
+.tab-bar { display:flex; gap:4px; margin-bottom:20px; border-bottom:2px solid var(--border-light); }
+.tab-btn { padding:8px 20px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#888; border-bottom:2px solid transparent; margin-bottom:-2px; transition:color 0.15s, border-color 0.15s; }
+.tab-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
+.tab-btn:hover:not(.active) { color:var(--text-dark); }
+.tab-pane { display:none; }
+.tab-pane.active { display:block; }
+
+/* Scenario */
+.scenario-section { margin-bottom:28px; }
+.scenario-section-title { font-size:15px; font-weight:700; color:var(--text-dark); margin-bottom:12px; padding-left:4px; border-left:3px solid var(--accent); padding-left:10px; }
+.scenario-card { background:var(--bg-card); border:1px solid var(--border-light); border-radius:8px; margin-bottom:12px; overflow:hidden; }
+.scenario-card-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:#f8f8fc; border-bottom:1px solid var(--border-light); }
+.scenario-card-title { font-size:13px; font-weight:700; color:var(--text-dark); }
+.scenario-card-desc { font-size:12px; color:#888; margin-top:2px; }
+.scenario-run-btn { background:var(--accent); color:#fff; border:none; padding:7px 18px; border-radius:4px; cursor:pointer; font-size:13px; font-weight:600; white-space:nowrap; flex-shrink:0; }
+.scenario-run-btn:hover { background:var(--accent-hover); }
+.scenario-run-btn:disabled { opacity:0.5; cursor:not-allowed; }
+.scenario-steps { padding:12px 16px; }
+.scenario-step { border:1px solid var(--border-light); border-radius:6px; margin-bottom:8px; overflow:hidden; }
+.scenario-step:last-child { margin-bottom:0; }
+.step-header { display:flex; align-items:center; gap:10px; padding:8px 12px; background:#fafafe; }
+.step-num { font-size:11px; font-weight:700; color:#fff; background:#aaa; border-radius:3px; padding:2px 7px; flex-shrink:0; min-width:52px; text-align:center; }
+.step-num.running { background:var(--accent); }
+.step-num.success { background:var(--green); }
+.step-num.failed { background:var(--red); }
+.step-num.skipped { background:#bbb; }
+.step-method { font-size:11px; font-weight:700; color:#fff; padding:2px 7px; border-radius:3px; flex-shrink:0; }
+.step-url { font-family:monospace; font-size:12px; color:#555; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.step-expect { font-size:11px; color:#888; flex-shrink:0; }
+.step-result { padding:0 12px 10px; display:none; }
+.step-result.visible { display:block; }
+.step-result-line { display:flex; align-items:center; gap:8px; font-size:12px; margin-top:6px; }
+.step-result-body { margin-top:6px; background:#1e1e2e; color:#d4d4d4; font-family:monospace; font-size:11px; padding:8px 10px; border-radius:4px; max-height:200px; overflow:auto; white-space:pre-wrap; word-break:break-word; }
+.expect-ok { color:var(--green); font-weight:700; }
+.expect-fail { color:var(--red); font-weight:700; }
+
 @media(max-width:768px) {
     body { flex-direction:column; }
     .sidebar { width:100%; min-width:100%; flex-direction:row; flex-wrap:wrap; padding:12px; gap:8px; }
@@ -164,6 +206,17 @@ body { font-family: 'Segoe UI', -apple-system, sans-serif; display:flex; min-hei
     </div>
     <div class="divider"></div>
     <div>
+        <h3>언어 (Accept-Language)</h3>
+        <label><input type="radio" name="locale" value="" checked> 기본 (ko)</label>
+        <label><input type="radio" name="locale" value="en"> 영어 (en)</label>
+        <label><input type="radio" name="locale" value="ja"> 일본어 (ja)</label>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:8px;line-height:1.6;">
+            🌐 <span style="color:var(--accent);font-weight:600;">i18n</span> 배지가 있는 API만 적용됩니다.<br>
+            <span style="color:#6c6c80;">• 숙소 검색<br>• 숙소 상세</span>
+        </div>
+    </div>
+    <div class="divider"></div>
+    <div>
         <h3>Base URL</h3>
         <input type="text" id="baseUrl" value="http://localhost:8080">
     </div>
@@ -172,7 +225,19 @@ body { font-family: 'Segoe UI', -apple-system, sans-serif; display:flex; min-hei
 <div class="main">
     <h1>API Endpoint Tester</h1>
     <p class="subtitle">OTA 숙박 플랫폼 백엔드 API 테스트 도구</p>
-    <div id="apiList"></div>
+
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('apiListTab', this)">API 목록</button>
+        <button class="tab-btn" onclick="switchTab('scenarioTab', this)">시나리오</button>
+    </div>
+
+    <div id="apiListTab" class="tab-pane active">
+        <div id="apiList"></div>
+    </div>
+
+    <div id="scenarioTab" class="tab-pane">
+        <div id="scenarioList"></div>
+    </div>
 
     <div class="security-section">
         <h3>보안 테스트</h3>
@@ -196,147 +261,194 @@ body { font-family: 'Segoe UI', -apple-system, sans-serif; display:flex; min-hei
 let currentToken = null;
 let currentRole = null;
 
+function getCurrentLocale() {
+    const sel = document.querySelector('input[name="locale"]:checked');
+    return sel ? sel.value : '';
+}
+
+const OPTS = {
+    accommodationType: [
+        {label:"없음",value:""},{label:"HOTEL",value:"HOTEL"},{label:"MOTEL",value:"MOTEL"},
+        {label:"RESORT",value:"RESORT"},{label:"PENSION",value:"PENSION"},
+        {label:"POOL_VILLA",value:"POOL_VILLA"},{label:"GUEST_HOUSE",value:"GUEST_HOUSE"}
+    ],
+    targetType: [
+        {label:"없음",value:""},{label:"ACCOMMODATION",value:"ACCOMMODATION"},{label:"ROOM",value:"ROOM"}
+    ],
+    priceType: [
+        {label:"없음",value:""},{label:"STAY",value:"STAY"},{label:"HOURLY",value:"HOURLY"}
+    ],
+    cancellationPolicy: [
+        {label:"없음",value:""},{label:"FREE_CANCELLATION",value:"FREE_CANCELLATION"},
+        {label:"NON_REFUNDABLE",value:"NON_REFUNDABLE"},{label:"PARTIAL_REFUND",value:"PARTIAL_REFUND"}
+    ],
+    sort: [
+        {label:"없음",value:""},{label:"최신순",value:"latest"},
+        {label:"가격낮은순",value:"price_asc"},{label:"가격높은순",value:"price_desc"}
+    ],
+    booleanOpt: [
+        {label:"없음",value:""},{label:"true",value:"true"},{label:"false",value:"false"}
+    ]
+};
+
+function sel(key, opts, defaultVal) {
+    return {key, type:'select', value: defaultVal || '', options: OPTS[opts]};
+}
+function txt(key, value) {
+    return {key, value: value != null ? String(value) : ''};
+}
+
 const API_ENDPOINTS = [
     {
         group: "인증 (Auth)",
         endpoints: [
-            { method:"POST", url:"/api/v1/auth/token", desc:"토큰 발급", body: { role: "ADMIN" } }
+            { method:"POST", url:"/api/v1/auth/token", desc:"토큰 발급",
+              note:"role(ADMIN/PARTNER/CUSTOMER) 선택 후 발급. PARTNER는 partner_id, CUSTOMER는 member_id 추가 필요. 발급된 토큰은 사이드바에 자동 저장됨.",
+              body: { role: "ADMIN" } }
         ]
     },
     {
         group: "고객 (Customer) - 공개",
         endpoints: [
-            { method:"GET", url:"/api/v1/accommodations", desc:"숙소 검색", params:[
-                {key:"checkInDate",value:"2026-04-25"},{key:"checkOutDate",value:"2026-04-26"},{key:"guestCount",value:"2"}
-            ]},
-            { method:"GET", url:"/api/v1/accommodations/{id}", desc:"숙소 상세" }
+            { method:"GET", url:"/api/v1/regions", desc:"지역 목록 조회 (트리)",
+              note:"숙소 유형별 지역 트리 반환. accommodationType 없으면 전체 유형 지역 반환. 검색 UI의 지역 드롭다운 데이터 소스로 사용.",
+              params:[sel("accommodationType","accommodationType","HOTEL")]},
+            { method:"GET", url:"/api/v1/tags", desc:"태그 목록 조회 (필터용)",
+              note:"숙소 검색 필터 UI용 태그 목록. targetType=ACCOMMODATION + accommodationType 지정 시 해당 유형 전용 태그만 반환. tagIds 파라미터에 넣을 id 값 확인용.",
+              params:[sel("targetType","targetType","ACCOMMODATION"), sel("accommodationType","accommodationType","HOTEL")]},
+            { method:"GET", url:"/api/v1/accommodations", desc:"숙소 검색", i18n:true,
+              note:"2단계 배치 조회: 1단계 region_id/날짜/인원/가격/태그로 ID 필터링 → 2단계 카드 데이터 로딩. tag_ids는 쉼표 구분(예: 1,2,3). region_id는 지역 API에서 확인. Accept-Language 헤더로 ko/en/ja 번역 반환.",
+              params:[{key:"region_id", type:"region-select", value:""}, txt("check_in_date","2026-04-25"), txt("check_out_date","2026-04-26"), txt("guest_count","2"), sel("accommodationType","accommodationType","HOTEL"), txt("min_price",""), txt("max_price",""), txt("tag_ids",""), sel("sort","sort","")]},
+            { method:"GET", url:"/api/v1/accommodations/{id}", desc:"숙소 상세", i18n:true,
+              note:"숙소 상세 + 객실 목록 + 옵션별 요금/재고 반환. check_in_date/check_out_date 필수. Accept-Language 헤더로 다국어 지원.",
+              params:[txt("check_in_date","2026-04-25"), txt("check_out_date","2026-04-26")]}
         ]
     },
     {
         group: "고객 (Customer) - 인증 필요",
         endpoints: [
-            { method:"POST", url:"/api/v1/reservations/stay", desc:"숙박 예약", body:{
-                reservation_request_id: "__UUID__",
-                accommodation_id: 1,
-                room_option_id: 1,
-                check_in_date: "2026-04-25",
-                check_out_date: "2026-04-26",
-                guest_name: "홍길동",
-                guest_phone: "010-1234-5678",
-                guest_email: "test@test.com"
-            }},
-            { method:"POST", url:"/api/v1/reservations/hourly", desc:"대실 예약", body:{
-                reservation_request_id: "__UUID__",
-                accommodation_id: 1,
-                room_option_id: 1,
-                use_date: "2026-04-25",
-                start_time: "14:00",
-                end_time: "18:00",
-                guest_name: "홍길동",
-                guest_phone: "010-1234-5678",
-                guest_email: "test@test.com"
-            }},
-            { method:"POST", url:"/api/v1/reservations/{id}/confirm-payment", desc:"결제 확인", body:{
-                payment_key: "toss_pay_1234567890",
-                amount: 130000
-            }},
-            { method:"DELETE", url:"/api/v1/reservations/{id}", desc:"예약 취소" },
-            { method:"GET", url:"/api/v1/reservations", desc:"내 예약 목록" },
-            { method:"GET", url:"/api/v1/reservations/{id}", desc:"예약 상세" }
+            { method:"POST", url:"/api/v1/reservations/stay", desc:"숙박 예약",
+              note:"CUSTOMER 토큰 필요. reservation_request_id는 중복 방지용 UUID(자동 생성됨). 재고 차감 후 PENDING 상태로 생성. 이후 confirm-payment로 결제 확인.",
+              body:{reservation_request_id:"__UUID__", accommodation_id:1, room_option_id:1, check_in_date:"2026-04-25", check_out_date:"2026-04-26", guest_name:"홍길동", guest_phone:"010-1234-5678", guest_email:"test@test.com"}},
+            { method:"POST", url:"/api/v1/reservations/hourly", desc:"대실 예약",
+              note:"CUSTOMER 토큰 필요. 모텔 대실 전용. date + start_time/end_time 지정. room_option의 price_type이 HOURLY인 옵션만 사용 가능. accommodation_id=4, room_option_id=7(역삼 모텔 201호)로 테스트 가능.",
+              body:{reservation_request_id:"__UUID__", accommodation_id:4, room_option_id:7, date:"2026-04-25", start_time:"14:00", end_time:"18:00", guest_name:"홍길동", guest_phone:"010-1234-5678", guest_email:"test@test.com"}},
+            { method:"POST", url:"/api/v1/reservations/{id}/confirm-payment", desc:"결제 확인",
+              note:"CUSTOMER 토큰 필요. 예약 ID + PG 결제키 + 금액으로 결제 확인. PENDING → CONFIRMED 상태로 변경.",
+              body:{payment_key:"toss_pay_1234567890", amount:130000}},
+            { method:"DELETE", url:"/api/v1/reservations/{id}", desc:"예약 취소",
+              note:"CUSTOMER 토큰 필요. 취소 정책(FREE_CANCELLATION/PARTIAL_REFUND/NON_REFUNDABLE)에 따라 처리. CONFIRMED 상태 예약만 취소 가능."},
+            { method:"GET", url:"/api/v1/reservations", desc:"내 예약 목록",
+              note:"CUSTOMER 토큰 필요. 본인 예약 이력 전체 조회."},
+            { method:"GET", url:"/api/v1/reservations/{id}", desc:"예약 상세",
+              note:"CUSTOMER 토큰 필요. 예약 상세 + 결제 정보 포함."}
+        ]
+    },
+    {
+        group: "파트너 (Extranet) - 지역 설정",
+        endpoints: [
+            { method:"GET", url:"/api/v1/extranet/accommodation-regions", desc:"유형별 지역 목록 (트리)",
+              note:"인증 불필요. 숙소 유형별 지역 트리 반환. 파트너가 숙소 등록 시 지역 선택 UI 데이터 소스로 사용. /api/v1/regions와 동일한 데이터.",
+              params:[sel("accommodationType","accommodationType","HOTEL")]},
+            { method:"PATCH", url:"/api/v1/extranet/accommodations/{id}/region", desc:"숙소 지역 설정",
+              note:"PARTNER 토큰 + X-Partner-Id 헤더 필요. 파트너 본인 숙소에만 설정 가능. regionId는 지역 목록 API에서 확인. 숙소 등록 후 지역 지정 시 사용.",
+              params:[txt("regionId","2")]}
         ]
     },
     {
         group: "파트너 (Extranet) - PARTNER 인증 필요",
         endpoints: [
-            { method:"GET", url:"/api/v1/extranet/accommodations", desc:"내 숙소 목록" },
-            { method:"POST", url:"/api/v1/extranet/accommodations", desc:"숙소 등록", body:{
-                name: "테스트 호텔",
-                type: "HOTEL",
-                full_address: "서울시 강남구 테헤란로 100",
-                latitude: 37.5,
-                longitude: 127.0,
-                check_in_time: "15:00",
-                check_out_time: "11:00"
-            }},
-            { method:"PUT", url:"/api/v1/extranet/accommodations/{id}", desc:"숙소 수정", body:{
-                name: "테스트 호텔 (수정)",
-                full_address: "서울시 강남구 테헤란로 200",
-                check_in_time: "16:00",
-                check_out_time: "11:00"
-            }},
-            { method:"GET", url:"/api/v1/extranet/accommodations/{id}/rooms", desc:"객실 목록" },
-            { method:"POST", url:"/api/v1/extranet/accommodations/{id}/rooms", desc:"객실 등록", body:{
-                name: "디럭스 더블",
-                floor: 5,
-                base_occupancy: 2,
-                max_occupancy: 3
-            }},
-            { method:"GET", url:"/api/v1/extranet/accommodations/{accId}/rooms/{roomId}/options", desc:"옵션 목록" },
-            { method:"POST", url:"/api/v1/extranet/accommodations/{accId}/rooms/{roomId}/options", desc:"옵션 등록", body:{
-                name: "숙박 기본",
-                type: "STAY",
-                check_in_time: "15:00",
-                check_out_time: "11:00"
-            }},
-            { method:"POST", url:"/api/v1/extranet/room-options/{optId}/inventories", desc:"재고 설정", body:{
-                start_date: "2026-05-15",
-                end_date: "2026-05-20",
-                total_quantity: 5
-            }},
-            { method:"GET", url:"/api/v1/extranet/room-options/{optId}/inventories", desc:"재고 조회", params:[
-                {key:"startDate",value:"2026-04-25"},{key:"endDate",value:"2026-04-30"}
-            ]},
-            { method:"POST", url:"/api/v1/extranet/room-options/{optId}/prices", desc:"요금 설정", body:{
-                start_date: "2026-05-15",
-                end_date: "2026-05-20",
-                price_type: "STAY",
-                base_price: 150000,
-                selling_price: 130000,
-                tax_included: true
-            }},
-            { method:"GET", url:"/api/v1/extranet/room-options/{optId}/prices", desc:"요금 조회", params:[
-                {key:"startDate",value:"2026-04-25"},{key:"endDate",value:"2026-04-30"}
-            ]},
-            { method:"GET", url:"/api/v1/extranet/reservations/accommodations/{accId}", desc:"예약 현황" }
+            { method:"GET", url:"/api/v1/extranet/accommodations", desc:"내 숙소 목록",
+              note:"PARTNER 토큰 필요. X-Partner-Id 헤더로 본인 숙소만 조회."},
+            { method:"POST", url:"/api/v1/extranet/accommodations", desc:"숙소 등록",
+              note:"PARTNER 토큰 필요. 등록 후 PENDING 상태. 관리자 승인 후 ACTIVE로 변경됨. 등록 즉시 지역 설정(PATCH region)도 해줘야 검색에 노출됨.",
+              body:{name:"테스트 호텔", type:"HOTEL", full_address:"서울시 강남구 테헤란로 100", latitude:37.5, longitude:127.0, check_in_time:"15:00", check_out_time:"11:00"}},
+            { method:"PUT", url:"/api/v1/extranet/accommodations/{id}", desc:"숙소 수정",
+              note:"PARTNER 토큰 필요. 수정 시 즉시 반영 아님 → ModificationRequest 생성 → 관리자 승인 후 반영.",
+              body:{name:"테스트 호텔 (수정)", full_address:"서울시 강남구 테헤란로 200", check_in_time:"16:00", check_out_time:"11:00"}},
+            { method:"GET", url:"/api/v1/extranet/accommodations/{id}/rooms", desc:"객실 목록",
+              note:"PARTNER 토큰 필요. 본인 숙소의 객실 목록 조회."},
+            { method:"POST", url:"/api/v1/extranet/accommodations/{id}/rooms", desc:"객실 등록",
+              note:"PARTNER 토큰 필요. 숙소 ID 지정 후 객실 추가. 등록 후 객실 옵션(option)도 추가해야 재고/요금 설정 가능.",
+              body:{name:"디럭스 더블", floor:5, base_occupancy:2, max_occupancy:3}},
+            { method:"GET", url:"/api/v1/extranet/accommodations/{accId}/rooms/{roomId}/options", desc:"옵션 목록",
+              note:"PARTNER 토큰 필요. 객실 옵션 목록 조회. 옵션 ID로 재고/요금 설정 API 호출."},
+            { method:"POST", url:"/api/v1/extranet/accommodations/{accId}/rooms/{roomId}/options", desc:"옵션 등록",
+              note:"PARTNER 토큰 필요. 하나의 객실에 여러 옵션 가능(기본/조식포함 등). type: STAY(숙박) or HOURLY(대실).",
+              body:{name:"숙박 기본", type:"STAY", check_in_time:"15:00", check_out_time:"11:00"}},
+            { method:"POST", url:"/api/v1/extranet/room-options/{optId}/inventories", desc:"재고 설정",
+              note:"PARTNER 토큰 필요. 날짜 범위로 일괄 설정. total_quantity = 해당 날짜에 팔 수 있는 총 객실 수.",
+              body:{start_date:"2026-05-15", end_date:"2026-05-20", total_quantity:5}},
+            { method:"GET", url:"/api/v1/extranet/room-options/{optId}/inventories", desc:"재고 조회",
+              note:"PARTNER 토큰 필요. 날짜 범위 내 재고 현황(remaining_quantity로 남은 수 확인).",
+              params:[txt("startDate","2026-04-25"), txt("endDate","2026-04-30")]},
+            { method:"POST", url:"/api/v1/extranet/room-options/{optId}/prices", desc:"요금 설정",
+              note:"PARTNER 토큰 필요. 날짜 범위로 일괄 설정. base_price = 정가, selling_price = 실제 판매가. price_type: STAY(숙박) or HOURLY(대실).",
+              body:{start_date:"2026-05-15", end_date:"2026-05-20", price_type:"STAY", base_price:150000, selling_price:130000, tax_included:true}},
+            { method:"GET", url:"/api/v1/extranet/room-options/{optId}/prices", desc:"요금 조회",
+              note:"PARTNER 토큰 필요. 날짜 범위 내 요금 조회. priceType으로 STAY/HOURLY 구분.",
+              params:[txt("startDate","2026-04-25"), txt("endDate","2026-04-30"), sel("priceType","priceType","STAY")]},
+            { method:"GET", url:"/api/v1/extranet/reservations/accommodations/{accId}", desc:"예약 현황",
+              note:"PARTNER 토큰 필요. 본인 숙소의 예약 현황 조회."}
+        ]
+    },
+    {
+        group: "관리자 (Admin) - 지역 마스터 관리",
+        endpoints: [
+            { method:"GET", url:"/api/v1/admin/accommodation-regions", desc:"유형별 지역 트리 조회",
+              note:"ADMIN 토큰 필요. 숙소 유형별 지역 마스터 데이터 관리용 조회.",
+              params:[sel("accommodationType","accommodationType","HOTEL")]},
+            { method:"POST", url:"/api/v1/admin/accommodation-regions", desc:"지역 생성",
+              note:"ADMIN 토큰 필요. 최상위 지역은 parent_id 생략. 하위 지역은 parent_id에 상위 지역 ID 지정.",
+              body:{accommodation_type:"HOTEL", region_name:"서초구", parent_id:1, sort_order:5}},
+            { method:"PUT", url:"/api/v1/admin/accommodation-regions/{regionId}", desc:"지역 수정",
+              note:"ADMIN 토큰 필요. 지역명/정렬순서 변경.",
+              body:{region_name:"서초구 (수정)", parent_id:1, sort_order:5}},
+            { method:"DELETE", url:"/api/v1/admin/accommodation-regions/{regionId}", desc:"지역 삭제",
+              note:"ADMIN 토큰 필요. 해당 지역에 등록된 숙소가 있으면 삭제 불가."}
         ]
     },
     {
         group: "관리자 (Admin) - ADMIN 인증 필요",
         endpoints: [
-            { method:"GET", url:"/api/v1/admin/accommodations", desc:"숙소 목록" },
-            { method:"GET", url:"/api/v1/admin/accommodations/{id}", desc:"숙소 상세" },
-            { method:"PATCH", url:"/api/v1/admin/accommodations/{id}/approve", desc:"숙소 승인" },
-            { method:"PATCH", url:"/api/v1/admin/accommodations/{id}/suspend", desc:"숙소 정지" },
-            { method:"PATCH", url:"/api/v1/admin/accommodations/{id}/close", desc:"숙소 폐쇄" },
-            { method:"GET", url:"/api/v1/admin/accommodations/modifications/pending", desc:"수정 요청 목록" },
-            { method:"PATCH", url:"/api/v1/admin/accommodations/modifications/{id}/approve", desc:"수정 승인" },
-            { method:"PATCH", url:"/api/v1/admin/accommodations/modifications/{id}/reject", desc:"수정 거절", body:{
-                reason: "등록 정보가 정확하지 않습니다."
-            }},
-            { method:"GET", url:"/api/v1/admin/tag-groups", desc:"태그 그룹 목록" },
-            { method:"POST", url:"/api/v1/admin/tag-groups", desc:"태그 그룹 생성", body:{
-                code: "FACILITY",
-                name: "시설",
-                display_order: 1
-            }},
-            { method:"GET", url:"/api/v1/admin/tag-groups/{gid}/tags", desc:"태그 목록" },
-            { method:"POST", url:"/api/v1/admin/tag-groups/{gid}/tags", desc:"태그 추가", body:{
-                code: "WIFI",
-                name: "무선 인터넷",
-                display_order: 1
-            }},
-            { method:"PATCH", url:"/api/v1/admin/room-options/{optId}/price", desc:"가격 조정", body:{
-                date: "2026-05-15",
-                selling_price: 120000
-            }}
+            { method:"GET", url:"/api/v1/admin/accommodations", desc:"숙소 목록",
+              note:"ADMIN 토큰 필요. 전체 숙소 목록 조회 (파트너 구분 없이 전체)."},
+            { method:"GET", url:"/api/v1/admin/accommodations/{id}", desc:"숙소 상세",
+              note:"ADMIN 토큰 필요. 숙소 상세 정보 조회."},
+            { method:"PATCH", url:"/api/v1/admin/accommodations/{id}/approve", desc:"숙소 승인",
+              note:"ADMIN 토큰 필요. PENDING → ACTIVE 상태로 변경. 승인 후 고객 검색에 노출됨."},
+            { method:"PATCH", url:"/api/v1/admin/accommodations/{id}/suspend", desc:"숙소 정지",
+              note:"ADMIN 토큰 필요. ACTIVE → SUSPENDED 상태. 검색 노출 중단, 신규 예약 불가."},
+            { method:"PATCH", url:"/api/v1/admin/accommodations/{id}/close", desc:"숙소 폐쇄",
+              note:"ADMIN 토큰 필요. 영구 폐쇄 처리. 복구 불가."},
+            { method:"GET", url:"/api/v1/admin/accommodations/modifications/pending", desc:"수정 요청 목록",
+              note:"ADMIN 토큰 필요. 파트너가 수정 요청한 건 중 미처리(PENDING) 목록."},
+            { method:"PATCH", url:"/api/v1/admin/accommodations/modifications/{id}/approve", desc:"수정 승인",
+              note:"ADMIN 토큰 필요. 수정 요청 승인 → 실제 숙소 데이터에 반영됨."},
+            { method:"PATCH", url:"/api/v1/admin/accommodations/modifications/{id}/reject", desc:"수정 거절",
+              note:"ADMIN 토큰 필요. 거절 사유 필수 입력. 파트너에게 반려 사유 전달됨.",
+              body:{reason:"등록 정보가 정확하지 않습니다."}},
+            { method:"GET", url:"/api/v1/admin/tag-groups", desc:"태그 그룹 목록",
+              note:"ADMIN 토큰 필요. 전체 태그 그룹 목록 (target_type/accommodation_type별 그룹 확인)."},
+            { method:"POST", url:"/api/v1/admin/tag-groups", desc:"태그 그룹 생성",
+              note:"ADMIN 토큰 필요. accommodation_type 없으면 모든 유형 공통 그룹으로 생성됨.",
+              body:{code:"FACILITY", name:"시설", display_order:1}},
+            { method:"GET", url:"/api/v1/admin/tag-groups/{gid}/tags", desc:"태그 목록",
+              note:"ADMIN 토큰 필요. 태그 그룹 ID로 해당 그룹의 태그 목록 조회."},
+            { method:"POST", url:"/api/v1/admin/tag-groups/{gid}/tags", desc:"태그 추가",
+              note:"ADMIN 토큰 필요. 태그 그룹에 새 태그 추가. display_order로 UI 노출 순서 조정.",
+              body:{code:"WIFI", name:"무선 인터넷", display_order:1}},
+            { method:"PATCH", url:"/api/v1/admin/room-options/{optId}/price", desc:"가격 조정",
+              note:"ADMIN 토큰 필요. 특정 날짜의 selling_price 직접 조정. 파트너 승인 없이 즉시 반영됨.",
+              body:{date:"2026-05-15", selling_price:120000}}
         ]
     },
     {
         group: "Supplier (ADMIN only)",
         endpoints: [
-            { method:"POST", url:"/api/v1/supplier/{code}/sync", desc:"공급사 동기화", body:{
-                force: false
-            }}
+            { method:"POST", url:"/api/v1/supplier/{code}/sync", desc:"공급사 동기화",
+              note:"ADMIN 토큰 필요. 외부 공급사(Expedia 등) 상품을 플랫폼으로 동기화. code = 공급사 코드(예: EXPEDIA). force=true면 전체 재동기화.",
+              body:{force:false}}
         ]
     }
 ];
@@ -450,8 +562,9 @@ function buildUrlFromInputs(rowEl, urlTemplate) {
     const qp = [];
     paramRows.forEach(pr => {
         const k = pr.querySelector('.qp-key').value.trim();
-        const v = pr.querySelector('.qp-value').value.trim();
-        if (k) qp.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+        const valEl = pr.querySelector('.qp-value');
+        const v = valEl ? valEl.value.trim() : '';
+        if (k && v) qp.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
     });
     if (qp.length) url += '?' + qp.join('&');
     return url;
@@ -473,10 +586,16 @@ function renderApiList() {
             html += '<div class="api-row-header" onclick="toggleRow(\'' + id + '\')">';
             html += '<span class="method-badge method-' + ep.method + '">' + ep.method + '</span>';
             html += '<span class="url">' + ep.url + '</span>';
+            if (ep.i18n) html += '<span class="i18n-badge">🌐 i18n</span>';
             html += '<span class="desc">' + ep.desc + '</span>';
             html += '<span class="arrow">&#9654;</span>';
             html += '</div>';
             html += '<div class="api-row-body">';
+
+            // Note
+            if (ep.note) {
+                html += '<div class="api-note">💡 ' + ep.note + '</div>';
+            }
 
             // URL builder
             html += '<div class="section-label">URL</div>';
@@ -498,7 +617,19 @@ function renderApiList() {
                 html += '<table class="params-table"><tbody class="qp-body">';
                 if (ep.params) {
                     ep.params.forEach(p => {
-                        html += '<tr class="query-param-row"><td><input class="qp-key" value="' + p.key + '" placeholder="key"></td><td><input class="qp-value" value="' + p.value + '" placeholder="value"></td><td><button class="remove-btn" onclick="this.closest(\'tr\').remove()">&times;</button></td></tr>';
+                        let valHtml;
+                        if (p.type === 'select' && p.options) {
+                            valHtml = '<select class="qp-value">';
+                            p.options.forEach(o => {
+                                valHtml += '<option value="' + o.value + '"' + (o.value === p.value ? ' selected' : '') + '>' + o.label + '</option>';
+                            });
+                            valHtml += '</select>';
+                        } else if (p.type === 'region-select') {
+                            valHtml = '<select class="qp-value region-select"><option value="">없음 (전체)</option></select>';
+                        } else {
+                            valHtml = '<input class="qp-value" value="' + (p.value || '') + '" placeholder="값 없으면 전송 안 함">';
+                        }
+                        html += '<tr class="query-param-row"><td><input class="qp-key" value="' + p.key + '" placeholder="key" style="background:#1e1e2e;color:#888;"></td><td>' + valHtml + '</td><td><button class="remove-btn" onclick="this.closest(\'tr\').remove()">&times;</button></td></tr>';
                     });
                 }
                 html += '</tbody></table>';
@@ -527,7 +658,53 @@ function renderApiList() {
 }
 
 function toggleRow(id) {
-    document.getElementById(id).classList.toggle('open');
+    const el = document.getElementById(id);
+    el.classList.toggle('open');
+    if (el.classList.contains('open')) initDynamicSelects(el);
+}
+
+function initDynamicSelects(rowEl) {
+    const regionSel = rowEl.querySelector('.region-select');
+    if (!regionSel) return;
+    rowEl.querySelectorAll('.query-param-row').forEach(tr => {
+        const k = tr.querySelector('.qp-key')?.value;
+        if (k === 'accommodationType') {
+            const accSel = tr.querySelector('.qp-value');
+            if (accSel && !accSel.dataset.regionHooked) {
+                accSel.dataset.regionHooked = '1';
+                accSel.addEventListener('change', () => populateRegionSelect(rowEl));
+            }
+        }
+    });
+    populateRegionSelect(rowEl);
+}
+
+async function populateRegionSelect(rowEl) {
+    const regionSel = rowEl.querySelector('.region-select');
+    if (!regionSel) return;
+    let accType = '';
+    rowEl.querySelectorAll('.query-param-row').forEach(tr => {
+        if (tr.querySelector('.qp-key')?.value === 'accommodationType') {
+            accType = tr.querySelector('.qp-value')?.value || '';
+        }
+    });
+    regionSel.innerHTML = '<option value="">없음</option>';
+    try {
+        const url = getBaseUrl() + '/api/v1/regions' + (accType ? '?accommodationType=' + accType : '');
+        const resp = await fetch(url);
+        const json = await resp.json();
+        flattenRegionTree(json.data || [], '', regionSel);
+    } catch(e) { regionSel.innerHTML = '<option value="">로드 실패</option>'; }
+}
+
+function flattenRegionTree(nodes, prefix, selectEl) {
+    nodes.forEach(n => {
+        const label = prefix ? prefix + ' > ' + n.region_name : n.region_name;
+        const opt = document.createElement('option');
+        opt.value = n.id; opt.textContent = label;
+        selectEl.appendChild(opt);
+        if (n.children?.length) flattenRegionTree(n.children, label, selectEl);
+    });
 }
 
 function addParam(btn) {
@@ -543,6 +720,8 @@ async function sendRequest(rowId, ep) {
     const url = getBaseUrl() + buildUrlFromInputs(rowEl, ep.url);
     const headers = { 'Content-Type': 'application/json' };
     if (currentToken) headers['Authorization'] = 'Bearer ' + currentToken;
+    const locale = getCurrentLocale();
+    if (locale) headers['Accept-Language'] = locale;
 
     const opts = { method: ep.method, headers };
     if (ep.body) {
@@ -653,6 +832,426 @@ async function secTest3() {
 }
 
 renderApiList();
+
+// ─── Tab switching ───────────────────────────────────────────────────────────
+function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    btn.classList.add('active');
+}
+
+// ─── Scenario definitions ────────────────────────────────────────────────────
+const SCENARIOS = [
+    {
+        id: 'S-A1',
+        channel: 'admin',
+        title: 'S-A1: 숙소 승인 플로우',
+        desc: '대기 중인 숙소를 조회하고 첫 번째 항목을 승인합니다.',
+        steps: [
+            {
+                label: 'STEP 1',
+                method: 'GET',
+                urlTemplate: '/api/v1/admin/accommodations',
+                query: { status: 'PENDING', page: '0', size: '5' },
+                desc: '대기 중인 숙소 목록 조회',
+                extractId: (data) => {
+                    const list = data?.data?.content || data?.data || [];
+                    if (Array.isArray(list) && list.length > 0) return list[0].id;
+                    return null;
+                },
+                idKey: 'accommodationId'
+            },
+            {
+                label: 'STEP 2',
+                method: 'PATCH',
+                urlTemplate: '/api/v1/admin/accommodations/{accommodationId}/approve',
+                desc: '첫 번째 숙소 승인',
+                idKeys: ['accommodationId']
+            }
+        ]
+    },
+    {
+        id: 'S-P1',
+        channel: 'partner',
+        title: 'S-P1: 전체 파트너 설정 플로우',
+        desc: '숙소 등록 → 객실 등록 → 옵션 등록 → 지역 설정 → 재고/요금 설정까지 전체 흐름을 실행합니다.',
+        steps: [
+            {
+                label: 'STEP 1',
+                method: 'POST',
+                urlTemplate: '/api/v1/extranet/accommodations',
+                desc: '숙소 등록',
+                body: { name: '테스트 호텔', type: 'HOTEL', full_address: '서울시 강남구 테헤란로 1', latitude: 37.5, longitude: 127.0, location_description: '강남역 도보 1분', check_in_time: '15:00', check_out_time: '11:00' },
+                extractId: (data) => data?.data?.id || data?.data?.data?.id || null,
+                idKey: 'acc_id'
+            },
+            {
+                label: 'STEP 2',
+                method: 'POST',
+                urlTemplate: '/api/v1/extranet/accommodations/{acc_id}/rooms',
+                desc: '객실 등록',
+                idKeys: ['acc_id'],
+                body: { name: '스탠다드 더블', room_type_name: '스탠다드', standard_capacity: 2, max_capacity: 3 },
+                extractId: (data) => data?.data?.id || data?.data?.data?.id || null,
+                idKey: 'room_id'
+            },
+            {
+                label: 'STEP 3',
+                method: 'POST',
+                urlTemplate: '/api/v1/extranet/accommodations/{acc_id}/rooms/{room_id}/options',
+                desc: '옵션 등록',
+                idKeys: ['acc_id', 'room_id'],
+                body: { name: '기본', cancellation_policy: 'FREE_CANCELLATION', additional_price: 0 },
+                extractId: (data) => data?.data?.id || data?.data?.data?.id || null,
+                idKey: 'option_id'
+            },
+            {
+                label: 'STEP 4',
+                method: 'PATCH',
+                urlTemplate: '/api/v1/extranet/accommodations/{acc_id}/region',
+                desc: '지역 설정',
+                idKeys: ['acc_id'],
+                query: { regionId: 1 }
+            },
+            {
+                label: 'STEP 5',
+                method: 'POST',
+                urlTemplate: '/api/v1/extranet/room-options/{option_id}/inventories',
+                desc: '재고 설정',
+                idKeys: ['option_id'],
+                body: { start_date: '2026-04-22', end_date: '2026-05-10', total_quantity: 2 }
+            },
+            {
+                label: 'STEP 6',
+                method: 'POST',
+                urlTemplate: '/api/v1/extranet/room-options/{option_id}/prices',
+                desc: '요금 설정',
+                idKeys: ['option_id'],
+                body: { start_date: '2026-04-22', end_date: '2026-05-10', price_type: 'STAY', base_price: 100000, selling_price: 90000, tax_included: true }
+            }
+        ]
+    },
+    {
+        id: 'S-C1',
+        channel: 'customer',
+        title: 'S-C1: 숙박 예약 전체 플로우',
+        desc: '숙소 검색 → 상세 조회 → 예약 → 결제 확인까지 전체 흐름을 실행합니다.',
+        steps: [
+            {
+                label: 'STEP 1',
+                method: 'GET',
+                urlTemplate: '/api/v1/accommodations',
+                query: { check_in_date: '2026-04-25', check_out_date: '2026-04-26', guest_count: '2' },
+                desc: '숙소 검색'
+            },
+            {
+                label: 'STEP 2',
+                method: 'GET',
+                urlTemplate: '/api/v1/accommodations/4',
+                query: { check_in_date: '2026-04-25', check_out_date: '2026-04-26' },
+                desc: '숙소 상세 (accommodation_id=4 고정)'
+            },
+            {
+                label: 'STEP 3',
+                method: 'POST',
+                urlTemplate: '/api/v1/reservations/stay',
+                desc: '숙박 예약',
+                body: { reservation_request_id: '{{uuid}}', accommodation_id: 4, room_option_id: 7, check_in_date: '2026-04-25', check_out_date: '2026-04-26', guest_name: '테스트고객', guest_phone: '010-0000-0001', guest_email: 'test@test.com' },
+                extractId: (data) => data?.data?.id || data?.data?.data?.id || data?.data?.reservation_id || null,
+                idKey: 'reservation_id'
+            },
+            {
+                label: 'STEP 4',
+                method: 'POST',
+                urlTemplate: '/api/v1/reservations/{reservation_id}/confirm-payment',
+                desc: '결제 확인',
+                idKeys: ['reservation_id'],
+                body: { payment_key: 'toss_pay_test_1234567890', amount: 130000 }
+            }
+        ]
+    },
+    {
+        id: 'S-C2',
+        channel: 'customer',
+        title: 'S-C2: 대실 예약 전체 플로우',
+        desc: '숙소 상세(대실 옵션 확인) → 대실 예약 → 결제 확인까지 실행합니다.',
+        steps: [
+            {
+                label: 'STEP 1',
+                method: 'GET',
+                urlTemplate: '/api/v1/accommodations/4',
+                query: { check_in_date: '2026-04-26', check_out_date: '2026-04-26' },
+                desc: '숙소 상세 (대실 옵션 확인)'
+            },
+            {
+                label: 'STEP 2',
+                method: 'POST',
+                urlTemplate: '/api/v1/reservations/hourly',
+                desc: '대실 예약',
+                body: { reservation_request_id: '{{uuid}}', accommodation_id: 4, room_option_id: 7, date: '2026-04-26', start_time: '14:00', end_time: '18:00', guest_name: '테스트고객', guest_phone: '010-0000-0002', guest_email: 'test@test.com' },
+                extractId: (data) => data?.data?.id || data?.data?.data?.id || data?.data?.reservation_id || null,
+                idKey: 'reservation_id'
+            },
+            {
+                label: 'STEP 3',
+                method: 'POST',
+                urlTemplate: '/api/v1/reservations/{reservation_id}/confirm-payment',
+                desc: '결제 확인',
+                idKeys: ['reservation_id'],
+                body: { payment_key: 'toss_pay_test_hourly_001', amount: 40000 }
+            }
+        ]
+    },
+    {
+        id: 'S-C3',
+        channel: 'customer',
+        title: 'S-C3: 재고 소진 후 예약 차단 검증',
+        desc: '재고가 1개인 방을 연속 예약하여 두 번째 요청이 409로 차단되는지 검증합니다.',
+        steps: [
+            {
+                label: 'STEP 1',
+                method: 'POST',
+                urlTemplate: '/api/v1/reservations/stay',
+                desc: '첫 번째 예약 (성공 기대)',
+                body: { reservation_request_id: '{{uuid}}', accommodation_id: 4, room_option_id: 7, check_in_date: '2026-05-01', check_out_date: '2026-05-02', guest_name: '테스트고객A', guest_phone: '010-0000-0010', guest_email: 'testa@test.com' },
+                expectedStatus: 201,
+                extractId: (data) => data?.data?.id || null,
+                idKey: 'reservation_id_1'
+            },
+            {
+                label: 'STEP 2',
+                method: 'POST',
+                urlTemplate: '/api/v1/reservations/stay',
+                desc: '두 번째 예약 — 동일 옵션/날짜 (409 차단 기대)',
+                body: { reservation_request_id: '{{uuid}}', accommodation_id: 4, room_option_id: 7, check_in_date: '2026-05-01', check_out_date: '2026-05-02', guest_name: '테스트고객B', guest_phone: '010-0000-0011', guest_email: 'testb@test.com' },
+                expectedStatus: 409,
+                allowFail: true
+            }
+        ]
+    },
+    {
+        id: 'S-C4',
+        channel: 'customer',
+        title: 'S-C4: 예약 취소 플로우',
+        desc: '숙박 예약 생성 후 즉시 취소합니다.',
+        steps: [
+            {
+                label: 'STEP 1',
+                method: 'POST',
+                urlTemplate: '/api/v1/reservations/stay',
+                desc: '예약 생성',
+                body: { reservation_request_id: '{{uuid}}', accommodation_id: 4, room_option_id: 7, check_in_date: '2026-04-28', check_out_date: '2026-04-29', guest_name: '취소테스트', guest_phone: '010-0000-0099', guest_email: 'cancel@test.com' },
+                extractId: (data) => data?.data?.id || data?.data?.data?.id || data?.data?.reservation_id || null,
+                idKey: 'reservation_id'
+            },
+            {
+                label: 'STEP 2',
+                method: 'DELETE',
+                urlTemplate: '/api/v1/reservations/{reservation_id}',
+                desc: '예약 취소',
+                idKeys: ['reservation_id']
+            }
+        ]
+    }
+];
+
+const SCENARIO_SECTIONS = [
+    { key: 'admin',    title: '관리자 시나리오 (Admin 토큰 필요)' },
+    { key: 'partner',  title: '파트너 시나리오 (Extranet 토큰 필요)' },
+    { key: 'customer', title: '고객 시나리오 (Customer 토큰 필요)' }
+];
+
+const METHOD_COLORS = { GET:'var(--method-get)', POST:'var(--method-post)', PUT:'var(--method-put)', PATCH:'var(--method-patch)', DELETE:'var(--method-delete)' };
+
+function renderScenarioList() {
+    const container = document.getElementById('scenarioList');
+    let html = '';
+    SCENARIO_SECTIONS.forEach(sec => {
+        const scenarios = SCENARIOS.filter(s => s.channel === sec.key);
+        if (!scenarios.length) return;
+        html += '<div class="scenario-section">';
+        html += '<div class="scenario-section-title">' + sec.title + '</div>';
+        scenarios.forEach(sc => {
+            html += '<div class="scenario-card" id="sc-' + sc.id + '">';
+            html += '<div class="scenario-card-header">';
+            html += '<div><div class="scenario-card-title">' + sc.title + '</div><div class="scenario-card-desc">' + sc.desc + '</div></div>';
+            html += '<button class="scenario-run-btn" id="run-btn-' + sc.id + '" onclick="runScenario(\'' + sc.id + '\')">실행</button>';
+            html += '</div>';
+            html += '<div class="scenario-steps" id="sc-steps-' + sc.id + '">';
+            sc.steps.forEach((step, i) => {
+                const displayUrl = step.urlTemplate + (step.query ? '?' + Object.entries(step.query).map(([k,v]) => k + '=' + v).join('&') : '');
+                const methodColor = METHOD_COLORS[step.method] || '#888';
+                const expectLabel = step.expectedStatus ? ' <span style="color:#888">기대: ' + step.expectedStatus + '</span>' : '';
+                html += '<div class="scenario-step" id="sc-step-' + sc.id + '-' + i + '">';
+                html += '<div class="step-header">';
+                html += '<span class="step-num" id="sc-step-num-' + sc.id + '-' + i + '">' + step.label + '</span>';
+                html += '<span class="step-method" style="background:' + methodColor + '">' + step.method + '</span>';
+                html += '<span class="step-url">' + displayUrl + '</span>';
+                if (expectLabel) html += '<span class="step-expect">' + expectLabel + '</span>';
+                html += '</div>';
+                html += '<div class="step-result" id="sc-step-result-' + sc.id + '-' + i + '"></div>';
+                html += '</div>';
+            });
+            html += '</div></div>';
+        });
+        html += '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function buildScenarioUrl(urlTemplate, idStore, query) {
+    let url = urlTemplate;
+    Object.entries(idStore).forEach(([k, v]) => {
+        url = url.replace('{' + k + '}', encodeURIComponent(v));
+    });
+    if (query) {
+        const qs = Object.entries(query).map(([k,v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v)).join('&');
+        url += '?' + qs;
+    }
+    return url;
+}
+
+function prepareScenarioBody(body) {
+    if (!body) return null;
+    const clone = JSON.parse(JSON.stringify(body));
+    for (const k in clone) {
+        if (clone[k] === '{{uuid}}') clone[k] = generateUUID();
+    }
+    return clone;
+}
+
+async function runScenario(scenarioId) {
+    const sc = SCENARIOS.find(s => s.id === scenarioId);
+    if (!sc) return;
+
+    if (!currentToken) {
+        alert('토큰이 없습니다. 사이드바에서 해당 채널 토큰을 먼저 발급해주세요.');
+        return;
+    }
+
+    const runBtn = document.getElementById('run-btn-' + scenarioId);
+    runBtn.disabled = true;
+    runBtn.textContent = '실행 중...';
+
+    // Reset step visuals
+    sc.steps.forEach((_, i) => {
+        const numEl = document.getElementById('sc-step-num-' + scenarioId + '-' + i);
+        const resEl = document.getElementById('sc-step-result-' + scenarioId + '-' + i);
+        numEl.className = 'step-num';
+        numEl.textContent = sc.steps[i].label;
+        resEl.className = 'step-result';
+        resEl.innerHTML = '';
+    });
+
+    const idStore = {};
+    let failed = false;
+
+    for (let i = 0; i < sc.steps.length; i++) {
+        const step = sc.steps[i];
+        const numEl = document.getElementById('sc-step-num-' + scenarioId + '-' + i);
+        const resEl = document.getElementById('sc-step-result-' + scenarioId + '-' + i);
+
+        if (failed) {
+            numEl.className = 'step-num skipped';
+            numEl.textContent = 'SKIPPED';
+            resEl.className = 'step-result visible';
+            resEl.innerHTML = '<div class="step-result-line" style="color:#aaa">이전 스텝 실패로 건너뜀</div>';
+            continue;
+        }
+
+        numEl.className = 'step-num running';
+        numEl.textContent = '실행 중...';
+
+        const url = getBaseUrl() + buildScenarioUrl(step.urlTemplate, idStore, step.query);
+        const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentToken };
+        const locale = getCurrentLocale();
+        if (locale) headers['Accept-Language'] = locale;
+        if (sc.channel === 'partner') {
+            const pid = document.getElementById('partnerId')?.value || '1';
+            headers['X-Partner-Id'] = pid;
+        }
+
+        const fetchOpts = { method: step.method, headers };
+        const bodyData = prepareScenarioBody(step.body);
+        if (bodyData) fetchOpts.body = JSON.stringify(bodyData);
+
+        const start = performance.now();
+        let status = 0, statusText = '', bodyJson = null, bodyRaw = '';
+
+        try {
+            const resp = await fetch(url, fetchOpts);
+            const elapsed = Math.round(performance.now() - start);
+            status = resp.status;
+            statusText = resp.statusText;
+            bodyRaw = await resp.text();
+            try { bodyJson = JSON.parse(bodyRaw); } catch(e) {}
+
+            // Extract ID if configured
+            if (step.extractId && bodyJson) {
+                const extractedId = step.extractId(bodyJson);
+                if (extractedId != null && step.idKey) {
+                    idStore[step.idKey] = extractedId;
+                }
+            }
+
+            // Determine pass/fail
+            const expectedStatus = step.expectedStatus;
+            let stepOk;
+            if (expectedStatus) {
+                stepOk = (status === expectedStatus);
+            } else {
+                stepOk = (status >= 200 && status < 300);
+            }
+
+            // allowFail: step failure doesn't stop the chain (used in S-C3 STEP 2)
+            if (!stepOk && !step.allowFail) failed = true;
+
+            numEl.className = 'step-num ' + (stepOk ? 'success' : 'failed');
+            numEl.textContent = stepOk ? (step.label + ' ✅') : (step.label + ' ❌');
+
+            const statusClass = status < 300 ? 'status-2xx' : status < 500 ? 'status-4xx' : 'status-5xx';
+            const statusColor = status < 300 ? 'var(--green)' : status < 500 ? 'var(--yellow)' : 'var(--red)';
+
+            let expectHtml = '';
+            if (expectedStatus) {
+                const matchIcon = stepOk ? '<span class="expect-ok">✅ 기대 결과 일치</span>' : '<span class="expect-fail">❌ 기대 결과 불일치</span>';
+                expectHtml = '<div class="step-result-line">' + matchIcon + ' (기대: ' + expectedStatus + ', 실제: ' + status + ')</div>';
+            }
+
+            const idInfo = step.idKey && idStore[step.idKey] != null
+                ? '<div class="step-result-line" style="color:var(--accent)">추출된 ID (' + step.idKey + '): ' + idStore[step.idKey] + '</div>'
+                : '';
+
+            const bodyPreview = bodyJson != null
+                ? syntaxHighlight(JSON.stringify(bodyJson, null, 2))
+                : (bodyRaw || '(empty)');
+
+            resEl.className = 'step-result visible';
+            resEl.innerHTML =
+                '<div class="step-result-line">' +
+                '<span style="font-weight:700;color:' + statusColor + '">' + status + ' ' + statusText + '</span>' +
+                '<span style="color:#aaa;font-size:11px">' + elapsed + 'ms</span>' +
+                '</div>' +
+                expectHtml +
+                idInfo +
+                '<div class="step-result-body">' + bodyPreview + '</div>';
+
+        } catch(e) {
+            const elapsed = Math.round(performance.now() - start);
+            failed = true;
+            numEl.className = 'step-num failed';
+            numEl.textContent = step.label + ' ❌';
+            resEl.className = 'step-result visible';
+            resEl.innerHTML = '<div class="step-result-line" style="color:var(--red)">요청 실패 (' + elapsed + 'ms): ' + e.message + '</div>';
+        }
+    }
+
+    runBtn.disabled = false;
+    runBtn.textContent = failed ? '다시 실행' : '완료 — 재실행';
+}
+
+renderScenarioList();
 </script>
 </body>
 </html>
